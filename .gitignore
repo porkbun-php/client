@@ -33,34 +33,26 @@ Temporary Items
 ### PhpStorm ###
 .idea
 
-# CMake
-cmake-build-*/
-
 # File-based project format
 *.iws
-
-# IntelliJ
-out/
 
 # mpeltonen/sbt-idea plugin
 .idea_modules/
 
-# JIRA plugin
-atlassian-ide-plugin.xml
-
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-fabric.properties
-
-# Generated files
+# PHPUnit
 .phpunit.result.cache
 .phpunit.cache
-
-# PHPUnit
+phpunit.phar
 /app/phpunit.xml
 /phpunit.xml
+coverage/
+clover.xml
 
 # Build data
 /build/
+
+modd.conf
+.php_cs
+.php_cs.cache
+
+.phpstan.neon
