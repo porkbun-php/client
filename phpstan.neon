@@ -1,0 +1,21 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    ignoreErrors:
+        -
+            identifier: missingType.iterableValue
+        - '#Call to an undefined method Mockery\\ExpectationInterface|Mockery\\HigherOrderMessage::#'
+        - '#Parameter .* of class .* constructor expects .*, Mockery\\MockInterface given#'
+        - '#Parameter .* of method .* expects .*, Mockery\\MockInterface given#'
+        - '#Parameter .* of function mockApiResponse expects string, string\|false given#'
+        - '#Call to method .* on an unknown class Psr\\SimpleCache\\CacheInterface#'
+        - '#Property .* has unknown class Psr\\SimpleCache\\CacheInterface as its type#'
+        - '#Parameter .* has invalid type Psr\\SimpleCache\\CacheInterface#'
+        - '#Call to method ReflectionClass.*::isSubclassOf.*will always evaluate to true#'
+    treatPhpDocTypesAsCertain: false
+
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon 
