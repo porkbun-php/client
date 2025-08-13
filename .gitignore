@@ -1,58 +1,49 @@
-### Composer ###
-composer.phar
+# Dependencies
 /vendor/
 
-### macOS ###
-# General
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
-.AppleDouble
-.LSOverride
-
-# Icon must end with two \r
-Icon
-
-# Thumbnails
+.DS_Store?
 ._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
 .Spotlight-V100
-.TemporaryItems
 .Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
+ehthumbs.db
+Thumbs.db
 
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-### PhpStorm ###
-.idea
-
-# File-based project format
-*.iws
-
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-# PHPUnit
-.phpunit.result.cache
-.phpunit.cache
-phpunit.phar
-/app/phpunit.xml
-/phpunit.xml
-coverage/
-clover.xml
-
-# Build data
-/build/
-
-modd.conf
-.php_cs
+# PHP tools cache
+.php-cs-fixer.cache
 .php_cs.cache
+.phpunit.result.cache
+.phpunit.cache/
+phpstan.neon.tmp
+.rector.json
 
-.phpstan.neon
+# Test output
+/coverage/
+/build/
+/var/
+/tmp/
+
+# Laravel Pint
+.pint.cache
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+
+# Local configuration overrides
+phpunit.xml
+
+# Local development files
+.kiro/
