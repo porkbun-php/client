@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Porkbun\DTO;
+
+final readonly class UrlForward
+{
+    public function __construct(
+        public int $id,
+        public string $subdomain,
+        public string $location,
+        public string $type,
+        public bool $includePath,
+        public bool $wildcard,
+    ) {
+    }
+
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            id: (int) ($data['id'] ?? 0),
+            subdomain: (string) ($data['subdomain'] ?? ''),
+            location: (string) ($data['location'] ?? ''),
+            type: (string) ($data['type'] ?? ''),
+            includePath: ($data['includePath'] ?? 'no') === 'yes',
+            wildcard: ($data['wildcard'] ?? 'no') === 'yes',
+        );
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'subdomain' => $this->subdomain,
+            'location' => $this->location,
+            'type' => $this->type,
+            'includePath' => $this->includePath ? 'yes' : 'no',
+            'wildcard' => $this->wildcard ? 'yes' : 'no',
+        ];
+    }
+
+    public function isPermanent(): bool
+    {
+        return $this->type === 'permanent';
+    }
+
+    public function isTemporary(): bool
+    {
+        return $this->type === 'temporary';
+    }
+
+    public function isRootDomain(): bool
+    {
+        return $this->subdomain === '';
+    }
+
+    public function getFullUrl(string $domain): string
+    {
+        if ($this->isRootDomain()) {
+            return $domain;
+        }
+
+        return "{$this->subdomain}.{$domain}";
+    }
+}

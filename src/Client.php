@@ -4,82 +4,147 @@ declare(strict_types=1);
 
 namespace Porkbun;
 
+use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
-use Porkbun\Service\AuthService;
-use Porkbun\Service\DnsService;
-use Porkbun\Service\DomainService;
-use Porkbun\Service\PricingService;
-use Porkbun\Service\SslService;
-use Psr\Http\Client\ClientInterface as HttpClientInterface;
+use Porkbun\Api\Dns;
+use Porkbun\Api\Domain;
+use Porkbun\Api\Ping;
+use Porkbun\Api\Pricing;
+use Porkbun\Api\Ssl;
+use Porkbun\Enum\Endpoint;
+use Porkbun\Exception\InvalidArgumentException;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 
-class Client
+final class Client
 {
-    private Config $config;
+    private ?HttpClient $httpClient = null;
 
-    private HttpClientInterface $httpClient;
+    private ?string $apiKey = null;
 
-    public function __construct(?Config $config = null, ?HttpClientInterface $httpClient = null)
+    private ?string $secretKey = null;
+
+    private Endpoint $endpoint = Endpoint::DEFAULT;
+
+    public function __construct(private readonly ClientInterface $psrClient, private readonly RequestFactoryInterface $requestFactory, private readonly StreamFactoryInterface $streamFactory)
     {
-        $this->config = $config ?? new Config();
-        $this->httpClient = $httpClient ?? Psr18ClientDiscovery::find();
     }
 
-    public function setBaseUrl(string $baseUrl): self
-    {
-        $this->config->setBaseUrl($baseUrl);
+    public static function create(
+        ?string $apiKey = null,
+        ?string $secretKey = null,
+    ): self {
+        $client = new self(
+            Psr18ClientDiscovery::find(),
+            Psr17FactoryDiscovery::findRequestFactory(),
+            Psr17FactoryDiscovery::findStreamFactory(),
+        );
 
-        return $this;
+        $hasApiKey = $apiKey !== null;
+        $hasSecretKey = $secretKey !== null;
+
+        if ($hasApiKey !== $hasSecretKey) {
+            throw new InvalidArgumentException('Both apiKey and secretKey must be provided together, or neither');
+        }
+
+        if ($hasApiKey && $hasSecretKey) {
+            $client->authenticate($apiKey, $secretKey);
+        }
+
+        return $client;
     }
 
-    public function setAuth(string $apiKey, string $secretKey): self
+    public function authenticate(string $apiKey, string $secretKey): self
     {
-        $this->config->setAuth($apiKey, $secretKey);
+        $this->apiKey = $apiKey;
+        $this->secretKey = $secretKey;
+        $this->httpClient = null;
 
         return $this;
     }
 
     public function clearAuth(): self
     {
-        $this->config->clearAuth();
+        $this->apiKey = null;
+        $this->secretKey = null;
+        $this->httpClient = null;
 
         return $this;
     }
 
-    public function getConfig(): Config
+    public function isAuthenticated(): bool
     {
-        return $this->config;
+        return $this->apiKey !== null && $this->secretKey !== null;
     }
 
-    public function pricing(): PricingService
+    public function useIpv4Endpoint(): self
     {
-        return new PricingService($this->httpClient, $this->config);
+        $this->endpoint = Endpoint::IPV4;
+        $this->httpClient = null;
+
+        return $this;
     }
 
-    public function auth(): AuthService
+    public function useDefaultEndpoint(): self
     {
-        return new AuthService($this->httpClient, $this->config);
+        $this->endpoint = Endpoint::DEFAULT;
+        $this->httpClient = null;
+
+        return $this;
     }
 
-    public function domains(): DomainService
+    public function useEndpoint(Endpoint $endpoint): self
     {
-        return new DomainService($this->httpClient, $this->config);
+        $this->endpoint = $endpoint;
+        $this->httpClient = null;
+
+        return $this;
     }
 
-    public function dns(string $domain): DnsService
+    public function getEndpoint(): Endpoint
     {
-        return new DnsService(
-            httpClient: $this->httpClient,
-            config: $this->config,
-            domain: $domain
-        );
+        return $this->endpoint;
     }
 
-    public function ssl(string $domain): SslService
+    public function pricing(): Pricing
     {
-        return new SslService(
-            httpClient: $this->httpClient,
-            config: $this->config,
-            domain: $domain
-        );
+        return new Pricing($this->getHttpClient());
+    }
+
+    public function ping(): Ping
+    {
+        return new Ping($this->getHttpClient());
+    }
+
+    public function domains(): Domain
+    {
+        return new Domain($this->getHttpClient());
+    }
+
+    public function dns(string $domain): Dns
+    {
+        return new Dns($this->getHttpClient(), $domain);
+    }
+
+    public function ssl(string $domain): Ssl
+    {
+        return new Ssl($this->getHttpClient(), $domain);
+    }
+
+    private function getHttpClient(): HttpClient
+    {
+        if (!$this->httpClient instanceof HttpClient) {
+            $this->httpClient = new HttpClient(
+                $this->psrClient,
+                $this->requestFactory,
+                $this->streamFactory,
+                $this->endpoint->getUrl(),
+                $this->apiKey,
+                $this->secretKey,
+            );
+        }
+
+        return $this->httpClient;
     }
 }
