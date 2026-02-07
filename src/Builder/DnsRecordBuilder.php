@@ -4,21 +4,20 @@ declare(strict_types=1);
 
 namespace Porkbun\Builder;
 
+use Porkbun\Enum\DnsRecordType;
 use Porkbun\Exception\InvalidArgumentException;
 
-class DnsRecordBuilder
+final class DnsRecordBuilder
 {
-    private string $name = '';
-
-    private ?string $type = null;
-
-    private ?string $content = null;
-
-    private int $ttl = 600;
-
-    private int $prio = 0;
-
-    private string $notes = '';
+    public function __construct(
+        private string $name = '',
+        private ?DnsRecordType $dnsRecordType = null,
+        private ?string $content = null,
+        private int $ttl = 600,
+        private int $prio = 0,
+        private string $notes = ''
+    ) {
+    }
 
     public function name(string $name): self
     {
@@ -27,23 +26,35 @@ class DnsRecordBuilder
         return $this;
     }
 
-    public function type(string $type): self
+    public function type(string|DnsRecordType $type): self
     {
-        $validTypes = ['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'NS', 'SRV', 'TLSA', 'CAA', 'HTTPS', 'SVCB'];
-
-        if (!in_array(strtoupper($type), $validTypes, true)) {
-            throw new InvalidArgumentException("Invalid record type: {$type}");
+        if (is_string($type)) {
+            $enumValue = DnsRecordType::tryFrom(mb_strtoupper($type));
+            if (!$enumValue instanceof DnsRecordType) {
+                throw new InvalidArgumentException("Invalid record type: {$type}");
+            }
+            $this->dnsRecordType = $enumValue;
+        } else {
+            $this->dnsRecordType = $type;
         }
 
-        $this->type = strtoupper($type);
+        // Re-validate existing content against the new type
+        if ($this->content !== null && !$this->dnsRecordType->validateContent($this->content)) {
+            throw new InvalidArgumentException("Invalid content for {$this->dnsRecordType->value} record: {$this->content}");
+        }
 
         return $this;
     }
 
     public function content(string $content): self
     {
-        if (trim($content) === '') {
+        if (mb_trim($content) === '') {
             throw new InvalidArgumentException('Content cannot be empty');
+        }
+
+        // Validate content based on record type if type is set
+        if ($this->dnsRecordType instanceof DnsRecordType && !$this->dnsRecordType->validateContent($content)) {
+            throw new InvalidArgumentException("Invalid content for {$this->dnsRecordType->value} record: {$content}");
         }
 
         $this->content = $content;
@@ -80,9 +91,12 @@ class DnsRecordBuilder
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getData(): array
     {
-        if ($this->type === null) {
+        if (!$this->dnsRecordType instanceof DnsRecordType) {
             throw new InvalidArgumentException('Record type is required');
         }
 
@@ -92,7 +106,7 @@ class DnsRecordBuilder
 
         $data = [
             'name' => $this->name,
-            'type' => $this->type,
+            'type' => $this->dnsRecordType->value,
             'content' => $this->content,
             'ttl' => (string) $this->ttl,
             'prio' => (string) $this->prio,
@@ -108,7 +122,7 @@ class DnsRecordBuilder
     public function reset(): self
     {
         $this->name = '';
-        $this->type = null;
+        $this->dnsRecordType = null;
         $this->content = null;
         $this->ttl = 600;
         $this->prio = 0;
@@ -117,34 +131,43 @@ class DnsRecordBuilder
         return $this;
     }
 
-    // Convenience methods for common record types
     public function a(string $ipAddress): self
     {
-        return $this->type('A')->content($ipAddress);
+        return $this->type(DnsRecordType::A)->content($ipAddress);
     }
 
     public function aaaa(string $ipv6Address): self
     {
-        return $this->type('AAAA')->content($ipv6Address);
+        return $this->type(DnsRecordType::AAAA)->content($ipv6Address);
     }
 
     public function cname(string $target): self
     {
-        return $this->type('CNAME')->content($target);
+        return $this->type(DnsRecordType::CNAME)->content($target);
     }
 
     public function mx(string $mailServer, int $priority = 10): self
     {
-        return $this->type('MX')->content($mailServer)->priority($priority);
+        return $this->type(DnsRecordType::MX)->content($mailServer)->priority($priority);
     }
 
     public function txt(string $text): self
     {
-        return $this->type('TXT')->content($text);
+        return $this->type(DnsRecordType::TXT)->content($text);
     }
 
     public function ns(string $nameserver): self
     {
-        return $this->type('NS')->content($nameserver);
+        return $this->type(DnsRecordType::NS)->content($nameserver);
+    }
+
+    public function caa(string $value): self
+    {
+        return $this->type(DnsRecordType::CAA)->content($value);
+    }
+
+    public function srv(string $value): self
+    {
+        return $this->type(DnsRecordType::SRV)->content($value);
     }
 }

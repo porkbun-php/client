@@ -4,6 +4,44 @@ declare(strict_types=1);
 
 namespace Porkbun\Exception;
 
-class AuthenticationException extends PorkbunApiException
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Throwable;
+
+final class AuthenticationException extends PorkbunApiException
 {
+    public function __construct(
+        string $message = 'Authentication required or invalid',
+        private readonly int $statusCode = 403,
+        ?Throwable $throwable = null,
+        private readonly ?RequestInterface $request = null,
+        private readonly ?ResponseInterface $response = null
+    ) {
+        parent::__construct($message, 0, $throwable);
+    }
+
+    public function getStatusCode(): int
+    {
+        return $this->statusCode;
+    }
+
+    public function getRequest(): ?RequestInterface
+    {
+        return $this->request;
+    }
+
+    public function getResponse(): ?ResponseInterface
+    {
+        return $this->response;
+    }
+
+    public function hasRequest(): bool
+    {
+        return $this->request instanceof RequestInterface;
+    }
+
+    public function hasResponse(): bool
+    {
+        return $this->response instanceof ResponseInterface;
+    }
 }
