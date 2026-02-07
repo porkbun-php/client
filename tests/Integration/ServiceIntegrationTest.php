@@ -2,155 +2,107 @@
 
 declare(strict_types=1);
 
-use Porkbun\Client;
+use Porkbun\Api\Dns;
+use Porkbun\Api\Domain;
+use Porkbun\Api\Ping;
+use Porkbun\Api\Ssl;
+use Porkbun\DTO\CreateDnsRecordData;
+use Porkbun\DTO\DnsRecordCollection;
+use Porkbun\DTO\DomainCheckData;
+use Porkbun\DTO\PingData;
+use Porkbun\DTO\SslCertificate;
 use Porkbun\Exception\ApiException;
-use Psr\Http\Client\ClientInterface;
 
 test('service integration - dns service full workflow', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+    $mockClient = createMockHttpClient([
+        ['status' => 'SUCCESS', 'id' => 123456],
+        ['status' => 'SUCCESS', 'records' => [['id' => '123456', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1', 'ttl' => '600', 'prio' => '0']]],
+        ['status' => 'SUCCESS'],
+        ['status' => 'SUCCESS'],
+    ]);
 
-    // Mock responses for DNS workflow
-    $createResponse = mockApiResponse(json_encode(['status' => 'SUCCESS', 'id' => '123456']));
-    $createResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns($httpClient, 'example.com');
 
-    $retrieveResponse = mockApiResponse(json_encode([
-        'status' => 'SUCCESS',
-        'records' => [['id' => '123456', 'name' => 'www', 'type' => 'A', 'content' => '192.168.1.1']],
-    ]));
-    $retrieveResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $createDnsRecordData = $dns->create('www', 'A', '192.0.2.1', 3600);
+    expect($createDnsRecordData)->toBeInstanceOf(CreateDnsRecordData::class)
+        ->and($createDnsRecordData->id)->toBe(123456);
 
-    $editResponse = mockApiResponse(json_encode(['status' => 'SUCCESS']));
-    $editResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $dnsRecordCollection = $dns->retrieve();
+    expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($dnsRecordCollection->isNotEmpty())->toBeTrue();
 
-    $deleteResponse = mockApiResponse(json_encode(['status' => 'SUCCESS']));
-    $deleteResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $dns->edit(123456, ['content' => '192.0.2.2']);
 
-    $mock->shouldReceive('sendRequest')->times(4)->andReturn(
-        $createResponse,
-        $retrieveResponse,
-        $editResponse,
-        $deleteResponse
-    );
-
-    $dns = $client->dns('example.com');
-
-    // Create record
-    $recordId = $dns->create('www', 'A', '192.168.1.1', 3600);
-    expect($recordId)->toBe(123456);
-
-    // Retrieve records
-    $records = $dns->retrieve();
-    expect($records['status'])->toBe('SUCCESS');
-
-    // Edit record
-    $dns->edit(123456, ['content' => '192.168.1.2']);
-
-    // Delete record
     $dns->delete(123456);
 });
 
 test('service integration - domain service operations', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+    $mockClient = createMockHttpClient([
+        ['status' => 'SUCCESS', 'domains' => [['domain' => 'example.com', 'status' => 'ACTIVE']]],
+        ['status' => 'SUCCESS', 'response' => ['avail' => 'no', 'type' => 'registration', 'price' => '1.01']],
+        ['status' => 'SUCCESS', 'ns' => ['ns1.porkbun.com', 'ns2.porkbun.com']],
+    ]);
 
-    $listResponse = mockApiResponse(json_encode([
-        'status' => 'SUCCESS',
-        'domains' => [['domain' => 'example.com', 'status' => 'ACTIVE']],
-    ]));
-    $listResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domain = new Domain($httpClient);
 
-    $checkResponse = mockApiResponse(json_encode([
-        'status' => 'SUCCESS',
-        'available' => false,
-    ]));
-    $checkResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $domains = $domain->listAll();
+    expect($domains)->toBeArray()
+        ->and($domains)->toHaveCount(1)
+        ->and($domains[0]->domain)->toBe('example.com');
 
-    $nsResponse = mockApiResponse(json_encode([
-        'status' => 'SUCCESS',
-        'ns' => ['ns1.porkbun.com', 'ns2.porkbun.com'],
-    ]));
-    $nsResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $domainCheckData = $domain->check('example.com');
+    expect($domainCheckData)->toBeInstanceOf(DomainCheckData::class)
+        ->and($domainCheckData->isAvailable)->toBeFalse();
 
-    $mock->shouldReceive('sendRequest')->times(3)->andReturn(
-        $listResponse,
-        $checkResponse,
-        $nsResponse
-    );
-
-    $domains = $client->domains();
-
-    // List domains
-    $domainList = $domains->listAll();
-    expect($domainList['status'])->toBe('SUCCESS');
-    expect($domainList['domains'])->toHaveCount(1);
-
-    // Check domain availability
-    $availability = $domains->checkDomain('example.com');
-    expect($availability['available'])->toBeFalse();
-
-    // Get nameservers
-    $nameservers = $domains->getNs('example.com');
-    expect($nameservers['ns'])->toHaveCount(2);
+    $nameservers = $domain->getNameservers('example.com');
+    expect($nameservers)->toBe(['ns1.porkbun.com', 'ns2.porkbun.com']);
 });
 
 test('service integration - error handling across services', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+    $mockClient = createMockHttpClient([
+        ['body' => ['status' => 'ERROR', 'message' => 'Domain not found'], 'httpStatus' => 200],
+    ]);
 
-    $errorResponse = mockApiResponse(json_encode([
-        'status' => 'ERROR',
-        'message' => 'Domain not found',
-    ]));
-    $errorResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domain = new Domain($httpClient);
 
-    $mock->shouldReceive('sendRequest')->once()->andReturn($errorResponse);
-
-    expect(fn (): array => $client->domains()->checkDomain('nonexistent.com'))
+    expect(fn (): DomainCheckData => $domain->check('nonexistent.com'))
         ->toThrow(ApiException::class, 'Domain not found');
 });
 
 test('service integration - ssl certificate retrieval', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'certificatechain' => '-----BEGIN CERTIFICATE-----\nMIIC...',
+            'privatekey' => '-----BEGIN RSA PRIVATE KEY-----\nMIIE...',
+            'publickey' => '-----BEGIN PUBLIC KEY-----\nMIIB...',
+        ],
+    ]);
 
-    $sslResponse = mockApiResponse(json_encode([
-        'status' => 'SUCCESS',
-        'certificatechain' => '-----BEGIN CERTIFICATE-----...',
-        'privatekey' => '-----BEGIN PRIVATE KEY-----...',
-        'publickey' => '-----BEGIN PUBLIC KEY-----...',
-    ]));
-    $sslResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $ssl = new Ssl($httpClient, 'example.com');
 
-    $mock->shouldReceive('sendRequest')->once()->andReturn($sslResponse);
+    $sslCertificate = $ssl->retrieve();
 
-    $ssl = $client->ssl('example.com');
-    $certificate = $ssl->retrieve();
-
-    expect($certificate['status'])->toBe('SUCCESS');
-    expect($certificate)->toHaveKeys(['certificatechain', 'privatekey', 'publickey']);
+    expect($sslCertificate)->toBeInstanceOf(SslCertificate::class)
+        ->and($sslCertificate->certificateChain)->toBe('-----BEGIN CERTIFICATE-----\nMIIC...')
+        ->and($sslCertificate->privateKey)->toBe('-----BEGIN RSA PRIVATE KEY-----\nMIIE...')
+        ->and($sslCertificate->publicKey)->toBe('-----BEGIN PUBLIC KEY-----\nMIIB...');
 });
 
-test('service integration - auth service ping', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+test('service integration - ping service authentication test', function (): void {
+    $mockClient = createMockHttpClient([
+        ['status' => 'SUCCESS', 'yourIp' => '203.0.113.1'],
+    ]);
 
-    $pingResponse = mockApiResponse(json_encode([
-        'status' => 'SUCCESS',
-        'yourIp' => '203.0.113.1',
-    ]));
-    $pingResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $ping = new Ping($httpClient);
 
-    $mock->shouldReceive('sendRequest')->once()->andReturn($pingResponse);
+    $pingData = $ping->check();
 
-    $auth = $client->auth();
-    $result = $auth->ping();
-
-    expect($result['status'])->toBe('SUCCESS');
-    expect($result['yourIp'])->toBe('203.0.113.1');
+    expect($pingData)->toBeInstanceOf(PingData::class)
+        ->and($pingData->yourIp)->toBe('203.0.113.1');
 });

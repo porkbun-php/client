@@ -2,159 +2,124 @@
 
 declare(strict_types=1);
 
-use Porkbun\Client;
-use Porkbun\Middleware\LoggingMiddleware;
-use Porkbun\Request\CreateDnsRecordRequest;
-use Psr\Http\Client\ClientInterface;
-use Psr\Http\Message\RequestInterface;
-use Psr\Log\LoggerInterface;
+use Porkbun\Api\Dns;
+use Porkbun\Api\Pricing;
+use Porkbun\Builder\DnsBatchBuilder;
+use Porkbun\DTO\BatchOperationResult;
+use Porkbun\DTO\CreateDnsRecordData;
+use Porkbun\DTO\DnsRecord;
+use Porkbun\DTO\DnsRecordCollection;
+use Porkbun\DTO\PricingCollection;
 
 test('integration - dns service with builder pattern', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+    $mockClient = createMockHttpClient([
+        ['status' => 'SUCCESS', 'id' => 123456],
+    ]);
 
-    $response = mockApiResponse(json_encode(['status' => 'SUCCESS', 'id' => '123456']));
-    $response->shouldReceive('getStatusCode')->andReturn(200);
-    $mock->shouldReceive('sendRequest')->once()->andReturn($response);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns($httpClient, 'example.com');
 
-    $dns = $client->dns('example.com');
-
-    // Test builder pattern
     $dnsRecordBuilder = $dns->record();
-    $recordId = $dns->createFromBuilder(
-        $dnsRecordBuilder->name('www')->a('192.168.1.1')->ttl(3600)->notes('Web server')
+    $createDnsRecordData = $dns->createFromBuilder(
+        $dnsRecordBuilder->name('www')->a('192.0.2.1')->ttl(3600)->notes('Web server')
     );
 
-    expect($recordId)->toBe(123456);
+    expect($createDnsRecordData)->toBeInstanceOf(CreateDnsRecordData::class)
+        ->and($createDnsRecordData->id)->toBe(123456);
 });
 
 test('integration - dns service batch operations', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+    $mockClient = createMockHttpClient([
+        ['status' => 'SUCCESS', 'id' => 123],
+        ['status' => 'SUCCESS'],
+    ]);
 
-    // Mock responses for batch operations
-    $createResponse = mockApiResponse(json_encode(['status' => 'SUCCESS', 'id' => '123']));
-    $createResponse->shouldReceive('getStatusCode')->andReturn(200);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns($httpClient, 'example.com');
 
-    $editResponse = mockApiResponse(json_encode(['status' => 'SUCCESS']));
-    $editResponse->shouldReceive('getStatusCode')->andReturn(200);
-
-    $mock->shouldReceive('sendRequest')->times(2)->andReturn($createResponse, $editResponse);
-
-    $dns = $client->dns('example.com');
-
-    $results = $dns->batch()
-        ->addRecord('www', 'A', '192.168.1.1')
+    $batch = new DnsBatchBuilder();
+    $results = $batch
+        ->addRecord('www', 'A', '192.0.2.1')
         ->editRecord(456, ['ttl' => '7200'])
-        ->commit();
+        ->execute($dns);
 
     expect($results)->toHaveCount(2);
-    expect($results[0]['status'])->toBe('success');
-    expect($results[1]['status'])->toBe('success');
+
+    expect($results[0])->toBeInstanceOf(BatchOperationResult::class)
+        ->and($results[0]->isSuccess())->toBeTrue();
+
+    expect($results[1])->toBeInstanceOf(BatchOperationResult::class)
+        ->and($results[1]->isSuccess())->toBeTrue();
 });
 
 test('integration - pricing service with response objects', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-
-    $responseData = [
-        'status' => 'SUCCESS',
-        'pricing' => [
-            'com' => ['registration' => '8.68', 'renewal' => '8.68'],
-            'net' => ['registration' => '9.98', 'renewal' => '9.98'],
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'pricing' => [
+                'com' => ['registration' => '8.68', 'renewal' => '8.68'],
+                'net' => ['registration' => '9.98', 'renewal' => '9.98'],
+            ],
         ],
-    ];
+    ]);
 
-    $response = mockApiResponse(json_encode($responseData));
-    $response->shouldReceive('getStatusCode')->andReturn(200);
-    $mock->shouldReceive('sendRequest')->once()->andReturn($response);
+    $httpClient = createHttpClient($mockClient);
+    $pricing = new Pricing($httpClient);
 
-    $pricing = $client->pricing();
-    $pricingResponse = $pricing->getPricingAsResponse();
+    $pricingCollection = $pricing->all();
 
-    expect($pricingResponse->isSuccess())->toBeTrue();
-    expect($pricingResponse->hasDomain('com'))->toBeTrue();
-    expect($pricingResponse->getRegistrationPrice('com'))->toBe('8.68');
-    expect($pricingResponse->getAllTlds())->toBe(['com', 'net']);
-});
-
-test('integration - service with middleware', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-
-    $response = mockApiResponse(json_encode(['status' => 'SUCCESS', 'pricing' => []]));
-    $response->shouldReceive('getStatusCode')->andReturn(200);
-    $mock->shouldReceive('sendRequest')->once()->andReturn($response);
-
-    $logger = Mockery::mock(LoggerInterface::class);
-    $logger->shouldReceive('info')->twice(); // before and after
-
-    $pricing = $client->pricing();
-    $pricing->addMiddleware(new LoggingMiddleware($logger));
-
-    // Use request/response pattern to trigger middleware
-    $pricingResponse = $pricing->getPricingFromRequest();
-
-    expect($pricingResponse->isSuccess())->toBeTrue();
+    expect($pricingCollection)->toBeInstanceOf(PricingCollection::class)
+        ->and($pricingCollection->has('com'))->toBeTrue()
+        ->and($pricingCollection->getRegistrationPrice('com'))->toBe(8.68)
+        ->and($pricingCollection->tlds())->toBe(['com', 'net']);
 });
 
 test('integration - dns service with typed requests', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
+    $mockClient = createMockHttpClient([
+        ['status' => 'SUCCESS', 'id' => 789123],
+    ]);
 
-    $response = mockApiResponse(json_encode(['status' => 'SUCCESS', 'id' => '789123']));
-    $response->shouldReceive('getStatusCode')->andReturn(200);
-    $httpRequest = Mockery::mock(RequestInterface::class);
-    $mock->shouldReceive('sendRequest')->once()->andReturn($response);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns($httpClient, 'example.com');
 
-    $dns = $client->dns('example.com');
-
-    $request = new CreateDnsRecordRequest(
-        'example.com',
+    $createDnsRecordData = $dns->create(
         'api',
         'A',
-        '10.0.0.1',
+        '198.51.100.1',
         7200,
         0,
         'API server'
     );
 
-    $createDnsRecordResponse = $dns->createFromRequest($request);
-
-    expect($createDnsRecordResponse->isSuccess())->toBeTrue();
-    expect($createDnsRecordResponse->getId())->toBe(789123);
-    expect($createDnsRecordResponse->hasId())->toBeTrue();
+    expect($createDnsRecordData)->toBeInstanceOf(CreateDnsRecordData::class)
+        ->and($createDnsRecordData->id)->toBe(789123)
+        ->and($createDnsRecordData->hasValidId())->toBeTrue();
 });
 
 test('integration - dns service retrieve with response objects', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-    $client = new Client(null, $mock);
-    $client->setAuth('pk1_key', 'sk1_secret');
-
-    $responseData = [
-        'status' => 'SUCCESS',
-        'records' => [
-            ['id' => '123', 'name' => 'www', 'type' => 'A', 'content' => '192.168.1.1'],
-            ['id' => '124', 'name' => 'api', 'type' => 'A', 'content' => '10.0.0.1'],
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'records' => [
+                ['id' => '123', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1', 'ttl' => '600', 'prio' => '0'],
+                ['id' => '124', 'name' => 'api', 'type' => 'A', 'content' => '198.51.100.1', 'ttl' => '600', 'prio' => '0'],
+            ],
         ],
-    ];
+    ]);
 
-    $response = mockApiResponse(json_encode($responseData));
-    $response->shouldReceive('getStatusCode')->andReturn(200);
-    $mock->shouldReceive('sendRequest')->once()->andReturn($response);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns($httpClient, 'example.com');
 
-    $dns = $client->dns('example.com');
-    $dnsRecordsResponse = $dns->retrieveAsResponse();
+    $dnsRecordCollection = $dns->retrieve();
 
-    expect($dnsRecordsResponse->isSuccess())->toBeTrue();
-    expect($dnsRecordsResponse->getRecordCount())->toBe(2);
-    $record = $dnsRecordsResponse->getRecordById(123);
+    expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($dnsRecordCollection->count())->toBe(2);
+
+    $record = $dnsRecordCollection->getRecordById(123);
     expect($record)->not()->toBeNull();
-    if ($record !== null) {
-        expect($record['name'])->toBe('www');
+    if ($record instanceof DnsRecord) {
+        expect($record->name)->toBe('www');
     }
-    expect($dnsRecordsResponse->getRecordsByType('A'))->toHaveCount(2);
+
+    expect($dnsRecordCollection->getRecordsByType('A'))->toHaveCount(2);
 });

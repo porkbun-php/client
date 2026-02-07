@@ -11,14 +11,14 @@ test('dns record builder can build basic A record', function (): void {
     $data = $builder
         ->name('www')
         ->type('A')
-        ->content('192.168.1.1')
+        ->content('192.0.2.1')
         ->ttl(3600)
         ->getData();
 
     expect($data)->toBe([
         'name' => 'www',
         'type' => 'A',
-        'content' => '192.168.1.1',
+        'content' => '192.0.2.1',
         'ttl' => '3600',
         'prio' => '0',
     ]);
@@ -51,7 +51,7 @@ test('dns record builder omits empty notes', function (): void {
     $data = $builder
         ->name('test')
         ->type('A')
-        ->content('1.1.1.1')
+        ->content('203.0.113.1')
         ->getData();
 
     expect($data)->not()->toHaveKey('notes');
@@ -102,9 +102,9 @@ test('dns record builder validates priority', function (): void {
 test('dns record builder has convenience methods', function (): void {
     $builder = new DnsRecordBuilder();
 
-    $data = $builder->name('www')->a('192.168.1.1')->getData();
+    $data = $builder->name('www')->a('192.0.2.1')->getData();
     expect($data['type'])->toBe('A');
-    expect($data['content'])->toBe('192.168.1.1');
+    expect($data['content'])->toBe('192.0.2.1');
 
     $builder->reset();
     $data = $builder->name('www')->aaaa('2001:db8::1')->getData();
@@ -131,7 +131,7 @@ test('dns record builder has convenience methods', function (): void {
 test('dns record builder can be reset', function (): void {
     $builder = new DnsRecordBuilder();
 
-    $builder->name('test')->type('A')->content('1.1.1.1')->notes('test');
+    $builder->name('test')->type('A')->content('203.0.113.1')->notes('test');
     $builder->reset();
 
     expect(fn (): array => $builder->getData())
@@ -144,10 +144,18 @@ test('dns record builder is fluent', function (): void {
     $dnsRecordBuilder = $builder
         ->name('www')
         ->type('A')
-        ->content('1.1.1.1')
+        ->content('203.0.113.1')
         ->ttl(7200)
         ->priority(5)
         ->notes('Web server');
 
     expect($dnsRecordBuilder)->toBe($builder);
+});
+
+test('dns record builder validates content regardless of call order', function (): void {
+    $builder = new DnsRecordBuilder();
+
+    // Set invalid content first, then set type - should still validate
+    expect(fn (): DnsRecordBuilder => $builder->content('not-an-ip')->type('A'))
+        ->toThrow(InvalidArgumentException::class, 'Invalid content for A record');
 });
