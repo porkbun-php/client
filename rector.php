@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\Php81\Rector\Property\ReadOnlyPropertyRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
+use Rector\TypeDeclaration\Rector\ClassMethod\StrictArrayParamDimFetchRector;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->paths([
@@ -16,6 +18,15 @@ return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->skip([
         __DIR__ . '/examples',
         __DIR__ . '/vendor',
+        // Skip readonly for Config property in Client since Config is mutable
+        ReadOnlyPropertyRector::class => [
+            __DIR__ . '/src/Client.php',
+        ],
+        // Laravel container uses ArrayAccess interface at runtime but contracts don't expose it
+        // Skip strict array param rules for Laravel integration
+        StrictArrayParamDimFetchRector::class => [
+            __DIR__ . '/src/Laravel/PorkbunServiceProvider.php',
+        ],
     ]);
 
     $rectorConfig->sets([
@@ -26,7 +37,7 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::PRIVATIZATION,
         SetList::TYPE_DECLARATION,
         SetList::INSTANCEOF,
-        LevelSetList::UP_TO_PHP_83,
+        LevelSetList::UP_TO_PHP_84,
     ]);
 
     // Import common classes automatically
