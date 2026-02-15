@@ -26,7 +26,7 @@ test('dns batch builder can execute operations', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     $batch = new DnsBatchBuilder();
     $results = $batch
@@ -52,7 +52,7 @@ test('dns batch builder handles errors gracefully', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     $batch = new DnsBatchBuilder();
     $results = $batch
@@ -73,7 +73,7 @@ test('dns batch builder clears operations after execute', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     $batch = new DnsBatchBuilder();
     $batch->addRecord('www', 'A', '192.0.2.1');

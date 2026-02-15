@@ -5,26 +5,21 @@ declare(strict_types=1);
 namespace Porkbun\Api;
 
 use Porkbun\DTO\SslCertificate;
-use Porkbun\HttpClient;
+use Porkbun\Internal\ClientContext;
 
 final class Ssl extends AbstractApi
 {
     public function __construct(
-        HttpClient $httpClient,
+        ClientContext $clientContext,
         private readonly string $domain,
     ) {
-        parent::__construct($httpClient);
+        parent::__construct($clientContext);
     }
 
-    public function retrieve(): SslCertificate
+    public function get(): SslCertificate
     {
         $response = $this->post("/ssl/retrieve/{$this->domain}");
 
         return SslCertificate::fromArray($response);
-    }
-
-    public function getDomain(): string
-    {
-        return $this->domain;
     }
 }

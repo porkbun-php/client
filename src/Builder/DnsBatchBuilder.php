@@ -6,12 +6,13 @@ namespace Porkbun\Builder;
 
 use Porkbun\Api\Dns;
 use Porkbun\DTO\BatchOperationResult;
-use Porkbun\Exception\InvalidArgumentException;
 use Porkbun\Exception\PorkbunApiException;
+use Porkbun\Internal\BatchOperation;
+use Porkbun\Internal\BatchOperationType;
 
 final class DnsBatchBuilder
 {
-    /** @var list<array<string, mixed>> */
+    /** @var list<BatchOperation> */
     private array $operations = [];
 
     public function addRecord(
@@ -32,28 +33,28 @@ final class DnsBatchBuilder
             ->notes($notes)
             ->getData();
 
-        $this->operations[] = ['type' => 'create', 'data' => $data];
+        $this->operations[] = BatchOperation::create($data);
 
         return $this;
     }
 
     public function editRecord(int $recordId, array $data): self
     {
-        $this->operations[] = ['type' => 'edit', 'id' => $recordId, 'data' => $data];
+        $this->operations[] = BatchOperation::edit($recordId, $data);
 
         return $this;
     }
 
     public function deleteRecord(int $recordId): self
     {
-        $this->operations[] = ['type' => 'delete', 'id' => $recordId];
+        $this->operations[] = BatchOperation::delete($recordId);
 
         return $this;
     }
 
     public function deleteByNameType(string $type, ?string $subdomain = null): self
     {
-        $this->operations[] = ['type' => 'deleteByNameType', 'recordType' => $type, 'subdomain' => $subdomain];
+        $this->operations[] = BatchOperation::deleteByNameType($type, $subdomain);
 
         return $this;
     }
@@ -66,19 +67,15 @@ final class DnsBatchBuilder
         $results = [];
 
         foreach ($this->operations as $operation) {
-            /** @var string $type */
-            $type = $operation['type'];
-
             try {
-                $results[] = match ($type) {
-                    'create' => $this->executeCreate($dns, $operation),
-                    'edit' => $this->executeEdit($dns, $operation),
-                    'delete' => $this->executeDelete($dns, $operation),
-                    'deleteByNameType' => $this->executeDeleteByNameType($dns, $operation),
-                    default => throw new InvalidArgumentException("Unknown operation type: {$type}")
+                $results[] = match ($operation->type) {
+                    BatchOperationType::CREATE => $this->executeCreate($dns, $operation),
+                    BatchOperationType::EDIT => $this->executeEdit($dns, $operation),
+                    BatchOperationType::DELETE => $this->executeDelete($dns, $operation),
+                    BatchOperationType::DELETE_BY_NAME_TYPE => $this->executeDeleteByNameType($dns, $operation),
                 };
             } catch (PorkbunApiException $e) {
-                $results[] = BatchOperationResult::failure($type, $e->getMessage());
+                $results[] = BatchOperationResult::failure($operation->type->value, $e->getMessage());
             }
         }
 
@@ -99,15 +96,12 @@ final class DnsBatchBuilder
         return count($this->operations);
     }
 
-    /**
-     * @param array<string, mixed> $operation
-     */
-    private function executeCreate(Dns $dns, array $operation): BatchOperationResult
+    private function executeCreate(Dns $dns, BatchOperation $batchOperation): BatchOperationResult
     {
         /** @var array{name: string, type: string, content: string, ttl: int|string, prio: int|string, notes?: string} $data */
-        $data = $operation['data'];
+        $data = $batchOperation->data;
 
-        $createDnsRecordData = $dns->create(
+        $createResult = $dns->create(
             (string) $data['name'],
             (string) $data['type'],
             (string) $data['content'],
@@ -116,49 +110,33 @@ final class DnsBatchBuilder
             (string) ($data['notes'] ?? '')
         );
 
-        return BatchOperationResult::success('create', recordId: $createDnsRecordData->id);
+        return BatchOperationResult::success('create', recordId: $createResult->id);
     }
 
-    /**
-     * @param array<string, mixed> $operation
-     */
-    private function executeEdit(Dns $dns, array $operation): BatchOperationResult
+    private function executeEdit(Dns $dns, BatchOperation $batchOperation): BatchOperationResult
     {
-        /** @var int $id */
-        $id = $operation['id'];
-        /** @var array<string, mixed> $data */
-        $data = $operation['data'];
+        assert($batchOperation->id !== null);
 
-        $dns->edit($id, $data);
+        $dns->edit($batchOperation->id, $batchOperation->data);
 
-        return BatchOperationResult::success('edit', recordId: $id);
+        return BatchOperationResult::success('edit', recordId: $batchOperation->id);
     }
 
-    /**
-     * @param array<string, mixed> $operation
-     */
-    private function executeDelete(Dns $dns, array $operation): BatchOperationResult
+    private function executeDelete(Dns $dns, BatchOperation $batchOperation): BatchOperationResult
     {
-        /** @var int $id */
-        $id = $operation['id'];
+        assert($batchOperation->id !== null);
 
-        $dns->delete($id);
+        $dns->delete($batchOperation->id);
 
-        return BatchOperationResult::success('delete', recordId: $id);
+        return BatchOperationResult::success('delete', recordId: $batchOperation->id);
     }
 
-    /**
-     * @param array<string, mixed> $operation
-     */
-    private function executeDeleteByNameType(Dns $dns, array $operation): BatchOperationResult
+    private function executeDeleteByNameType(Dns $dns, BatchOperation $batchOperation): BatchOperationResult
     {
-        /** @var string $recordType */
-        $recordType = $operation['recordType'];
-        /** @var string|null $subdomain */
-        $subdomain = $operation['subdomain'];
+        assert($batchOperation->recordType !== null);
 
-        $dns->deleteByType($recordType, $subdomain);
+        $dns->deleteByType($batchOperation->recordType, $batchOperation->subdomain);
 
-        return BatchOperationResult::success('deleteByNameType', recordType: $recordType);
+        return BatchOperationResult::success('deleteByNameType', recordType: $batchOperation->recordType);
     }
 }

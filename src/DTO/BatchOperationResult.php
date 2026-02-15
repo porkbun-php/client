@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Porkbun\DTO;
 
-final readonly class BatchOperationResult
+use JsonSerializable;
+use Override;
+
+final readonly class BatchOperationResult implements JsonSerializable
 {
     public function __construct(
         public string $operation,
@@ -47,6 +50,12 @@ final readonly class BatchOperationResult
     public function hasRecordId(): bool
     {
         return $this->recordId !== null;
+    }
+
+    #[Override]
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     public function toArray(): array

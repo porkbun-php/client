@@ -3,6 +3,8 @@ parameters:
     paths:
         - src
         - tests
+    excludePaths:
+        - examples
     ignoreErrors:
         # Array value types - we prefer clean code without verbose @param array<string, mixed> annotations
         - identifier: missingType.iterableValue

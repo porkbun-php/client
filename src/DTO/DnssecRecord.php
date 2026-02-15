@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Porkbun\DTO;
 
-final readonly class DnssecRecord
+use JsonSerializable;
+use Override;
+
+final readonly class DnssecRecord implements JsonSerializable
 {
     public function __construct(
         public int $keyTag,
@@ -60,6 +63,12 @@ final readonly class DnssecRecord
         }
 
         return $data;
+    }
+
+    #[Override]
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     /** @see https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml */

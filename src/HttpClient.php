@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Porkbun;
 
+use Composer\InstalledVersions;
 use JsonException;
+use OutOfBoundsException;
 use Porkbun\Enum\Endpoint;
 use Porkbun\Exception\ApiException;
 use Porkbun\Exception\AuthenticationException;
@@ -19,7 +21,6 @@ use Psr\Http\Message\StreamFactoryInterface;
 
 final class HttpClient
 {
-    private const string USER_AGENT = 'porkbun-php-api/2.0';
     private const string CONTENT_TYPE = 'application/json';
 
     private ?ResponseInterface $lastResponse = null;
@@ -63,7 +64,7 @@ final class HttpClient
 
         $request = $this->requestFactory->createRequest('POST', $url)
             ->withHeader('Content-Type', self::CONTENT_TYPE)
-            ->withHeader('User-Agent', self::USER_AGENT)
+            ->withHeader('User-Agent', $this->getUserAgent())
             ->withBody($this->streamFactory->createStream($body));
 
         try {
@@ -94,7 +95,7 @@ final class HttpClient
 
         $request = $this->requestFactory->createRequest('GET', $url)
             ->withHeader('Content-Type', self::CONTENT_TYPE)
-            ->withHeader('User-Agent', self::USER_AGENT);
+            ->withHeader('User-Agent', $this->getUserAgent());
 
         try {
             $this->lastResponse = $this->httpClient->sendRequest($request);
@@ -227,5 +228,16 @@ final class HttpClient
 
         return (str_starts_with($content, '{') && str_ends_with($content, '}'))
             || (str_starts_with($content, '[') && str_ends_with($content, ']'));
+    }
+
+    private function getUserAgent(): string
+    {
+        try {
+            $version = InstalledVersions::getPrettyVersion('glebovdev/porkbun-php-api') ?? 'dev';
+        } catch (OutOfBoundsException) {
+            $version = 'dev';
+        }
+
+        return "porkbun-php-api/{$version}";
     }
 }

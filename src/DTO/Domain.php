@@ -54,10 +54,10 @@ final readonly class Domain
             tld: $data['tld'] ?? null,
             createDate: $createDate,
             expireDate: $expireDate,
-            securityLock: isset($data['securityLock']) ? (bool) $data['securityLock'] : null,
-            whoisPrivacy: isset($data['whoisPrivacy']) ? (bool) $data['whoisPrivacy'] : null,
-            autoRenew: isset($data['autoRenew']) ? (bool) $data['autoRenew'] : null,
-            notLocal: isset($data['notLocal']) ? (bool) $data['notLocal'] : null,
+            securityLock: isset($data['securityLock']) ? self::parseBool($data['securityLock']) : null,
+            whoisPrivacy: isset($data['whoisPrivacy']) ? self::parseBool($data['whoisPrivacy']) : null,
+            autoRenew: isset($data['autoRenew']) ? self::parseBool($data['autoRenew']) : null,
+            notLocal: isset($data['notLocal']) ? self::parseBool($data['notLocal']) : null,
             labels: $labels,
         );
     }
@@ -128,5 +128,10 @@ final readonly class Domain
         $parts = explode('.', $this->domain);
 
         return end($parts);
+    }
+
+    private static function parseBool(mixed $value): bool
+    {
+        return in_array($value, [true, 1, '1', 'yes'], true);
     }
 }

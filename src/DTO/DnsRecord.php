@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Porkbun\DTO;
 
+use JsonSerializable;
+use Override;
 use Porkbun\Enum\DnsRecordType;
+use Porkbun\Exception\InvalidArgumentException;
 
-final readonly class DnsRecord
+final readonly class DnsRecord implements JsonSerializable
 {
     public function __construct(
         public int $id,
@@ -21,10 +24,17 @@ final readonly class DnsRecord
 
     public static function fromArray(array $data): self
     {
+        $typeString = (string) ($data['type'] ?? '');
+        $type = DnsRecordType::tryFrom($typeString);
+
+        if (!$type instanceof DnsRecordType) {
+            throw new InvalidArgumentException("Unknown DNS record type: '{$typeString}'");
+        }
+
         return new self(
             id: (int) ($data['id'] ?? 0),
             name: (string) ($data['name'] ?? ''),
-            dnsRecordType: DnsRecordType::from((string) ($data['type'] ?? '')),
+            dnsRecordType: $type,
             content: (string) ($data['content'] ?? ''),
             ttl: (int) ($data['ttl'] ?? 600),
             priority: (int) ($data['prio'] ?? 0),
@@ -48,6 +58,12 @@ final readonly class DnsRecord
     public function isRootRecord(): bool
     {
         return $this->name === '' || $this->name === '@';
+    }
+
+    #[Override]
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     public function isType(string|DnsRecordType $type): bool

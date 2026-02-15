@@ -13,13 +13,7 @@ enum Endpoint: string
     {
         $normalizedUrl = mb_rtrim($url, '/');
 
-        foreach (self::cases() as $endpoint) {
-            if (mb_rtrim($endpoint->value, '/') === $normalizedUrl) {
-                return $endpoint;
-            }
-        }
-
-        return null;
+        return array_find(self::cases(), fn (self $endpoint): bool => mb_rtrim($endpoint->value, '/') === $normalizedUrl);
     }
 
     public static function fromType(string $type): ?self

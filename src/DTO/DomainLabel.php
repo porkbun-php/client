@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Porkbun\DTO;
 
-final readonly class DomainLabel
+use JsonSerializable;
+use Override;
+
+final readonly class DomainLabel implements JsonSerializable
 {
     public function __construct(
         public string $id,
@@ -29,5 +32,11 @@ final readonly class DomainLabel
             'title' => $this->title,
             'color' => $this->color,
         ];
+    }
+
+    #[Override]
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

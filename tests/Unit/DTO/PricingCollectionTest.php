@@ -69,31 +69,15 @@ test('tlds returns all tld keys', function (): void {
     expect($pricingCollection->tlds())->toBe(['com', 'net', 'org']);
 });
 
-test('getRegistrationPrice returns price or null', function (): void {
-    $pricingCollection = PricingCollection::fromArray([
-        'com' => ['registration' => '8.99', 'renewal' => '10.99'],
-    ]);
-
-    expect($pricingCollection->getRegistrationPrice('com'))->toBe(8.99)
-        ->and($pricingCollection->getRegistrationPrice('xyz'))->toBeNull();
-});
-
-test('getRenewalPrice returns price or null', function (): void {
-    $pricingCollection = PricingCollection::fromArray([
-        'com' => ['registration' => '8.99', 'renewal' => '10.99'],
-    ]);
-
-    expect($pricingCollection->getRenewalPrice('com'))->toBe(10.99)
-        ->and($pricingCollection->getRenewalPrice('xyz'))->toBeNull();
-});
-
-test('getTransferPrice returns price or null', function (): void {
+test('get returns typed item with accessible prices', function (): void {
     $pricingCollection = PricingCollection::fromArray([
         'com' => ['registration' => '8.99', 'renewal' => '10.99', 'transfer' => '7.99'],
     ]);
 
-    expect($pricingCollection->getTransferPrice('com'))->toBe(7.99)
-        ->and($pricingCollection->getTransferPrice('xyz'))->toBeNull();
+    expect($pricingCollection->get('com')?->registrationPrice)->toBe(8.99)
+        ->and($pricingCollection->get('com')?->renewalPrice)->toBe(10.99)
+        ->and($pricingCollection->get('com')?->transferPrice)->toBe(7.99)
+        ->and($pricingCollection->get('xyz')?->registrationPrice)->toBeNull();
 });
 
 test('cheapest returns sorted items', function (): void {

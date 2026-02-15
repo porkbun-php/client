@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Porkbun\DTO;
 
-final readonly class UrlForward
+use JsonSerializable;
+use Override;
+
+final readonly class UrlForward implements JsonSerializable
 {
     public function __construct(
         public int $id,
@@ -38,6 +41,12 @@ final readonly class UrlForward
             'includePath' => $this->includePath ? 'yes' : 'no',
             'wildcard' => $this->wildcard ? 'yes' : 'no',
         ];
+    }
+
+    #[Override]
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     public function isPermanent(): bool

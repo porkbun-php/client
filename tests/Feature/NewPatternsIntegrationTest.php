@@ -6,7 +6,7 @@ use Porkbun\Api\Dns;
 use Porkbun\Api\Pricing;
 use Porkbun\Builder\DnsBatchBuilder;
 use Porkbun\DTO\BatchOperationResult;
-use Porkbun\DTO\CreateDnsRecordData;
+use Porkbun\DTO\CreateResult;
 use Porkbun\DTO\DnsRecord;
 use Porkbun\DTO\DnsRecordCollection;
 use Porkbun\DTO\PricingCollection;
@@ -17,15 +17,15 @@ test('integration - dns service with builder pattern', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     $dnsRecordBuilder = $dns->record();
-    $createDnsRecordData = $dns->createFromBuilder(
+    $createResult = $dns->createFromBuilder(
         $dnsRecordBuilder->name('www')->a('192.0.2.1')->ttl(3600)->notes('Web server')
     );
 
-    expect($createDnsRecordData)->toBeInstanceOf(CreateDnsRecordData::class)
-        ->and($createDnsRecordData->id)->toBe(123456);
+    expect($createResult)->toBeInstanceOf(CreateResult::class)
+        ->and($createResult->id)->toBe(123456);
 });
 
 test('integration - dns service batch operations', function (): void {
@@ -35,7 +35,7 @@ test('integration - dns service batch operations', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     $batch = new DnsBatchBuilder();
     $results = $batch
@@ -64,13 +64,13 @@ test('integration - pricing service with response objects', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient);
-    $pricing = new Pricing($httpClient);
+    $pricing = new Pricing(createMockContext($httpClient));
 
     $pricingCollection = $pricing->all();
 
     expect($pricingCollection)->toBeInstanceOf(PricingCollection::class)
         ->and($pricingCollection->has('com'))->toBeTrue()
-        ->and($pricingCollection->getRegistrationPrice('com'))->toBe(8.68)
+        ->and($pricingCollection->get('com')?->registrationPrice)->toBe(8.68)
         ->and($pricingCollection->tlds())->toBe(['com', 'net']);
 });
 
@@ -80,9 +80,9 @@ test('integration - dns service with typed requests', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $createDnsRecordData = $dns->create(
+    $createResult = $dns->create(
         'api',
         'A',
         '198.51.100.1',
@@ -91,12 +91,12 @@ test('integration - dns service with typed requests', function (): void {
         'API server'
     );
 
-    expect($createDnsRecordData)->toBeInstanceOf(CreateDnsRecordData::class)
-        ->and($createDnsRecordData->id)->toBe(789123)
-        ->and($createDnsRecordData->hasValidId())->toBeTrue();
+    expect($createResult)->toBeInstanceOf(CreateResult::class)
+        ->and($createResult->id)->toBe(789123)
+        ->and($createResult->hasValidId())->toBeTrue();
 });
 
-test('integration - dns service retrieve with response objects', function (): void {
+test('integration - dns service all with response objects', function (): void {
     $mockClient = createMockHttpClient([
         [
             'status' => 'SUCCESS',
@@ -108,9 +108,9 @@ test('integration - dns service retrieve with response objects', function (): vo
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dnsRecordCollection = $dns->retrieve();
+    $dnsRecordCollection = $dns->all();
 
     expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
         ->and($dnsRecordCollection->count())->toBe(2);

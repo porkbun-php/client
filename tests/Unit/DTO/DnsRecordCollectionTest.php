@@ -88,3 +88,71 @@ test('collection can find record by id', function (): void {
 
     expect($collection->getRecordById(999))->toBeNull();
 });
+
+test('collection stores cloudflare status', function (): void {
+    $records = [
+        DnsRecord::fromArray(['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1']),
+    ];
+
+    $collection = new DnsRecordCollection($records, 'enabled');
+
+    expect($collection->getCloudflare())->toBe('enabled')
+        ->and($collection->isCloudflareEnabled())->toBeTrue();
+});
+
+test('collection handles disabled cloudflare', function (): void {
+    $records = [
+        DnsRecord::fromArray(['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1']),
+    ];
+
+    $collection = new DnsRecordCollection($records, 'disabled');
+
+    expect($collection->getCloudflare())->toBe('disabled')
+        ->and($collection->isCloudflareEnabled())->toBeFalse();
+});
+
+test('collection handles null cloudflare', function (): void {
+    $records = [
+        DnsRecord::fromArray(['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1']),
+    ];
+
+    $collection = new DnsRecordCollection($records);
+
+    expect($collection->getCloudflare())->toBeNull()
+        ->and($collection->isCloudflareEnabled())->toBeFalse();
+});
+
+test('last returns last record', function (): void {
+    $records = [
+        DnsRecord::fromArray(['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1']),
+        DnsRecord::fromArray(['id' => '2', 'name' => 'api', 'type' => 'A', 'content' => '192.0.2.2']),
+        DnsRecord::fromArray(['id' => '3', 'name' => 'mail', 'type' => 'MX', 'content' => 'mail.example.com', 'prio' => '10']),
+    ];
+
+    $collection = new DnsRecordCollection($records);
+
+    $last = $collection->last();
+
+    expect($last)->toBeInstanceOf(DnsRecord::class);
+
+    /** @var DnsRecord $last */
+    expect($last->id)->toBe(3)
+        ->and($last->name)->toBe('mail');
+});
+
+test('last returns null for empty collection', function (): void {
+    $collection = new DnsRecordCollection();
+
+    expect($collection->last())->toBeNull();
+});
+
+test('fromArray accepts cloudflare parameter', function (): void {
+    $recordsData = [
+        ['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1'],
+    ];
+
+    $dnsRecordCollection = DnsRecordCollection::fromArray($recordsData, 'enabled');
+
+    expect($dnsRecordCollection->getCloudflare())->toBe('enabled')
+        ->and($dnsRecordCollection->isCloudflareEnabled())->toBeTrue();
+});

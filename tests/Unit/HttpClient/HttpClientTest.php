@@ -49,7 +49,7 @@ test('http client sets correct headers', function (): void {
         ->once()
         ->with(Mockery::on(function (RequestInterface $request): bool {
             expect($request->getHeaderLine('Content-Type'))->toBe('application/json')
-                ->and($request->getHeaderLine('User-Agent'))->toBe('porkbun-php-api/2.0');
+                ->and($request->getHeaderLine('User-Agent'))->toStartWith('porkbun-php-api/');
 
             return true;
         }))

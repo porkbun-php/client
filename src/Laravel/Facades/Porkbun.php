@@ -6,13 +6,12 @@ namespace Porkbun\Laravel\Facades;
 
 use Illuminate\Support\Facades\Facade;
 use Override;
-use Porkbun\Api\Dns;
-use Porkbun\Api\Domain;
-use Porkbun\Api\Ping;
+use Porkbun\Api\Domains;
 use Porkbun\Api\Pricing;
-use Porkbun\Api\Ssl;
 use Porkbun\Client;
+use Porkbun\DTO\PingResult;
 use Porkbun\Enum\Endpoint;
+use Porkbun\Resource\Domain;
 
 /**
  * @method static Client authenticate(string $apiKey, string $secretKey)
@@ -23,10 +22,9 @@ use Porkbun\Enum\Endpoint;
  * @method static Client useEndpoint(Endpoint $endpoint)
  * @method static Endpoint getEndpoint()
  * @method static Pricing pricing()
- * @method static Ping ping()
- * @method static Domain domains()
- * @method static Dns dns(string $domain)
- * @method static Ssl ssl(string $domain)
+ * @method static PingResult ping()
+ * @method static Domains domains()
+ * @method static Domain domain(string $domain)
  *
  * @see Client
  */

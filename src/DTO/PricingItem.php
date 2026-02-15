@@ -11,7 +11,9 @@ final readonly class PricingItem
         public float $registrationPrice,
         public float $renewalPrice,
         public ?float $transferPrice = null,
-        public ?int $years = null,
+        /** @var array<mixed> */
+        public array $coupons = [],
+        public ?string $specialType = null,
     ) {
     }
 
@@ -22,8 +24,19 @@ final readonly class PricingItem
             registrationPrice: (float) ($data['registration'] ?? 0),
             renewalPrice: (float) ($data['renewal'] ?? 0),
             transferPrice: isset($data['transfer']) ? (float) $data['transfer'] : null,
-            years: isset($data['years']) ? (int) $data['years'] : null,
+            coupons: $data['coupons'] ?? [],
+            specialType: $data['specialType'] ?? null,
         );
+    }
+
+    public function isHandshake(): bool
+    {
+        return $this->specialType === 'handshake';
+    }
+
+    public function hasCoupons(): bool
+    {
+        return $this->coupons !== [];
     }
 
     public function toArray(): array
@@ -38,8 +51,12 @@ final readonly class PricingItem
             $result['transfer'] = (string) $this->transferPrice;
         }
 
-        if ($this->years !== null) {
-            $result['years'] = $this->years;
+        if ($this->coupons !== []) {
+            $result['coupons'] = $this->coupons;
+        }
+
+        if ($this->specialType !== null) {
+            $result['specialType'] = $this->specialType;
         }
 
         return $result;

@@ -6,6 +6,7 @@ namespace Porkbun\DTO;
 
 use ArrayIterator;
 use Countable;
+use Deprecated;
 use IteratorAggregate;
 use JsonSerializable;
 use Override;
@@ -16,23 +17,44 @@ use Traversable;
  */
 final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSerializable
 {
+    /** @var list<DnsRecord> */
     private array $records;
 
-    public function __construct(array $records = [])
+    public function __construct(array $records = [], private readonly ?string $cloudflare = null)
     {
         $this->records = array_values($records);
     }
 
-    public static function fromArray(array $recordsData): self
+    public static function fromArray(array $recordsData, ?string $cloudflare = null): self
     {
         $records = [];
         foreach ($recordsData as $recordData) {
             $records[] = DnsRecord::fromArray($recordData);
         }
 
-        return new self($records);
+        return new self($records, $cloudflare);
     }
 
+    public function getCloudflare(): ?string
+    {
+        return $this->cloudflare;
+    }
+
+    public function isCloudflareEnabled(): bool
+    {
+        return $this->cloudflare === 'enabled';
+    }
+
+    /** @return list<DnsRecord> */
+    public function all(): array
+    {
+        return $this->records;
+    }
+
+    /**
+     * @return list<DnsRecord>
+     */
+    #[Deprecated(message: 'Use all() instead for consistency with other collections')]
     public function getRecords(): array
     {
         return $this->records;
@@ -77,6 +99,15 @@ final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSer
     public function first(): ?DnsRecord
     {
         return $this->records[0] ?? null;
+    }
+
+    public function last(): ?DnsRecord
+    {
+        if ($this->records === []) {
+            return null;
+        }
+
+        return $this->records[count($this->records) - 1];
     }
 
     public function firstOfType(string $type): ?DnsRecord

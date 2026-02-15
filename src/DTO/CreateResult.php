@@ -7,11 +7,12 @@ namespace Porkbun\DTO;
 use JsonSerializable;
 use Override;
 
-final readonly class CreateDnsRecordData implements JsonSerializable
+final readonly class CreateResult implements JsonSerializable
 {
     public function __construct(
         public int $id,
         public ?string $createdAt = null,
+        /** @var ?list<string> */
         public ?array $validationWarnings = null,
     ) {
     }
@@ -22,7 +23,7 @@ final readonly class CreateDnsRecordData implements JsonSerializable
             id: (int) ($data['id'] ?? 0),
             createdAt: isset($data['createdAt']) ? (string) $data['createdAt'] : null,
             validationWarnings: isset($data['validationWarnings']) && is_array($data['validationWarnings'])
-                ? $data['validationWarnings']
+                ? array_values(array_map(strval(...), $data['validationWarnings']))
                 : null,
         );
     }
