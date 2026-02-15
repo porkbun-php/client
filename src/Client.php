@@ -6,13 +6,13 @@ namespace Porkbun;
 
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
-use Porkbun\Api\Dns;
-use Porkbun\Api\Domain;
-use Porkbun\Api\Ping;
+use Porkbun\Api\Domains;
 use Porkbun\Api\Pricing;
-use Porkbun\Api\Ssl;
+use Porkbun\DTO\PingResult;
 use Porkbun\Enum\Endpoint;
 use Porkbun\Exception\InvalidArgumentException;
+use Porkbun\Internal\ClientContext;
+use Porkbun\Resource\Domain;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\StreamFactoryInterface;
@@ -27,7 +27,14 @@ final class Client
 
     private Endpoint $endpoint = Endpoint::DEFAULT;
 
+    private readonly ClientContext $clientContext;
+
     public function __construct(private readonly ClientInterface $psrClient, private readonly RequestFactoryInterface $requestFactory, private readonly StreamFactoryInterface $streamFactory)
+    {
+        $this->clientContext = new ClientContext(fn (): HttpClient => $this->getHttpClient());
+    }
+
+    private function __clone(): void
     {
     }
 
@@ -109,27 +116,24 @@ final class Client
 
     public function pricing(): Pricing
     {
-        return new Pricing($this->getHttpClient());
+        return new Pricing($this->clientContext);
     }
 
-    public function ping(): Ping
+    public function ping(): PingResult
     {
-        return new Ping($this->getHttpClient());
+        $data = $this->clientContext->httpClient()->post('/ping');
+
+        return PingResult::fromArray($data);
     }
 
-    public function domains(): Domain
+    public function domains(): Domains
     {
-        return new Domain($this->getHttpClient());
+        return new Domains($this->clientContext);
     }
 
-    public function dns(string $domain): Dns
+    public function domain(string $domain): Domain
     {
-        return new Dns($this->getHttpClient(), $domain);
-    }
-
-    public function ssl(string $domain): Ssl
-    {
-        return new Ssl($this->getHttpClient(), $domain);
+        return new Domain($domain, $this->clientContext);
     }
 
     private function getHttpClient(): HttpClient

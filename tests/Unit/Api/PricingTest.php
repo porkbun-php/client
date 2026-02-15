@@ -17,15 +17,15 @@ test('pricing api returns pricing collection', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient);
-    $pricing = new Pricing($httpClient);
+    $pricing = new Pricing(createMockContext($httpClient));
 
     $pricingCollection = $pricing->all();
 
     expect($pricingCollection)->toBeInstanceOf(PricingCollection::class)
         ->and($pricingCollection->has('com'))->toBeTrue()
         ->and($pricingCollection->has('net'))->toBeTrue()
-        ->and($pricingCollection->getRegistrationPrice('com'))->toBe(8.68)
-        ->and($pricingCollection->getRenewalPrice('com'))->toBe(8.68);
+        ->and($pricingCollection->get('com')?->registrationPrice)->toBe(8.68)
+        ->and($pricingCollection->get('com')?->renewalPrice)->toBe(8.68);
 });
 
 test('pricing api handles empty pricing', function (): void {
@@ -34,7 +34,7 @@ test('pricing api handles empty pricing', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient);
-    $pricing = new Pricing($httpClient);
+    $pricing = new Pricing(createMockContext($httpClient));
 
     $pricingCollection = $pricing->all();
 

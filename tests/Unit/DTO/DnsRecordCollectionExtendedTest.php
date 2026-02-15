@@ -5,13 +5,13 @@ declare(strict_types=1);
 use Porkbun\DTO\DnsRecord;
 use Porkbun\DTO\DnsRecordCollection;
 
-test('getRecords returns all records', function (): void {
+test('all returns all records', function (): void {
     $dnsRecordCollection = DnsRecordCollection::fromArray([
         ['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1'],
         ['id' => '2', 'name' => 'api', 'type' => 'A', 'content' => '192.0.2.2'],
     ]);
 
-    expect($dnsRecordCollection->getRecords())->toHaveCount(2);
+    expect($dnsRecordCollection->all())->toHaveCount(2);
 });
 
 test('getRecordsByName filters by name', function (): void {

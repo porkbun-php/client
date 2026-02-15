@@ -3,15 +3,17 @@
 declare(strict_types=1);
 
 use Porkbun\Api\Dns;
-use Porkbun\Api\Domain;
-use Porkbun\Api\Ping;
+use Porkbun\Api\Domains;
+use Porkbun\Api\Nameservers;
 use Porkbun\Api\Ssl;
-use Porkbun\DTO\CreateDnsRecordData;
+use Porkbun\DTO\Availability;
+use Porkbun\DTO\CreateResult;
 use Porkbun\DTO\DnsRecordCollection;
-use Porkbun\DTO\DomainCheckData;
-use Porkbun\DTO\PingData;
+use Porkbun\DTO\DomainCollection;
+use Porkbun\DTO\NameserverCollection;
 use Porkbun\DTO\SslCertificate;
 use Porkbun\Exception\ApiException;
+use Porkbun\Resource\Domain;
 
 test('service integration - dns service full workflow', function (): void {
     $mockClient = createMockHttpClient([
@@ -22,13 +24,13 @@ test('service integration - dns service full workflow', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns($httpClient, 'example.com');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $createDnsRecordData = $dns->create('www', 'A', '192.0.2.1', 3600);
-    expect($createDnsRecordData)->toBeInstanceOf(CreateDnsRecordData::class)
-        ->and($createDnsRecordData->id)->toBe(123456);
+    $createResult = $dns->create('www', 'A', '192.0.2.1', 3600);
+    expect($createResult)->toBeInstanceOf(CreateResult::class)
+        ->and($createResult->id)->toBe(123456);
 
-    $dnsRecordCollection = $dns->retrieve();
+    $dnsRecordCollection = $dns->all();
     expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
         ->and($dnsRecordCollection->isNotEmpty())->toBeTrue();
 
@@ -37,27 +39,49 @@ test('service integration - dns service full workflow', function (): void {
     $dns->delete(123456);
 });
 
-test('service integration - domain service operations', function (): void {
+test('service integration - domains service operations', function (): void {
     $mockClient = createMockHttpClient([
         ['status' => 'SUCCESS', 'domains' => [['domain' => 'example.com', 'status' => 'ACTIVE']]],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domains = new Domains(createMockContext($httpClient));
+
+    $domainCollection = $domains->all();
+    $first = $domainCollection->first();
+
+    assert($first instanceof Porkbun\DTO\Domain);
+    expect($domainCollection)->toBeInstanceOf(DomainCollection::class)
+        ->and($domainCollection)->toHaveCount(1)
+        ->and($first->domain)->toBe('example.com');
+});
+
+test('service integration - domain check availability', function (): void {
+    $mockClient = createMockHttpClient([
         ['status' => 'SUCCESS', 'response' => ['avail' => 'no', 'type' => 'registration', 'price' => '1.01']],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domain = new Domain('example.com', createMockContext($httpClient));
+
+    $availability = $domain->check();
+    expect($availability)->toBeInstanceOf(Availability::class)
+        ->and($availability->isAvailable)->toBeFalse();
+});
+
+test('service integration - nameservers service operations', function (): void {
+    $mockClient = createMockHttpClient([
         ['status' => 'SUCCESS', 'ns' => ['ns1.porkbun.com', 'ns2.porkbun.com']],
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $domain = new Domain($httpClient);
+    $nameservers = new Nameservers(createMockContext($httpClient), 'example.com');
 
-    $domains = $domain->listAll();
-    expect($domains)->toBeArray()
-        ->and($domains)->toHaveCount(1)
-        ->and($domains[0]->domain)->toBe('example.com');
-
-    $domainCheckData = $domain->check('example.com');
-    expect($domainCheckData)->toBeInstanceOf(DomainCheckData::class)
-        ->and($domainCheckData->isAvailable)->toBeFalse();
-
-    $nameservers = $domain->getNameservers('example.com');
-    expect($nameservers)->toBe(['ns1.porkbun.com', 'ns2.porkbun.com']);
+    $nameserverCollection = $nameservers->all();
+    expect($nameserverCollection)->toBeInstanceOf(NameserverCollection::class)
+        ->and($nameserverCollection)->toHaveCount(2)
+        ->and($nameserverCollection->first())->toBe('ns1.porkbun.com')
+        ->and($nameserverCollection->last())->toBe('ns2.porkbun.com');
 });
 
 test('service integration - error handling across services', function (): void {
@@ -66,9 +90,9 @@ test('service integration - error handling across services', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $domain = new Domain($httpClient);
+    $domain = new Domain('nonexistent.com', createMockContext($httpClient));
 
-    expect(fn (): DomainCheckData => $domain->check('nonexistent.com'))
+    expect(fn (): Availability => $domain->check())
         ->toThrow(ApiException::class, 'Domain not found');
 });
 
@@ -83,26 +107,12 @@ test('service integration - ssl certificate retrieval', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $ssl = new Ssl($httpClient, 'example.com');
+    $ssl = new Ssl(createMockContext($httpClient), 'example.com');
 
-    $sslCertificate = $ssl->retrieve();
+    $sslCertificate = $ssl->get();
 
     expect($sslCertificate)->toBeInstanceOf(SslCertificate::class)
         ->and($sslCertificate->certificateChain)->toBe('-----BEGIN CERTIFICATE-----\nMIIC...')
         ->and($sslCertificate->privateKey)->toBe('-----BEGIN RSA PRIVATE KEY-----\nMIIE...')
         ->and($sslCertificate->publicKey)->toBe('-----BEGIN PUBLIC KEY-----\nMIIB...');
-});
-
-test('service integration - ping service authentication test', function (): void {
-    $mockClient = createMockHttpClient([
-        ['status' => 'SUCCESS', 'yourIp' => '203.0.113.1'],
-    ]);
-
-    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $ping = new Ping($httpClient);
-
-    $pingData = $ping->check();
-
-    expect($pingData)->toBeInstanceOf(PingData::class)
-        ->and($pingData->yourIp)->toBe('203.0.113.1');
 });

@@ -30,7 +30,8 @@ final class PricingCollection implements Countable, IteratorAggregate, JsonSeria
 
         foreach ($pricingData as $tld => $data) {
             /** @var array<string, mixed> $data */
-            $items[(string) $tld] = PricingItem::fromArray((string) $tld, $data);
+            $tldString = (string) $tld;
+            $items[$tldString] = PricingItem::fromArray($tldString, $data);
         }
 
         return new self($items);
@@ -62,27 +63,6 @@ final class PricingCollection implements Countable, IteratorAggregate, JsonSeria
     public function tlds(): array
     {
         return array_keys($this->items);
-    }
-
-    public function getRegistrationPrice(string $tld): ?float
-    {
-        $item = $this->items[$tld] ?? null;
-
-        return $item?->registrationPrice;
-    }
-
-    public function getRenewalPrice(string $tld): ?float
-    {
-        $item = $this->items[$tld] ?? null;
-
-        return $item?->renewalPrice;
-    }
-
-    public function getTransferPrice(string $tld): ?float
-    {
-        $item = $this->items[$tld] ?? null;
-
-        return $item?->transferPrice;
     }
 
     /** @return array<PricingItem> */

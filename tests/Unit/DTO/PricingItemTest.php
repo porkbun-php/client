@@ -9,14 +9,31 @@ test('it creates pricing item from array', function (): void {
         'registration' => '8.99',
         'renewal' => '10.99',
         'transfer' => '7.99',
-        'years' => '1',
+        'coupons' => [],
+        'specialType' => null,
     ]);
 
     expect($pricingItem->tld)->toBe('com')
         ->and($pricingItem->registrationPrice)->toBe(8.99)
         ->and($pricingItem->renewalPrice)->toBe(10.99)
         ->and($pricingItem->transferPrice)->toBe(7.99)
-        ->and($pricingItem->years)->toBe(1);
+        ->and($pricingItem->coupons)->toBe([])
+        ->and($pricingItem->specialType)->toBeNull();
+});
+
+test('it creates handshake domain pricing', function (): void {
+    $pricingItem = PricingItem::fromArray('den', [
+        'registration' => '17.82',
+        'renewal' => '17.82',
+        'transfer' => '17.82',
+        'coupons' => [],
+        'specialType' => 'handshake',
+    ]);
+
+    expect($pricingItem->tld)->toBe('den')
+        ->and($pricingItem->specialType)->toBe('handshake')
+        ->and($pricingItem->isHandshake())->toBeTrue()
+        ->and($pricingItem->hasCoupons())->toBeFalse();
 });
 
 test('it handles missing optional fields', function (): void {
@@ -26,7 +43,9 @@ test('it handles missing optional fields', function (): void {
     ]);
 
     expect($pricingItem->transferPrice)->toBeNull()
-        ->and($pricingItem->years)->toBeNull();
+        ->and($pricingItem->coupons)->toBe([])
+        ->and($pricingItem->specialType)->toBeNull()
+        ->and($pricingItem->isHandshake())->toBeFalse();
 });
 
 test('it handles missing required fields with defaults', function (): void {
@@ -42,7 +61,6 @@ test('toArray serializes correctly', function (): void {
         registrationPrice: 8.99,
         renewalPrice: 10.99,
         transferPrice: 7.99,
-        years: 2,
     );
 
     $array = $item->toArray();
@@ -52,8 +70,21 @@ test('toArray serializes correctly', function (): void {
         'registration' => '8.99',
         'renewal' => '10.99',
         'transfer' => '7.99',
-        'years' => 2,
     ]);
+});
+
+test('toArray includes specialType when present', function (): void {
+    $item = new PricingItem(
+        tld: 'den',
+        registrationPrice: 17.82,
+        renewalPrice: 17.82,
+        transferPrice: 17.82,
+        specialType: 'handshake',
+    );
+
+    $array = $item->toArray();
+
+    expect($array['specialType'])->toBe('handshake');
 });
 
 test('toArray omits null optional fields', function (): void {

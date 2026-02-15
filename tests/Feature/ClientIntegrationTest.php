@@ -3,14 +3,13 @@
 declare(strict_types=1);
 
 use Porkbun\Api\Dns;
-use Porkbun\Api\Ping;
 use Porkbun\Api\Pricing;
 use Porkbun\Api\Ssl;
 use Porkbun\Client;
-use Porkbun\DTO\PingData;
 use Porkbun\DTO\PricingCollection;
 use Porkbun\Enum\Endpoint;
 use Porkbun\Exception\AuthenticationException;
+use Porkbun\Resource\Domain;
 
 test('client integration - public pricing works without auth', function (): void {
     $mockClient = createMockHttpClient([
@@ -23,13 +22,13 @@ test('client integration - public pricing works without auth', function (): void
     ]);
 
     $httpClient = createHttpClient($mockClient);
-    $pricing = new Pricing($httpClient);
+    $pricing = new Pricing(createMockContext($httpClient));
 
     $pricingCollection = $pricing->all();
 
     expect($pricingCollection)->toBeInstanceOf(PricingCollection::class)
-        ->and($pricingCollection->getRegistrationPrice('com'))->toBe(8.68)
-        ->and($pricingCollection->getRenewalPrice('com'))->toBe(8.68);
+        ->and($pricingCollection->get('com')?->registrationPrice)->toBe(8.68)
+        ->and($pricingCollection->get('com')?->renewalPrice)->toBe(8.68);
 });
 
 test('client integration - auth required endpoint throws without credentials', function (): void {
@@ -38,23 +37,23 @@ test('client integration - auth required endpoint throws without credentials', f
     ]);
 
     $httpClient = createHttpClient($mockClient);
+    $pricing = new Pricing(createMockContext($httpClient));
 
-    expect(fn (): PingData => new Ping($httpClient)->check())
+    expect(fn (): PricingCollection => $pricing->all())
         ->toThrow(AuthenticationException::class);
 });
 
 test('client integration - auth required endpoint works with credentials', function (): void {
     $mockClient = createMockHttpClient([
-        ['status' => 'SUCCESS', 'yourIp' => '192.0.2.1'],
+        ['status' => 'SUCCESS', 'pricing' => ['com' => ['registration' => '8.68']]],
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $ping = new Ping($httpClient);
+    $pricing = new Pricing(createMockContext($httpClient));
 
-    $pingData = $ping->check();
+    $pricingCollection = $pricing->all();
 
-    expect($pingData)->toBeInstanceOf(PingData::class)
-        ->and($pingData->yourIp)->toBe('192.0.2.1');
+    expect($pricingCollection)->toBeInstanceOf(PricingCollection::class);
 });
 
 test('client integration - dynamic configuration changes', function (): void {
@@ -73,15 +72,14 @@ test('client integration - dynamic configuration changes', function (): void {
     expect($client->isAuthenticated())->toBeFalse();
 });
 
-test('client integration - domain specific services get domain parameter', function (): void {
+test('client integration - domain facade provides domain specific services', function (): void {
     $client = Client::create();
 
-    $dnsService = $client->dns('example.com');
-    $sslService = $client->ssl('example.com');
+    $domain = $client->domain('example.com');
 
-    expect($dnsService)->toBeInstanceOf(Dns::class)
-        ->and($dnsService->getDomain())->toBe('example.com');
+    expect($domain)->toBeInstanceOf(Domain::class)
+        ->and($domain->getName())->toBe('example.com');
 
-    expect($sslService)->toBeInstanceOf(Ssl::class)
-        ->and($sslService->getDomain())->toBe('example.com');
+    expect($domain->dns())->toBeInstanceOf(Dns::class);
+    expect($domain->ssl())->toBeInstanceOf(Ssl::class);
 });

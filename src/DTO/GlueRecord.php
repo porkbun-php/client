@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Porkbun\DTO;
 
-final readonly class GlueRecord
+use JsonSerializable;
+use Override;
+
+final readonly class GlueRecord implements JsonSerializable
 {
     public function __construct(
         public string $host,
@@ -41,6 +44,12 @@ final readonly class GlueRecord
             'host' => $this->host,
             'ips' => $this->ips,
         ];
+    }
+
+    #[Override]
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 
     public function hasIpv4(): bool

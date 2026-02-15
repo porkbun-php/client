@@ -44,6 +44,3 @@ phpstan.neon.tmp
 
 # Local configuration overrides
 phpunit.xml
-
-# Local development files
-.kiro/

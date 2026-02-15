@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 use Porkbun\Api\Ssl;
 use Porkbun\DTO\SslCertificate;
+use Porkbun\Exception\ApiException;
 
-test('ssl api can retrieve certificate', function (): void {
+test('ssl api can get certificate', function (): void {
     $mockClient = createMockHttpClient([
         [
             'status' => 'SUCCESS',
@@ -16,9 +17,9 @@ test('ssl api can retrieve certificate', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $ssl = new Ssl($httpClient, 'example.com');
+    $ssl = new Ssl(createMockContext($httpClient), 'example.com');
 
-    $sslCertificate = $ssl->retrieve();
+    $sslCertificate = $ssl->get();
 
     expect($sslCertificate)->toBeInstanceOf(SslCertificate::class)
         ->and($sslCertificate->hasCertificate())->toBeTrue()
@@ -38,19 +39,30 @@ test('ssl api handles intermediate certificate', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $ssl = new Ssl($httpClient, 'example.com');
+    $ssl = new Ssl(createMockContext($httpClient), 'example.com');
 
-    $sslCertificate = $ssl->retrieve();
+    $sslCertificate = $ssl->get();
 
     expect($sslCertificate->hasIntermediateCertificate())->toBeTrue()
         ->and($sslCertificate->getFullChain())->toContain('INTER');
 });
 
-test('ssl api returns correct domain', function (): void {
-    $mockClient = createMockHttpClient([]);
+test('ssl api throws ApiException when certificate not ready', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'body' => [
+                'status' => 'ERROR',
+                'message' => 'The SSL certificate is not ready for this domain.',
+            ],
+            'httpStatus' => 400,
+        ],
+    ]);
 
-    $httpClient = createHttpClient($mockClient);
-    $ssl = new Ssl($httpClient, 'example.com');
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $ssl = new Ssl(createMockContext($httpClient), 'example.com');
 
-    expect($ssl->getDomain())->toBe('example.com');
+    expect(fn (): SslCertificate => $ssl->get())->toThrow(
+        ApiException::class,
+        'The SSL certificate is not ready for this domain.'
+    );
 });

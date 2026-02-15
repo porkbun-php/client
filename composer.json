@@ -1,5 +1,5 @@
 {
-    "name": "ilyaglebov/porkbun-php-api",
+    "name": "glebovdev/porkbun-php-api",
     "description": "PHP client for the Porkbun API",
     "license": "MIT",
     "type": "library",

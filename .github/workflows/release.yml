@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: curl, json, mbstring, xml
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: |
+          composer install --prefer-dist --no-dev --optimize-autoloader
+
+      - name: Run quality checks
+        run: composer run check
+
+      - name: Extract tag name
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: Release ${{ steps.tag.outputs.tag }}
+          draft: false
+          prerelease: false
+          body: |
+            ## Changes in ${{ steps.tag.outputs.tag }}
+
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+
+            ## Installation
+
+            ```bash
+            composer require glebovdev/porkbun-php-api:${{ steps.tag.outputs.tag }}
+            ```

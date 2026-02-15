@@ -7,7 +7,7 @@ namespace Porkbun\DTO;
 use JsonSerializable;
 use Override;
 
-final readonly class DomainCheckData implements JsonSerializable
+final readonly class Availability implements JsonSerializable
 {
     public function __construct(
         public bool $isAvailable,
@@ -16,14 +16,15 @@ final readonly class DomainCheckData implements JsonSerializable
         public ?float $regularPrice = null,
         public bool $hasFirstYearPromo = false,
         public bool $isPremium = false,
+        public int $minDuration = 1,
         public ?float $renewalPrice = null,
+        public ?float $renewalRegularPrice = null,
         public ?float $transferPrice = null,
+        public ?float $transferRegularPrice = null,
         public ?int $limitTotal = null,
         public ?int $limitUsed = null,
-        public ?array $additionalInfo = null,
-        public ?string $registrar = null,
-        public ?string $expirationDate = null,
-        public ?array $whoisInfo = null,
+        public ?int $limitTtl = null,
+        public ?string $limitNaturalLanguage = null,
     ) {
     }
 
@@ -42,14 +43,15 @@ final readonly class DomainCheckData implements JsonSerializable
             regularPrice: isset($response['regularPrice']) ? (float) $response['regularPrice'] : null,
             hasFirstYearPromo: ($response['firstYearPromo'] ?? 'no') === 'yes',
             isPremium: ($response['premium'] ?? 'no') === 'yes',
+            minDuration: (int) ($response['minDuration'] ?? 1),
             renewalPrice: isset($renewalData['price']) ? (float) $renewalData['price'] : null,
+            renewalRegularPrice: isset($renewalData['regularPrice']) ? (float) $renewalData['regularPrice'] : null,
             transferPrice: isset($transferData['price']) ? (float) $transferData['price'] : null,
+            transferRegularPrice: isset($transferData['regularPrice']) ? (float) $transferData['regularPrice'] : null,
             limitTotal: isset($limits['limit']) ? (int) $limits['limit'] : null,
             limitUsed: isset($limits['used']) ? (int) $limits['used'] : null,
-            additionalInfo: is_array($data['additionalInfo'] ?? null) ? $data['additionalInfo'] : null,
-            registrar: $data['registrar'] ?? null,
-            expirationDate: $data['expirationDate'] ?? null,
-            whoisInfo: is_array($data['whoisInfo'] ?? null) ? $data['whoisInfo'] : null,
+            limitTtl: isset($limits['TTL']) ? (int) $limits['TTL'] : null,
+            limitNaturalLanguage: isset($limits['naturalLanguage']) ? (string) $limits['naturalLanguage'] : null,
         );
     }
 
@@ -58,6 +60,20 @@ final readonly class DomainCheckData implements JsonSerializable
         return $this->price !== null
             && $this->regularPrice !== null
             && $this->price < $this->regularPrice;
+    }
+
+    public function hasRenewalPromo(): bool
+    {
+        return $this->renewalPrice !== null
+            && $this->renewalRegularPrice !== null
+            && $this->renewalPrice < $this->renewalRegularPrice;
+    }
+
+    public function hasTransferPromo(): bool
+    {
+        return $this->transferPrice !== null
+            && $this->transferRegularPrice !== null
+            && $this->transferPrice < $this->transferRegularPrice;
     }
 
     public function getPromoSavings(): ?float
@@ -121,6 +137,7 @@ final readonly class DomainCheckData implements JsonSerializable
             'response' => [
                 'avail' => $this->isAvailable ? 'yes' : 'no',
                 'type' => $this->type,
+                'minDuration' => $this->minDuration,
             ],
         ];
 
@@ -139,11 +156,25 @@ final readonly class DomainCheckData implements JsonSerializable
 
         if ($this->renewalPrice !== null || $this->transferPrice !== null) {
             $data['response']['additional'] = [];
+
             if ($this->renewalPrice !== null) {
-                $data['response']['additional']['renewal'] = ['price' => $this->renewalPrice];
+                $data['response']['additional']['renewal'] = [
+                    'type' => 'renewal',
+                    'price' => $this->renewalPrice,
+                ];
+                if ($this->renewalRegularPrice !== null) {
+                    $data['response']['additional']['renewal']['regularPrice'] = $this->renewalRegularPrice;
+                }
             }
+
             if ($this->transferPrice !== null) {
-                $data['response']['additional']['transfer'] = ['price' => $this->transferPrice];
+                $data['response']['additional']['transfer'] = [
+                    'type' => 'transfer',
+                    'price' => $this->transferPrice,
+                ];
+                if ($this->transferRegularPrice !== null) {
+                    $data['response']['additional']['transfer']['regularPrice'] = $this->transferRegularPrice;
+                }
             }
         }
 
@@ -152,19 +183,12 @@ final readonly class DomainCheckData implements JsonSerializable
                 'limit' => $this->limitTotal,
                 'used' => $this->limitUsed,
             ];
-        }
-
-        if ($this->additionalInfo !== null) {
-            $data['additionalInfo'] = $this->additionalInfo;
-        }
-        if ($this->registrar !== null) {
-            $data['registrar'] = $this->registrar;
-        }
-        if ($this->expirationDate !== null) {
-            $data['expirationDate'] = $this->expirationDate;
-        }
-        if ($this->whoisInfo !== null) {
-            $data['whoisInfo'] = $this->whoisInfo;
+            if ($this->limitTtl !== null) {
+                $data['limits']['TTL'] = $this->limitTtl;
+            }
+            if ($this->limitNaturalLanguage !== null) {
+                $data['limits']['naturalLanguage'] = $this->limitNaturalLanguage;
+            }
         }
 
         return $data;

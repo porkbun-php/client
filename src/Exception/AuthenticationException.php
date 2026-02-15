@@ -12,32 +12,17 @@ final class AuthenticationException extends PorkbunApiException
 {
     public function __construct(
         string $message = 'Authentication required or invalid',
-        private readonly int $statusCode = 403,
+        int $statusCode = 403,
         ?Throwable $throwable = null,
-        private readonly ?RequestInterface $request = null,
+        ?RequestInterface $request = null,
         private readonly ?ResponseInterface $response = null
     ) {
-        parent::__construct($message, 0, $throwable);
-    }
-
-    public function getStatusCode(): int
-    {
-        return $this->statusCode;
-    }
-
-    public function getRequest(): ?RequestInterface
-    {
-        return $this->request;
+        parent::__construct($message, $statusCode, $throwable, $request);
     }
 
     public function getResponse(): ?ResponseInterface
     {
         return $this->response;
-    }
-
-    public function hasRequest(): bool
-    {
-        return $this->request instanceof RequestInterface;
     }
 
     public function hasResponse(): bool

@@ -7,7 +7,7 @@ namespace Porkbun\DTO;
 use JsonSerializable;
 use Override;
 
-final readonly class PingData implements JsonSerializable
+final readonly class PingResult implements JsonSerializable
 {
     public function __construct(
         public ?string $yourIp,
@@ -35,7 +35,7 @@ final readonly class PingData implements JsonSerializable
 
     public function hasForwardedIp(): bool
     {
-        return $this->xForwardedFor !== null;
+        return $this->xForwardedFor !== null && $this->xForwardedFor !== '';
     }
 
     public function toArray(): array

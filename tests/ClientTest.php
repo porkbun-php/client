@@ -3,14 +3,12 @@
 declare(strict_types=1);
 
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Porkbun\Api\Dns;
-use Porkbun\Api\Domain;
-use Porkbun\Api\Ping;
+use Porkbun\Api\Domains;
 use Porkbun\Api\Pricing;
-use Porkbun\Api\Ssl;
 use Porkbun\Client;
 use Porkbun\Enum\Endpoint;
 use Porkbun\Exception\InvalidArgumentException;
+use Porkbun\Resource\Domain;
 use Psr\Http\Client\ClientInterface;
 
 test('client can be instantiated with PSR interfaces', function (): void {
@@ -59,10 +57,16 @@ test('client provides API factories', function (): void {
     $client = Client::create();
 
     expect($client->pricing())->toBeInstanceOf(Pricing::class)
-        ->and($client->ping())->toBeInstanceOf(Ping::class)
-        ->and($client->domains())->toBeInstanceOf(Domain::class)
-        ->and($client->dns('example.com'))->toBeInstanceOf(Dns::class)
-        ->and($client->ssl('example.com'))->toBeInstanceOf(Ssl::class);
+        ->and($client->domains())->toBeInstanceOf(Domains::class);
+});
+
+test('client provides domain facade', function (): void {
+    $client = Client::create();
+
+    $domain = $client->domain('example.com');
+
+    expect($domain)->toBeInstanceOf(Domain::class)
+        ->and($domain->getName())->toBe('example.com');
 });
 
 test('client can switch to ipv4 endpoint', function (): void {
@@ -82,6 +86,11 @@ test('client can use custom endpoint', function (): void {
 
     $client->useEndpoint(Endpoint::IPV4);
     expect($client->getEndpoint())->toBe(Endpoint::IPV4);
+});
+
+test('client cannot be cloned', function (): void {
+    $client = Client::create();
+    expect(fn (): Client => clone $client)->toThrow(Error::class);
 });
 
 test('client endpoint methods are fluent', function (): void {

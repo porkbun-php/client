@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Mockery\MockInterface;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Porkbun\HttpClient;
+use Porkbun\Internal\ClientContext;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -16,7 +17,7 @@ use Psr\Http\Message\ResponseInterface;
 
 uses()->afterEach(function (): void {
     Mockery::close();
-})->in('Unit', 'Integration');
+})->in('Unit', 'Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -89,4 +90,12 @@ function createHttpClient(
         $apiKey,
         $secretKey,
     );
+}
+
+/**
+ * Create a ClientContext that returns the given HttpClient.
+ */
+function createMockContext(HttpClient $httpClient): ClientContext
+{
+    return new ClientContext(fn (): HttpClient => $httpClient);
 }
