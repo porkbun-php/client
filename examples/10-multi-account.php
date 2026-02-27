@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Porkbun\Client;
-
 // Start without auth — public endpoints still work
-$client = Client::create();
+$client = new Porkbun\Client();
 $pricing = $client->pricing()->all();
 echo "TLDs available: " . count($pricing) . "\n";
 

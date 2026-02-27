@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Porkbun\Client;
 use Porkbun\Exception\NetworkException;
 
 // Pricing API is public — no authentication required
-$client = Client::create();
+$client = new Porkbun\Client();
 
 try {
     $pricing = $client->pricing()->all();
@@ -26,7 +25,7 @@ echo "Popular TLD Pricing:\n";
 echo str_repeat('-', 50) . "\n";
 
 foreach ($tlds as $tld) {
-    $item = $pricing->get($tld);
+    $item = $pricing->find($tld);
     if ($item !== null) {
         printf(
             ".%-6s Register: $%7.2f  Renew: $%7.2f\n",
@@ -39,15 +38,18 @@ foreach ($tlds as $tld) {
 
 // Quick price lookup via get()
 echo "\nQuick lookup:\n";
-$com = $pricing->get('com');
+$com = $pricing->find('com');
 echo ".com registration: " . ($com !== null ? sprintf('$%.2f', $com->registrationPrice) : 'N/A') . "\n";
 echo ".com renewal: " . ($com !== null ? sprintf('$%.2f', $com->renewalPrice) : 'N/A') . "\n";
 
-// 5 cheapest TLDs
-echo "\nTop 5 Cheapest TLDs:\n";
+// 10 cheapest non-handshake TLDs
+echo "\nTop 10 Cheapest TLDs:\n";
 echo str_repeat('-', 50) . "\n";
 
-foreach ($pricing->cheapest(5) as $item) {
+$regular = array_filter($pricing->items(), fn ($item) => !$item->isHandshake);
+usort($regular, fn ($a, $b) => $a->registrationPrice <=> $b->registrationPrice);
+
+foreach (array_slice($regular, 0, 10) as $item) {
     printf(
         ".%-10s $%.2f/year\n",
         $item->tld,

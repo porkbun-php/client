@@ -5,7 +5,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Porkbun\Builder\DnsBatchBuilder;
-use Porkbun\Client;
 
 $apiKey = getenv('PORKBUN_API_KEY') ?: '';
 $secretKey = getenv('PORKBUN_SECRET_KEY') ?: '';
@@ -16,7 +15,9 @@ if ($apiKey === '' || $secretKey === '' || $domainName === '') {
     exit(1);
 }
 
-$dns = Client::create($apiKey, $secretKey)->domain($domainName)->dns();
+$client = new Porkbun\Client();
+$client->authenticate($apiKey, $secretKey);
+$dns = $client->domain($domainName)->dns();
 
 // Mix builder and raw approaches in one batch
 $batch = new DnsBatchBuilder();
@@ -25,10 +26,10 @@ $batch
     ->add($dns->record()->name('mail')->mx('mail.example.com', 10))
     ->addRecord('api', 'A', '192.0.2.2', ttl: 600);
 
-echo "Queued operations: {$batch->getOperationsCount()}\n";
+echo "Queued operations: {$batch->operationsCount()}\n";
 
 // Edit and delete can also be batched
-// $batch->editRecord($existingId, ['content' => '192.0.2.100', 'ttl' => '1800']);
+// $batch->updateRecord($existingId, ['content' => '192.0.2.100', 'ttl' => '1800']);
 // $batch->deleteRecord($oldRecordId);
 // $batch->deleteByNameType('A', 'deprecated-subdomain');
 
@@ -40,18 +41,18 @@ $lbBatch
     ->add($base->name('lb2')->a('10.0.1.2'))
     ->add($base->name('lb3')->a('10.0.1.3'));
 
-echo "Load balancer batch: {$lbBatch->getOperationsCount()} operations\n";
+echo "Load balancer batch: {$lbBatch->operationsCount()} operations\n";
 
 // Rollback clears all queued operations without executing
 $lbBatch->rollback();
-echo "After rollback: {$lbBatch->getOperationsCount()} operations\n";
+echo "After rollback: {$lbBatch->operationsCount()} operations\n";
 
 // Execute and handle results (commented out — creates real records)
 // $results = $batch->execute($dns);
 // foreach ($results as $result) {
-//     if ($result->isSuccess()) {
+//     if ($result->success) {
 //         echo "OK: {$result->operation}";
-//         if ($result->hasRecordId()) {
+//         if ($result->hasRecordId) {
 //             echo " (ID: {$result->recordId})";
 //         }
 //         echo "\n";
