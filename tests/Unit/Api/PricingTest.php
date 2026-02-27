@@ -24,8 +24,8 @@ test('pricing api returns pricing collection', function (): void {
     expect($pricingCollection)->toBeInstanceOf(PricingCollection::class)
         ->and($pricingCollection->has('com'))->toBeTrue()
         ->and($pricingCollection->has('net'))->toBeTrue()
-        ->and($pricingCollection->get('com')?->registrationPrice)->toBe(8.68)
-        ->and($pricingCollection->get('com')?->renewalPrice)->toBe(8.68);
+        ->and($pricingCollection->find('com')?->registrationPrice)->toBe(8.68)
+        ->and($pricingCollection->find('com')?->renewalPrice)->toBe(8.68);
 });
 
 test('pricing api handles empty pricing', function (): void {

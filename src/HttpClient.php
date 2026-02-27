@@ -23,13 +23,13 @@ final class HttpClient
 {
     private const string CONTENT_TYPE = 'application/json';
 
-    private ?ResponseInterface $lastResponse = null;
+    public private(set) ?ResponseInterface $lastResponse = null;
 
     public function __construct(
         private readonly ClientInterface $httpClient,
         private readonly RequestFactoryInterface $requestFactory,
         private readonly StreamFactoryInterface $streamFactory,
-        private readonly string $baseUrl = Endpoint::DEFAULT->value,
+        public readonly string $baseUrl = Endpoint::DEFAULT->value,
         private readonly ?string $apiKey = null,
         private readonly ?string $secretKey = null,
     ) {
@@ -38,16 +38,6 @@ final class HttpClient
     public function hasAuthentication(): bool
     {
         return $this->apiKey !== null && $this->secretKey !== null;
-    }
-
-    public function getBaseUrl(): string
-    {
-        return $this->baseUrl;
-    }
-
-    public function getLastResponse(): ?ResponseInterface
-    {
-        return $this->lastResponse;
     }
 
     /**
@@ -152,6 +142,10 @@ final class HttpClient
         if ($statusCode >= 400) {
             $message = $this->extractErrorMessage($body) ?? "HTTP {$statusCode} error";
 
+            if ($this->isAuthenticationError($message)) {
+                throw new AuthenticationException($message, $statusCode, null, $request, $response);
+            }
+
             throw new ApiException($message, $statusCode, null, $request, $response);
         }
 
@@ -189,6 +183,10 @@ final class HttpClient
         if ($data['status'] !== 'SUCCESS') {
             $message = is_string($data['message'] ?? null) ? $data['message'] : 'Unknown API error';
 
+            if ($this->isAuthenticationError($message)) {
+                throw new AuthenticationException($message, $response->getStatusCode(), null, $request, $response);
+            }
+
             throw new ApiException($message, $response->getStatusCode(), null, $request, $response);
         }
     }
@@ -222,6 +220,15 @@ final class HttpClient
         return null;
     }
 
+    private function isAuthenticationError(string $message): bool
+    {
+        $message = mb_strtolower($message);
+
+        return str_contains($message, 'invalid api key')
+            || str_contains($message, 'invalid secret')
+            || str_contains($message, 'authentication');
+    }
+
     private function looksLikeJson(string $content): bool
     {
         $content = mb_trim($content);
@@ -233,11 +240,11 @@ final class HttpClient
     private function getUserAgent(): string
     {
         try {
-            $version = InstalledVersions::getPrettyVersion('glebovdev/porkbun-php-api') ?? 'dev';
+            $version = InstalledVersions::getPrettyVersion('porkbun-php/client') ?? 'dev';
         } catch (OutOfBoundsException) {
             $version = 'dev';
         }
 
-        return "porkbun-php-api/{$version}";
+        return "porkbun-php-client/{$version}";
     }
 }

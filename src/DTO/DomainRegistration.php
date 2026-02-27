@@ -9,6 +9,16 @@ use Override;
 
 final readonly class DomainRegistration implements JsonSerializable
 {
+    public bool $hasLimits;
+
+    public ?array $attemptsLimit;
+
+    public ?array $successLimit;
+
+    public ?int $remainingAttempts;
+
+    public ?int $remainingRegistrations;
+
     public function __construct(
         public string $domain,
         public int $cost,
@@ -17,6 +27,25 @@ final readonly class DomainRegistration implements JsonSerializable
         /** @var ?array{attempts?: array{limit: int, used: int}, success?: array{limit: int, used: int}} */
         public ?array $limits = null,
     ) {
+        $this->hasLimits = $this->limits !== null && $this->limits !== [];
+        $this->attemptsLimit = $this->limits['attempts'] ?? null;
+        $this->successLimit = $this->limits['success'] ?? null;
+
+        if ($this->attemptsLimit !== null) {
+            $limit = (int) ($this->attemptsLimit['limit'] ?? 0);
+            $used = (int) ($this->attemptsLimit['used'] ?? 0);
+            $this->remainingAttempts = max(0, $limit - $used);
+        } else {
+            $this->remainingAttempts = null;
+        }
+
+        if ($this->successLimit !== null) {
+            $limit = (int) ($this->successLimit['limit'] ?? 0);
+            $used = (int) ($this->successLimit['used'] ?? 0);
+            $this->remainingRegistrations = max(0, $limit - $used);
+        } else {
+            $this->remainingRegistrations = null;
+        }
     }
 
     public static function fromArray(array $data): self
@@ -31,56 +60,15 @@ final readonly class DomainRegistration implements JsonSerializable
     }
 
     /** Cost in dollars (e.g., 1108 cents = $11.08) */
-    public function getCostInDollars(): float
+    public function costInDollars(): float
     {
         return $this->cost / 100;
     }
 
     /** Balance in dollars */
-    public function getBalanceInDollars(): float
+    public function balanceInDollars(): float
     {
         return $this->balance / 100;
-    }
-
-    public function hasLimits(): bool
-    {
-        return $this->limits !== null && $this->limits !== [];
-    }
-
-    public function getAttemptsLimit(): ?array
-    {
-        return $this->limits['attempts'] ?? null;
-    }
-
-    public function getSuccessLimit(): ?array
-    {
-        return $this->limits['success'] ?? null;
-    }
-
-    public function getRemainingAttempts(): ?int
-    {
-        $attempts = $this->getAttemptsLimit();
-        if ($attempts === null) {
-            return null;
-        }
-
-        $limit = (int) ($attempts['limit'] ?? 0);
-        $used = (int) ($attempts['used'] ?? 0);
-
-        return max(0, $limit - $used);
-    }
-
-    public function getRemainingSuccessfulRegistrations(): ?int
-    {
-        $success = $this->getSuccessLimit();
-        if ($success === null) {
-            return null;
-        }
-
-        $limit = (int) ($success['limit'] ?? 0);
-        $used = (int) ($success['used'] ?? 0);
-
-        return max(0, $limit - $used);
     }
 
     public function toArray(): array

@@ -10,7 +10,7 @@ namespace Porkbun\Internal;
 enum BatchOperationType: string
 {
     case CREATE = 'create';
-    case EDIT = 'edit';
+    case UPDATE = 'update';
     case DELETE = 'delete';
     case DELETE_BY_NAME_TYPE = 'deleteByNameType';
 }

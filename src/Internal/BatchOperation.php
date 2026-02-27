@@ -38,10 +38,10 @@ final readonly class BatchOperation
     /**
      * @param array<string, mixed> $data
      */
-    public static function edit(int $id, array $data): self
+    public static function update(int $id, array $data): self
     {
         return new self(
-            type: BatchOperationType::EDIT,
+            type: BatchOperationType::UPDATE,
             id: $id,
             data: $data,
             recordType: null,

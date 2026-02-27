@@ -32,8 +32,8 @@ test('it creates handshake domain pricing', function (): void {
 
     expect($pricingItem->tld)->toBe('den')
         ->and($pricingItem->specialType)->toBe('handshake')
-        ->and($pricingItem->isHandshake())->toBeTrue()
-        ->and($pricingItem->hasCoupons())->toBeFalse();
+        ->and($pricingItem->isHandshake)->toBeTrue()
+        ->and($pricingItem->hasCoupons)->toBeFalse();
 });
 
 test('it handles missing optional fields', function (): void {
@@ -45,7 +45,20 @@ test('it handles missing optional fields', function (): void {
     expect($pricingItem->transferPrice)->toBeNull()
         ->and($pricingItem->coupons)->toBe([])
         ->and($pricingItem->specialType)->toBeNull()
-        ->and($pricingItem->isHandshake())->toBeFalse();
+        ->and($pricingItem->isHandshake)->toBeFalse();
+});
+
+test('it parses comma-formatted prices', function (): void {
+    $pricingItem = PricingItem::fromArray('pr', [
+        'registration' => '1,039.98',
+        'renewal' => '1,039.98',
+        'transfer' => '1,030.18',
+        'coupons' => [],
+    ]);
+
+    expect($pricingItem->registrationPrice)->toBe(1039.98)
+        ->and($pricingItem->renewalPrice)->toBe(1039.98)
+        ->and($pricingItem->transferPrice)->toBe(1030.18);
 });
 
 test('it handles missing required fields with defaults', function (): void {

@@ -36,9 +36,9 @@ it('creates root domain forward', function (): void {
     $urlForward = UrlForward::fromArray($data);
 
     expect($urlForward->subdomain)->toBe('')
-        ->and($urlForward->isRootDomain())->toBeTrue()
-        ->and($urlForward->isPermanent())->toBeFalse()
-        ->and($urlForward->isTemporary())->toBeTrue();
+        ->and($urlForward->isRootDomain)->toBeTrue()
+        ->and($urlForward->isPermanent)->toBeFalse()
+        ->and($urlForward->isTemporary)->toBeTrue();
 });
 
 it('converts to array', function (): void {
@@ -73,7 +73,7 @@ it('generates full url correctly', function (): void {
         wildcard: false,
     );
 
-    expect($forward->getFullUrl('example.com'))->toBe('api.example.com');
+    expect($forward->fullUrl('example.com'))->toBe('api.example.com');
 
     $rootForward = new UrlForward(
         id: 124,
@@ -84,7 +84,7 @@ it('generates full url correctly', function (): void {
         wildcard: false,
     );
 
-    expect($rootForward->getFullUrl('example.com'))->toBe('example.com');
+    expect($rootForward->fullUrl('example.com'))->toBe('example.com');
 });
 
 it('detects forward types correctly', function (): void {
@@ -97,8 +97,8 @@ it('detects forward types correctly', function (): void {
         wildcard: false,
     );
 
-    expect($permanent->isPermanent())->toBeTrue()
-        ->and($permanent->isTemporary())->toBeFalse();
+    expect($permanent->isPermanent)->toBeTrue()
+        ->and($permanent->isTemporary)->toBeFalse();
 
     $temporary = new UrlForward(
         id: 2,
@@ -109,6 +109,6 @@ it('detects forward types correctly', function (): void {
         wildcard: false,
     );
 
-    expect($temporary->isPermanent())->toBeFalse()
-        ->and($temporary->isTemporary())->toBeTrue();
+    expect($temporary->isPermanent)->toBeFalse()
+        ->and($temporary->isTemporary)->toBeTrue();
 });

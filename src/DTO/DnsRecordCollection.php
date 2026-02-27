@@ -6,7 +6,6 @@ namespace Porkbun\DTO;
 
 use ArrayIterator;
 use Countable;
-use Deprecated;
 use IteratorAggregate;
 use JsonSerializable;
 use Override;
@@ -18,31 +17,25 @@ use Traversable;
 final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSerializable
 {
     /** @var list<DnsRecord> */
+    public array $rootRecords;
+
+    /** @var list<DnsRecord> */
     private array $records;
 
-    public function __construct(array $records = [], private readonly ?string $cloudflare = null)
+    public function __construct(array $records = [])
     {
         $this->records = array_values($records);
+        $this->rootRecords = array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->isRootRecord));
     }
 
-    public static function fromArray(array $recordsData, ?string $cloudflare = null): self
+    public static function fromArray(array $recordsData): self
     {
         $records = [];
         foreach ($recordsData as $recordData) {
             $records[] = DnsRecord::fromArray($recordData);
         }
 
-        return new self($records, $cloudflare);
-    }
-
-    public function getCloudflare(): ?string
-    {
-        return $this->cloudflare;
-    }
-
-    public function isCloudflareEnabled(): bool
-    {
-        return $this->cloudflare === 'enabled';
+        return new self($records);
     }
 
     /** @return list<DnsRecord> */
@@ -51,16 +44,7 @@ final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSer
         return $this->records;
     }
 
-    /**
-     * @return list<DnsRecord>
-     */
-    #[Deprecated(message: 'Use all() instead for consistency with other collections')]
-    public function getRecords(): array
-    {
-        return $this->records;
-    }
-
-    public function getRecordById(int|string $id): ?DnsRecord
+    public function find(int|string $id): ?DnsRecord
     {
         $targetId = (int) $id;
 
@@ -73,22 +57,17 @@ final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSer
         return null;
     }
 
-    public function getRecordsByType(string $type): array
+    public function byType(string $type): array
     {
         return array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->isType($type)));
     }
 
-    public function getRecordsByName(string $name): array
+    public function byName(string $name): array
     {
         return array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->name === $name));
     }
 
-    public function getRootRecords(): array
-    {
-        return array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->isRootRecord()));
-    }
-
-    public function getRecordsByTypeAndName(string $type, string $name): array
+    public function byTypeAndName(string $type, string $name): array
     {
         return array_values(array_filter(
             $this->records,
@@ -108,13 +87,6 @@ final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSer
         }
 
         return $this->records[count($this->records) - 1];
-    }
-
-    public function firstOfType(string $type): ?DnsRecord
-    {
-        $matches = $this->getRecordsByType($type);
-
-        return $matches[0] ?? null;
     }
 
     public function isEmpty(): bool

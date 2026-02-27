@@ -27,8 +27,8 @@ test('client integration - public pricing works without auth', function (): void
     $pricingCollection = $pricing->all();
 
     expect($pricingCollection)->toBeInstanceOf(PricingCollection::class)
-        ->and($pricingCollection->get('com')?->registrationPrice)->toBe(8.68)
-        ->and($pricingCollection->get('com')?->renewalPrice)->toBe(8.68);
+        ->and($pricingCollection->find('com')?->registrationPrice)->toBe(8.68)
+        ->and($pricingCollection->find('com')?->renewalPrice)->toBe(8.68);
 });
 
 test('client integration - auth required endpoint throws without credentials', function (): void {
@@ -57,13 +57,13 @@ test('client integration - auth required endpoint works with credentials', funct
 });
 
 test('client integration - dynamic configuration changes', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
-    expect($client->getEndpoint())->toBe(Endpoint::DEFAULT);
+    expect($client->endpoint)->toBe(Endpoint::DEFAULT);
     expect($client->isAuthenticated())->toBeFalse();
 
     $client->useIpv4Endpoint();
-    expect($client->getEndpoint())->toBe(Endpoint::IPV4);
+    expect($client->endpoint)->toBe(Endpoint::IPV4);
 
     $client->authenticate('pk1_key', 'sk1_secret');
     expect($client->isAuthenticated())->toBeTrue();
@@ -73,12 +73,12 @@ test('client integration - dynamic configuration changes', function (): void {
 });
 
 test('client integration - domain facade provides domain specific services', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
     $domain = $client->domain('example.com');
 
     expect($domain)->toBeInstanceOf(Domain::class)
-        ->and($domain->getName())->toBe('example.com');
+        ->and($domain->name)->toBe('example.com');
 
     expect($domain->dns())->toBeInstanceOf(Dns::class);
     expect($domain->ssl())->toBeInstanceOf(Ssl::class);

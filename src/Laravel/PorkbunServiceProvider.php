@@ -25,7 +25,11 @@ final class PorkbunServiceProvider extends ServiceProvider implements Deferrable
             /** @var string|null $secretKey */
             $secretKey = $config['secret_key'] ?? null;
 
-            $client = Client::create($apiKey, $secretKey);
+            $client = new Client();
+
+            if ($apiKey !== null && $secretKey !== null) {
+                $client->authenticate($apiKey, $secretKey);
+            }
 
             $endpoint = $config['endpoint'] ?? 'default';
             if ($endpoint === 'ipv4') {

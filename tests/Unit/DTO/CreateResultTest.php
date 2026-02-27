@@ -37,9 +37,9 @@ test('hasValidId checks for positive id', function (): void {
     $zero = CreateResult::fromArray(['id' => '0']);
     $missing = CreateResult::fromArray([]);
 
-    expect($createResult->hasValidId())->toBeTrue()
-        ->and($zero->hasValidId())->toBeFalse()
-        ->and($missing->hasValidId())->toBeFalse();
+    expect($createResult->hasValidId)->toBeTrue()
+        ->and($zero->hasValidId)->toBeFalse()
+        ->and($missing->hasValidId)->toBeFalse();
 });
 
 test('hasValidationWarnings checks for non-empty array', function (): void {
@@ -55,9 +55,9 @@ test('hasValidationWarnings checks for non-empty array', function (): void {
         'id' => '123',
     ]);
 
-    expect($createResult->hasValidationWarnings())->toBeTrue()
-        ->and($emptyWarnings->hasValidationWarnings())->toBeFalse()
-        ->and($nullWarnings->hasValidationWarnings())->toBeFalse();
+    expect($createResult->hasValidationWarnings)->toBeTrue()
+        ->and($emptyWarnings->hasValidationWarnings)->toBeFalse()
+        ->and($nullWarnings->hasValidationWarnings)->toBeFalse();
 });
 
 test('toArray serializes all fields', function (): void {

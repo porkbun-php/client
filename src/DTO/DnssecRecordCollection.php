@@ -56,7 +56,7 @@ final class DnssecRecordCollection implements Countable, IteratorAggregate, Json
         return $this->records[count($this->records) - 1];
     }
 
-    public function findByKeyTag(int $keyTag): ?DnssecRecord
+    public function find(int $keyTag): ?DnssecRecord
     {
         foreach ($this->records as $record) {
             if ($record->keyTag === $keyTag) {

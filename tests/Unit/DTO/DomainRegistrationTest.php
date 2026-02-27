@@ -30,7 +30,7 @@ test('it creates domain registration from array', function (): void {
         ->and($domainRegistration->cost)->toBe(1108)
         ->and($domainRegistration->orderId)->toBe(123456789)
         ->and($domainRegistration->balance)->toBe(10000)
-        ->and($domainRegistration->hasLimits())->toBeTrue();
+        ->and($domainRegistration->hasLimits)->toBeTrue();
 });
 
 test('it handles missing limits', function (): void {
@@ -43,14 +43,14 @@ test('it handles missing limits', function (): void {
 
     $domainRegistration = DomainRegistration::fromArray($data);
 
-    expect($domainRegistration->hasLimits())->toBeFalse()
-        ->and($domainRegistration->getAttemptsLimit())->toBeNull()
-        ->and($domainRegistration->getSuccessLimit())->toBeNull()
-        ->and($domainRegistration->getRemainingAttempts())->toBeNull()
-        ->and($domainRegistration->getRemainingSuccessfulRegistrations())->toBeNull();
+    expect($domainRegistration->hasLimits)->toBeFalse()
+        ->and($domainRegistration->attemptsLimit)->toBeNull()
+        ->and($domainRegistration->successLimit)->toBeNull()
+        ->and($domainRegistration->remainingAttempts)->toBeNull()
+        ->and($domainRegistration->remainingRegistrations)->toBeNull();
 });
 
-test('getCostInDollars converts cents to dollars', function (): void {
+test('costInDollars converts cents to dollars', function (): void {
     $domainRegistration = DomainRegistration::fromArray([
         'domain' => 'example.com',
         'cost' => 1108,
@@ -58,10 +58,10 @@ test('getCostInDollars converts cents to dollars', function (): void {
         'balance' => 0,
     ]);
 
-    expect($domainRegistration->getCostInDollars())->toBe(11.08);
+    expect($domainRegistration->costInDollars())->toBe(11.08);
 });
 
-test('getBalanceInDollars converts cents to dollars', function (): void {
+test('balanceInDollars converts cents to dollars', function (): void {
     $domainRegistration = DomainRegistration::fromArray([
         'domain' => 'example.com',
         'cost' => 0,
@@ -69,10 +69,10 @@ test('getBalanceInDollars converts cents to dollars', function (): void {
         'balance' => 10000,
     ]);
 
-    expect($domainRegistration->getBalanceInDollars())->toBe(100.00);
+    expect($domainRegistration->balanceInDollars())->toBe(100.00);
 });
 
-test('getRemainingAttempts calculates correctly', function (): void {
+test('remainingAttempts calculates correctly', function (): void {
     $domainRegistration = DomainRegistration::fromArray([
         'domain' => 'example.com',
         'cost' => 0,
@@ -83,10 +83,10 @@ test('getRemainingAttempts calculates correctly', function (): void {
         ],
     ]);
 
-    expect($domainRegistration->getRemainingAttempts())->toBe(2);
+    expect($domainRegistration->remainingAttempts)->toBe(2);
 });
 
-test('getRemainingSuccessfulRegistrations calculates correctly', function (): void {
+test('remainingRegistrations calculates correctly', function (): void {
     $domainRegistration = DomainRegistration::fromArray([
         'domain' => 'example.com',
         'cost' => 0,
@@ -97,7 +97,7 @@ test('getRemainingSuccessfulRegistrations calculates correctly', function (): vo
         ],
     ]);
 
-    expect($domainRegistration->getRemainingSuccessfulRegistrations())->toBe(3);
+    expect($domainRegistration->remainingRegistrations)->toBe(3);
 });
 
 test('toArray serializes correctly', function (): void {

@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace Porkbun\DTO;
 
-final readonly class PricingItem
+use JsonSerializable;
+use Override;
+
+final readonly class PricingItem implements JsonSerializable
 {
+    public bool $isHandshake;
+
+    public bool $hasCoupons;
+
     public function __construct(
         public string $tld,
         public float $registrationPrice,
@@ -15,28 +22,20 @@ final readonly class PricingItem
         public array $coupons = [],
         public ?string $specialType = null,
     ) {
+        $this->isHandshake = $this->specialType === 'handshake';
+        $this->hasCoupons = $this->coupons !== [];
     }
 
     public static function fromArray(string $tld, array $data): self
     {
         return new self(
             tld: $tld,
-            registrationPrice: (float) ($data['registration'] ?? 0),
-            renewalPrice: (float) ($data['renewal'] ?? 0),
-            transferPrice: isset($data['transfer']) ? (float) $data['transfer'] : null,
+            registrationPrice: self::parsePrice($data['registration'] ?? '0'),
+            renewalPrice: self::parsePrice($data['renewal'] ?? '0'),
+            transferPrice: isset($data['transfer']) ? self::parsePrice($data['transfer']) : null,
             coupons: $data['coupons'] ?? [],
             specialType: $data['specialType'] ?? null,
         );
-    }
-
-    public function isHandshake(): bool
-    {
-        return $this->specialType === 'handshake';
-    }
-
-    public function hasCoupons(): bool
-    {
-        return $this->coupons !== [];
     }
 
     public function toArray(): array
@@ -60,5 +59,16 @@ final readonly class PricingItem
         }
 
         return $result;
+    }
+
+    #[Override]
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
+
+    private static function parsePrice(string|int|float $value): float
+    {
+        return (float) str_replace(',', '', (string) $value);
     }
 }

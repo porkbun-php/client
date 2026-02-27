@@ -9,6 +9,20 @@ use Override;
 
 final readonly class DnssecRecord implements JsonSerializable
 {
+    public bool $isKsk;
+
+    public bool $isZsk;
+
+    public bool $isSecureEntryPoint;
+
+    public bool $isModernAlgorithm;
+
+    public bool $isModernDigestType;
+
+    public string $algorithmName;
+
+    public string $digestTypeName;
+
     public function __construct(
         public int $keyTag,
         public int $algorithm,
@@ -19,6 +33,49 @@ final readonly class DnssecRecord implements JsonSerializable
         public ?int $protocol = null,
         public ?string $publicKey = null,
     ) {
+        $this->isKsk = $this->flags !== null && ($this->flags & 257) === 257;
+        $this->isZsk = $this->flags !== null && ($this->flags & 256) === 256 && !$this->isKsk;
+        $this->isSecureEntryPoint = $this->flags !== null && ($this->flags & 1) === 1;
+
+        $this->isModernAlgorithm = in_array($this->algorithm, [
+            8,  // RSASHA256
+            10, // RSASHA512
+            13, // ECDSAP256SHA256
+            14, // ECDSAP384SHA384
+            15, // ED25519
+            16, // ED448
+        ], true);
+
+        $this->isModernDigestType = in_array($this->digestType, [
+            2, // SHA-256
+            4, // SHA-384
+        ], true);
+
+        /** @see https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml */
+        $this->algorithmName = match ($this->algorithm) {
+            1 => 'RSAMD5',
+            3 => 'DSA',
+            5 => 'RSASHA1',
+            6 => 'DSA-NSEC3-SHA1',
+            7 => 'RSASHA1-NSEC3-SHA1',
+            8 => 'RSASHA256',
+            10 => 'RSASHA512',
+            12 => 'ECC-GOST',
+            13 => 'ECDSAP256SHA256',
+            14 => 'ECDSAP384SHA384',
+            15 => 'ED25519',
+            16 => 'ED448',
+            default => "Algorithm {$this->algorithm}",
+        };
+
+        $this->digestTypeName = match ($this->digestType) {
+            0 => 'Reserved',
+            1 => 'SHA-1',
+            2 => 'SHA-256',
+            3 => 'GOST R 34.11-94',
+            4 => 'SHA-384',
+            default => "Digest Type {$this->digestType}",
+        };
     }
 
     public static function fromArray(array $data): self
@@ -69,72 +126,5 @@ final readonly class DnssecRecord implements JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->toArray();
-    }
-
-    /** @see https://www.iana.org/assignments/dns-sec-alg-numbers/dns-sec-alg-numbers.xhtml */
-    public function getAlgorithmName(): string
-    {
-        return match ($this->algorithm) {
-            1 => 'RSAMD5',
-            3 => 'DSA',
-            5 => 'RSASHA1',
-            6 => 'DSA-NSEC3-SHA1',
-            7 => 'RSASHA1-NSEC3-SHA1',
-            8 => 'RSASHA256',
-            10 => 'RSASHA512',
-            12 => 'ECC-GOST',
-            13 => 'ECDSAP256SHA256',
-            14 => 'ECDSAP384SHA384',
-            15 => 'ED25519',
-            16 => 'ED448',
-            default => "Algorithm {$this->algorithm}",
-        };
-    }
-
-    public function getDigestTypeName(): string
-    {
-        return match ($this->digestType) {
-            0 => 'Reserved',
-            1 => 'SHA-1',
-            2 => 'SHA-256',
-            3 => 'GOST R 34.11-94',
-            4 => 'SHA-384',
-            default => "Digest Type {$this->digestType}",
-        };
-    }
-
-    public function isKsk(): bool
-    {
-        return $this->flags !== null && ($this->flags & 257) === 257;
-    }
-
-    public function isZsk(): bool
-    {
-        return $this->flags !== null && ($this->flags & 256) === 256 && !$this->isKsk();
-    }
-
-    public function isSecureEntryPoint(): bool
-    {
-        return $this->flags !== null && ($this->flags & 1) === 1;
-    }
-
-    public function isModernAlgorithm(): bool
-    {
-        return in_array($this->algorithm, [
-            8,  // RSASHA256
-            10, // RSASHA512
-            13, // ECDSAP256SHA256
-            14, // ECDSAP384SHA384
-            15, // ED25519
-            16, // ED448
-        ], true);
-    }
-
-    public function isModernDigestType(): bool
-    {
-        return in_array($this->digestType, [
-            2, // SHA-256
-            4, // SHA-384
-        ], true);
     }
 }

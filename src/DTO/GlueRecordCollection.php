@@ -56,7 +56,7 @@ final class GlueRecordCollection implements Countable, IteratorAggregate, JsonSe
         return $this->records[count($this->records) - 1];
     }
 
-    public function findByHost(string $host): ?GlueRecord
+    public function find(string $host): ?GlueRecord
     {
         foreach ($this->records as $record) {
             if ($record->host === $host) {

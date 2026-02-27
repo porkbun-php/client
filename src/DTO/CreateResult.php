@@ -9,12 +9,18 @@ use Override;
 
 final readonly class CreateResult implements JsonSerializable
 {
+    public bool $hasValidId;
+
+    public bool $hasValidationWarnings;
+
     public function __construct(
         public int $id,
         public ?string $createdAt = null,
         /** @var ?list<string> */
         public ?array $validationWarnings = null,
     ) {
+        $this->hasValidId = $this->id > 0;
+        $this->hasValidationWarnings = $this->validationWarnings !== null && $this->validationWarnings !== [];
     }
 
     public static function fromArray(array $data): self
@@ -26,16 +32,6 @@ final readonly class CreateResult implements JsonSerializable
                 ? array_values(array_map(strval(...), $data['validationWarnings']))
                 : null,
         );
-    }
-
-    public function hasValidId(): bool
-    {
-        return $this->id > 0;
-    }
-
-    public function hasValidationWarnings(): bool
-    {
-        return $this->validationWarnings !== null && $this->validationWarnings !== [];
     }
 
     public function toArray(): array

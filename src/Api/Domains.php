@@ -13,6 +13,17 @@ final class Domains extends AbstractApi
 {
     private const int PAGE_SIZE = 1000;
 
+    public function find(string $domain): ?Domain
+    {
+        foreach ($this->allPages() as $d) {
+            if ($d->domain === $domain) {
+                return $d;
+            }
+        }
+
+        return null;
+    }
+
     public function all(int $start = 0, bool $includeLabels = false): DomainCollection
     {
         $data = [
@@ -38,23 +49,6 @@ final class Domains extends AbstractApi
 
             foreach ($collection as $domain) {
                 yield $domain;
-            }
-
-            $pageCount = count($collection);
-            $start += self::PAGE_SIZE;
-        } while ($pageCount >= self::PAGE_SIZE);
-    }
-
-    /** @return Generator<int, DomainCollection> */
-    public function allCollections(bool $includeLabels = false): Generator
-    {
-        $start = 0;
-
-        do {
-            $collection = $this->all($start, $includeLabels);
-
-            if ($collection->isNotEmpty()) {
-                yield $collection;
             }
 
             $pageCount = count($collection);

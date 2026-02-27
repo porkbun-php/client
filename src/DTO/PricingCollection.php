@@ -49,7 +49,7 @@ final class PricingCollection implements Countable, IteratorAggregate, JsonSeria
         return array_values($this->items);
     }
 
-    public function get(string $tld): ?PricingItem
+    public function find(string $tld): ?PricingItem
     {
         return $this->items[$tld] ?? null;
     }
@@ -77,6 +77,17 @@ final class PricingCollection implements Countable, IteratorAggregate, JsonSeria
     public function first(): ?PricingItem
     {
         return $this->items()[0] ?? null;
+    }
+
+    public function last(): ?PricingItem
+    {
+        $items = $this->items();
+
+        if ($items === []) {
+            return null;
+        }
+
+        return $items[count($items) - 1];
     }
 
     public function isEmpty(): bool

@@ -47,25 +47,25 @@ test('getFullChain combines certificates', function (): void {
         intermediateCertificate: '',
     );
 
-    expect($withIntermediate->getFullChain())->toBe("CERT\nINTERMEDIATE")
-        ->and($withoutIntermediate->getFullChain())->toBe('CERT')
-        ->and($emptyIntermediate->getFullChain())->toBe('CERT');
+    expect($withIntermediate->fullChain)->toBe("CERT\nINTERMEDIATE")
+        ->and($withoutIntermediate->fullChain)->toBe('CERT')
+        ->and($emptyIntermediate->fullChain)->toBe('CERT');
 });
 
 test('hasCertificate checks for non-empty chain', function (): void {
     $withCert = new SslCertificate('CERT', 'KEY', 'PUB');
     $emptyCert = new SslCertificate('', 'KEY', 'PUB');
 
-    expect($withCert->hasCertificate())->toBeTrue()
-        ->and($emptyCert->hasCertificate())->toBeFalse();
+    expect($withCert->hasCertificate)->toBeTrue()
+        ->and($emptyCert->hasCertificate)->toBeFalse();
 });
 
 test('hasPrivateKey checks for non-empty key', function (): void {
     $withKey = new SslCertificate('CERT', 'KEY', 'PUB');
     $emptyKey = new SslCertificate('CERT', '', 'PUB');
 
-    expect($withKey->hasPrivateKey())->toBeTrue()
-        ->and($emptyKey->hasPrivateKey())->toBeFalse();
+    expect($withKey->hasPrivateKey)->toBeTrue()
+        ->and($emptyKey->hasPrivateKey)->toBeFalse();
 });
 
 test('hasIntermediateCertificate checks for non-empty intermediate', function (): void {
@@ -73,9 +73,9 @@ test('hasIntermediateCertificate checks for non-empty intermediate', function ()
     $emptyIntermediate = new SslCertificate('CERT', 'KEY', 'PUB', '');
     $nullIntermediate = new SslCertificate('CERT', 'KEY', 'PUB');
 
-    expect($withIntermediate->hasIntermediateCertificate())->toBeTrue()
-        ->and($emptyIntermediate->hasIntermediateCertificate())->toBeFalse()
-        ->and($nullIntermediate->hasIntermediateCertificate())->toBeFalse();
+    expect($withIntermediate->hasIntermediateCertificate)->toBeTrue()
+        ->and($emptyIntermediate->hasIntermediateCertificate)->toBeFalse()
+        ->and($nullIntermediate->hasIntermediateCertificate)->toBeFalse();
 });
 
 test('toArray serializes correctly', function (): void {

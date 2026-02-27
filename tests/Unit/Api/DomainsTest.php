@@ -8,6 +8,90 @@ use Porkbun\DTO\DomainCollection;
 use Porkbun\DTO\DomainLabel;
 use Porkbun\Exception\InvalidArgumentException;
 
+test('domains api can find a domain by name', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'domains' => [
+                ['domain' => 'example.com', 'status' => 'ACTIVE'],
+                ['domain' => 'example.org', 'status' => 'ACTIVE'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domains = new Domains(createMockContext($httpClient));
+
+    $domain = $domains->find('example.com');
+
+    assert($domain instanceof Domain);
+    expect($domain)->toBeInstanceOf(Domain::class)
+        ->and($domain->domain)->toBe('example.com');
+});
+
+test('domains api find returns null for unknown domain', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'domains' => [
+                ['domain' => 'example.com', 'status' => 'ACTIVE'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domains = new Domains(createMockContext($httpClient));
+
+    $domain = $domains->find('notfound.com');
+
+    expect($domain)->toBeNull();
+});
+
+test('domains api find returns domain on second page', function (): void {
+    $page1Domains = [];
+    for ($i = 0; $i < 1000; $i++) {
+        $page1Domains[] = ['domain' => "domain{$i}.com", 'status' => 'ACTIVE'];
+    }
+
+    $mockClient = createMockHttpClient([
+        ['status' => 'SUCCESS', 'domains' => $page1Domains],
+        [
+            'status' => 'SUCCESS',
+            'domains' => [
+                ['domain' => 'target.com', 'status' => 'ACTIVE'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domains = new Domains(createMockContext($httpClient));
+
+    $domain = $domains->find('target.com');
+
+    assert($domain instanceof Domain);
+    expect($domain)->toBeInstanceOf(Domain::class)
+        ->and($domain->domain)->toBe('target.com');
+});
+
+test('domains api find returns null after exhausting all pages', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'domains' => [
+                ['domain' => 'example.com', 'status' => 'ACTIVE'],
+                ['domain' => 'example.org', 'status' => 'ACTIVE'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domains = new Domains(createMockContext($httpClient));
+
+    $domain = $domains->find('nothere.com');
+
+    expect($domain)->toBeNull();
+});
+
 test('domains api can list all domains', function (): void {
     $mockClient = createMockHttpClient([
         [
@@ -148,33 +232,6 @@ test('allPages stops on empty first page', function (): void {
     $allDomains = iterator_to_array($domains->allPages());
 
     expect($allDomains)->toHaveCount(0);
-});
-
-test('allCollections yields DomainCollection per page', function (): void {
-    $page1Domains = [];
-    for ($i = 0; $i < 1000; $i++) {
-        $page1Domains[] = ['domain' => "domain{$i}.com", 'status' => 'ACTIVE'];
-    }
-
-    $page2Domains = [
-        ['domain' => 'last.com', 'status' => 'ACTIVE'],
-    ];
-
-    $mockClient = createMockHttpClient([
-        ['status' => 'SUCCESS', 'domains' => $page1Domains],
-        ['status' => 'SUCCESS', 'domains' => $page2Domains],
-    ]);
-
-    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $domains = new Domains(createMockContext($httpClient));
-
-    $collections = iterator_to_array($domains->allCollections());
-
-    expect($collections)->toHaveCount(2)
-        ->and($collections[0])->toBeInstanceOf(DomainCollection::class)
-        ->and($collections[0])->toHaveCount(1000)
-        ->and($collections[1])->toBeInstanceOf(DomainCollection::class)
-        ->and($collections[1])->toHaveCount(1);
 });
 
 test('domains api can disable auto renew for multiple domains', function (): void {
