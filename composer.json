@@ -1,21 +1,29 @@
 {
-    "name": "glebovdev/porkbun-php-api",
-    "description": "PHP client for the Porkbun API",
+    "name": "porkbun-php/client",
+    "description": "PHP client for the Porkbun API v3 with domain-centric design, typed DTOs, and complete endpoint coverage",
     "license": "MIT",
     "type": "library",
     "keywords": [
         "porkbun",
         "api",
+        "api-client",
         "dns",
         "domain",
+        "domain-registration",
         "ssl"
     ],
     "authors": [
         {
             "name": "Ilya Glebov",
-            "email": "hi@ilyaglebov.dev"
+            "email": "hi@ilyaglebov.dev",
+            "homepage": "https://ilyaglebov.dev"
         }
     ],
+    "homepage": "https://github.com/porkbun-php/client",
+    "support": {
+        "issues": "https://github.com/porkbun-php/client/issues",
+        "source": "https://github.com/porkbun-php/client"
+    },
     "require": {
         "php": "^8.4",
         "nyholm/psr7": "^1.8",
@@ -67,7 +75,7 @@
     },
     "scripts": {
         "check": [
-            "@normalize",
+            "@normalize:check",
             "@pint",
             "@phpstan",
             "@rector",
@@ -78,14 +86,17 @@
             "@pint:fix",
             "@rector:fix"
         ],
-        "normalize": "composer normalize --dry-run",
+        "normalize:check": "composer normalize --dry-run",
         "normalize:fix": "composer normalize",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "pint": "pint --test",
+        "pint:check": "@pint",
         "pint:fix": "pint",
         "rector": "vendor/bin/rector process --dry-run",
+        "rector:dry-run": "@rector",
         "rector:fix": "vendor/bin/rector process",
-        "test": "pest",
-        "test:coverage": "pest --coverage"
+        "test": "pest --exclude-group=integration",
+        "test:coverage": "pest --exclude-group=integration --coverage",
+        "test:integration": "pest --group=integration tests/Integration"
     }
 }
