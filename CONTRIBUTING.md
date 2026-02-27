@@ -34,6 +34,6 @@ composer run phpstan      # Static analysis (level max)
 
 ## Pull Requests
 
-- Branch from `develop`
+- Branch from `main`
 - Keep changes focused — one feature or fix per PR
 - Ensure `composer run check` passes before requesting review
