@@ -3,8 +3,22 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.editorconfig'
+      - 'examples/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.editorconfig'
+      - 'examples/**'
   workflow_dispatch:
 
 permissions:
