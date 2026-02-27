@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Porkbun\Client;
 use Porkbun\Enum\DnsRecordType;
 
 $apiKey = getenv('PORKBUN_API_KEY') ?: '';
@@ -16,7 +15,9 @@ if ($apiKey === '' || $secretKey === '' || $domainName === '') {
     exit(1);
 }
 
-$dns = Client::create($apiKey, $secretKey)->domain($domainName)->dns();
+$client = new Porkbun\Client();
+$client->authenticate($apiKey, $secretKey);
+$dns = $client->domain($domainName)->dns();
 
 // Convenience methods for common record types
 // $dns->createFromBuilder($dns->record()->name('www')->a('192.0.2.1')->ttl(3600));
@@ -45,13 +46,13 @@ $web2 = $base->name('web2')->a('10.0.1.2');
 $mail = $base->name('mail')->mx('mail.example.com', 10);
 
 echo "Template-based records ready to create:\n";
-echo "  web1: {$web1->getData()['content']} (TTL {$web1->getData()['ttl']})\n";
-echo "  web2: {$web2->getData()['content']} (TTL {$web2->getData()['ttl']})\n";
-echo "  mail: {$mail->getData()['content']} (priority {$mail->getData()['prio']})\n";
+echo "  web1: {$web1->data()['content']} (TTL {$web1->data()['ttl']})\n";
+echo "  web2: {$web2->data()['content']} (TTL {$web2->data()['ttl']})\n";
+echo "  mail: {$mail->data()['content']} (priority {$mail->data()['prio']})\n";
 
 // Enum types work everywhere
 $builder = $dns->record()->name('test')->type(DnsRecordType::A)->content('192.0.2.1');
-echo "\nBuilder type: {$builder->getData()['type']}\n";
+echo "\nBuilder type: {$builder->data()['type']}\n";
 
 // $dns->createFromBuilder($web1);
 // $dns->createFromBuilder($web2);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Porkbun\Client;
 use Porkbun\Exception\AuthenticationException;
 use Porkbun\Exception\NetworkException;
 
@@ -17,17 +16,18 @@ if ($apiKey === '' || $secretKey === '') {
     exit(1);
 }
 
-$client = Client::create($apiKey, $secretKey);
+$client = new Porkbun\Client();
+$client->authenticate($apiKey, $secretKey);
 
 try {
     // Test API connectivity (default dual-stack endpoint)
     $ping = $client->ping();
-    echo "Ping OK — your IP: " . ($ping->ip() ?? 'unknown') . "\n";
+    echo "Ping OK — your IP: " . ($ping->resolvedIp ?? 'unknown') . "\n";
 
     // Switch to IPv4-only endpoint and test again
     $client->useIpv4Endpoint();
     $ping = $client->ping();
-    echo "Ping OK (IPv4) — your IP: " . ($ping->ip() ?? 'unknown') . "\n";
+    echo "Ping OK (IPv4) — your IP: " . ($ping->resolvedIp ?? 'unknown') . "\n";
 } catch (AuthenticationException) {
     echo "Authentication failed — check your API keys.\n";
     exit(1);

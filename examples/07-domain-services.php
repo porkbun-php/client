@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Porkbun\Client;
 use Porkbun\Exception\ApiException;
 use Porkbun\Exception\AuthenticationException;
 
@@ -17,8 +16,22 @@ if ($apiKey === '' || $secretKey === '' || $domainName === '') {
     exit(1);
 }
 
-$client = Client::create($apiKey, $secretKey);
+$client = new Porkbun\Client();
+$client->authenticate($apiKey, $secretKey);
 $domain = $client->domain($domainName);
+
+// Domain details (metadata from account)
+try {
+    $details = $domain->details();
+    echo "Domain: {$details->domain}\n";
+    echo "  Status:       {$details->status}\n";
+    echo '  Auto-renew:   ' . ($details->autoRenew ? 'on' : 'off') . "\n";
+    echo '  Security lock: ' . ($details->securityLock ? 'on' : 'off') . "\n";
+    echo '  Expires:      ' . ($details->expireDate?->format('Y-m-d') ?? 'unknown') . "\n";
+    echo str_repeat('-', 60) . "\n";
+} catch (ApiException $e) {
+    echo "Could not fetch domain details: {$e->getMessage()}\n";
+}
 
 // Nameservers
 try {
@@ -41,10 +54,7 @@ foreach ($forwards as $fwd) {
     echo "  {$fwd->subdomain}.{$domainName} -> {$fwd->location}\n";
 }
 
-// $domain->urlForwarding()->add([
-//     'subdomain' => 'go', 'location' => 'https://destination.example.com',
-//     'type' => 'temporary', 'includePath' => 'no', 'wildcard' => 'no',
-// ]);
+// $domain->urlForwarding()->create('https://destination.example.com', 'temporary', subdomain: 'go');
 // $domain->urlForwarding()->delete($forwardId);
 
 // Glue Records
@@ -58,6 +68,16 @@ foreach ($glueRecords as $glue) {
 // $domain->glue()->update('ns1', ['192.0.2.10']);
 // $domain->glue()->delete('ns1');
 
+// DNSSEC
+$dnssecRecords = $domain->dnssec()->all();
+echo "\nDNSSEC records: " . count($dnssecRecords) . "\n";
+foreach ($dnssecRecords as $record) {
+    echo "  Key Tag {$record->keyTag} (alg: {$record->algorithmName}, digest: {$record->digestTypeName})\n";
+}
+
+// $domain->dnssec()->create(keyTag: 12345, algorithm: 13, digestType: 2, digest: 'abc123...');
+// $domain->dnssec()->delete(12345);
+
 // Auto-Renew
 // $domain->autoRenew()->enable();
 // $domain->autoRenew()->disable();
@@ -65,7 +85,7 @@ foreach ($glueRecords as $glue) {
 // SSL Certificate
 try {
     $ssl = $domain->ssl()->get();
-    echo "\nSSL: " . ($ssl->hasCertificate() ? 'certificate available' : 'no certificate') . "\n";
+    echo "\nSSL: " . ($ssl->hasCertificate ? 'certificate available' : 'no certificate') . "\n";
 } catch (ApiException $e) {
     echo "\nSSL: not available ({$e->getMessage()})\n";
 }

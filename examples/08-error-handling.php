@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Porkbun\Client;
 use Porkbun\Exception\ApiException;
 use Porkbun\Exception\AuthenticationException;
 use Porkbun\Exception\ExceptionInterface;
 use Porkbun\Exception\NetworkException;
 
-$client = Client::create('pk1_invalid', 'sk1_invalid');
+$client = new Porkbun\Client();
+$client->authenticate('pk1_invalid', 'sk1_invalid');
 
 // Full exception hierarchy — catch from most specific to least
 try {
@@ -38,19 +38,20 @@ $apiKey = getenv('PORKBUN_API_KEY') ?: '';
 $secretKey = getenv('PORKBUN_SECRET_KEY') ?: '';
 
 if ($apiKey !== '' && $secretKey !== '') {
-    $client = Client::create($apiKey, $secretKey);
+    $client = new Porkbun\Client();
+    $client->authenticate($apiKey, $secretKey);
 
     try {
         $client->useDefaultEndpoint();
         $ping = $client->ping();
-        echo "\nPing OK (default): {$ping->ip()}\n";
+        echo "\nPing OK (default): {$ping->resolvedIp}\n";
     } catch (NetworkException) {
         echo "\nDefault endpoint failed, trying IPv4...\n";
 
         try {
             $client->useIpv4Endpoint();
             $ping = $client->ping();
-            echo "Ping OK (IPv4): {$ping->ip()}\n";
+            echo "Ping OK (IPv4): {$ping->resolvedIp}\n";
         } catch (NetworkException $e) {
             echo "All endpoints failed: {$e->getMessage()}\n";
         }

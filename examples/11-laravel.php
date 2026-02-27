@@ -7,7 +7,7 @@
  * within a Laravel application.
  *
  * Setup:
- *   composer require glebovdev/porkbun-php-api
+ *   composer require porkbun-php/client
  *   php artisan vendor:publish --tag=porkbun-config
  *
  * .env:
