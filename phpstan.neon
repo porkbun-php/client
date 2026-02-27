@@ -5,6 +5,7 @@ parameters:
         - tests
     excludePaths:
         - examples
+        - tests/Integration
     ignoreErrors:
         # Array value types - we prefer clean code without verbose @param array<string, mixed> annotations
         - identifier: missingType.iterableValue
