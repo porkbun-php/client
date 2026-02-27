@@ -17,6 +17,8 @@ enum DnsRecordType: string
     case CAA = 'CAA';
     case HTTPS = 'HTTPS';
     case SVCB = 'SVCB';
+    case ALIAS = 'ALIAS';
+    case SSHFP = 'SSHFP';
 
     public function requiresPriority(): bool
     {
@@ -26,7 +28,7 @@ enum DnsRecordType: string
         };
     }
 
-    public function getDescription(): string
+    public function description(): string
     {
         return match ($this) {
             self::A => 'IPv4 address record',
@@ -40,6 +42,8 @@ enum DnsRecordType: string
             self::CAA => 'Certification Authority Authorization record',
             self::HTTPS => 'HTTPS service binding record',
             self::SVCB => 'Service binding record',
+            self::ALIAS => 'CNAME flattening record',
+            self::SSHFP => 'SSH fingerprint record',
         };
     }
 
@@ -55,6 +59,8 @@ enum DnsRecordType: string
             self::TLSA => $this->isValidTlsaRecord($content),
             self::CAA => $this->isValidCaaRecord($content),
             self::HTTPS, self::SVCB => true, // Complex validation would require specific parsing
+            self::ALIAS => $this->isValidDomainName($content),
+            self::SSHFP => $this->isValidSshfpRecord($content),
         };
     }
 
@@ -79,5 +85,11 @@ enum DnsRecordType: string
     {
         // CAA format: flags tag value
         return preg_match('/^\d+ [a-zA-Z]+ .+$/', $content) === 1;
+    }
+
+    private function isValidSshfpRecord(string $content): bool
+    {
+        // SSHFP format: algorithm fingerprint-type fingerprint
+        return preg_match('/^\d+ \d+ [a-fA-F0-9]+$/', $content) === 1;
     }
 }

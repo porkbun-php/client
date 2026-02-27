@@ -49,7 +49,7 @@ test('http client sets correct headers', function (): void {
         ->once()
         ->with(Mockery::on(function (RequestInterface $request): bool {
             expect($request->getHeaderLine('Content-Type'))->toBe('application/json')
-                ->and($request->getHeaderLine('User-Agent'))->toStartWith('porkbun-php-api/');
+                ->and($request->getHeaderLine('User-Agent'))->toStartWith('porkbun-php-client/');
 
             return true;
         }))
@@ -81,6 +81,28 @@ test('http client throws AuthenticationException on 403', function (): void {
         ->toThrow(AuthenticationException::class);
 });
 
+test('http client throws AuthenticationException on invalid API key with non-403 status', function (): void {
+    $mockClient = createMockHttpClient([
+        ['body' => ['status' => 'ERROR', 'message' => 'Invalid API key.'], 'httpStatus' => 400],
+    ]);
+
+    $httpClient = createHttpClient($mockClient);
+
+    expect(fn (): array => $httpClient->post('/ping'))
+        ->toThrow(AuthenticationException::class, 'Invalid API key.');
+});
+
+test('http client throws AuthenticationException on auth error in success response', function (): void {
+    $mockClient = createMockHttpClient([
+        ['body' => ['status' => 'ERROR', 'message' => 'Invalid API key.'], 'httpStatus' => 200],
+    ]);
+
+    $httpClient = createHttpClient($mockClient);
+
+    expect(fn (): array => $httpClient->post('/ping'))
+        ->toThrow(AuthenticationException::class, 'Invalid API key.');
+});
+
 test('http client throws NetworkException on client error', function (): void {
     $mock = Mockery::mock(ClientInterface::class);
 
@@ -104,9 +126,9 @@ test('http client stores last response', function (): void {
 
     $httpClient = createHttpClient($mockClient);
 
-    expect($httpClient->getLastResponse())->toBeNull();
+    expect($httpClient->lastResponse)->toBeNull();
 
     $httpClient->post('/ping');
 
-    expect($httpClient->getLastResponse())->not->toBeNull();
+    expect($httpClient->lastResponse)->not->toBeNull();
 });

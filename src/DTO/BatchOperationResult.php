@@ -9,6 +9,10 @@ use Override;
 
 final readonly class BatchOperationResult implements JsonSerializable
 {
+    public bool $isFailure;
+
+    public bool $hasRecordId;
+
     public function __construct(
         public string $operation,
         public bool $success,
@@ -16,6 +20,8 @@ final readonly class BatchOperationResult implements JsonSerializable
         public ?string $recordType = null,
         public ?string $error = null
     ) {
+        $this->isFailure = !$this->success;
+        $this->hasRecordId = $this->recordId !== null;
     }
 
     public static function success(string $operation, ?int $recordId = null, ?string $recordType = null): self
@@ -35,21 +41,6 @@ final readonly class BatchOperationResult implements JsonSerializable
             success: false,
             error: $error
         );
-    }
-
-    public function isSuccess(): bool
-    {
-        return $this->success;
-    }
-
-    public function isFailure(): bool
-    {
-        return !$this->success;
-    }
-
-    public function hasRecordId(): bool
-    {
-        return $this->recordId !== null;
     }
 
     #[Override]

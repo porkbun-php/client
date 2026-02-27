@@ -41,13 +41,13 @@ test('items returns indexed array', function (): void {
         ->and($items[0])->toBeInstanceOf(PricingItem::class);
 });
 
-test('get returns item or null', function (): void {
+test('find returns item or null', function (): void {
     $pricingCollection = PricingCollection::fromArray([
         'com' => ['registration' => '8.99', 'renewal' => '10.99'],
     ]);
 
-    expect($pricingCollection->get('com'))->toBeInstanceOf(PricingItem::class)
-        ->and($pricingCollection->get('xyz'))->toBeNull();
+    expect($pricingCollection->find('com'))->toBeInstanceOf(PricingItem::class)
+        ->and($pricingCollection->find('xyz'))->toBeNull();
 });
 
 test('has checks for tld existence', function (): void {
@@ -69,15 +69,15 @@ test('tlds returns all tld keys', function (): void {
     expect($pricingCollection->tlds())->toBe(['com', 'net', 'org']);
 });
 
-test('get returns typed item with accessible prices', function (): void {
+test('find returns typed item with accessible prices', function (): void {
     $pricingCollection = PricingCollection::fromArray([
         'com' => ['registration' => '8.99', 'renewal' => '10.99', 'transfer' => '7.99'],
     ]);
 
-    expect($pricingCollection->get('com')?->registrationPrice)->toBe(8.99)
-        ->and($pricingCollection->get('com')?->renewalPrice)->toBe(10.99)
-        ->and($pricingCollection->get('com')?->transferPrice)->toBe(7.99)
-        ->and($pricingCollection->get('xyz')?->registrationPrice)->toBeNull();
+    expect($pricingCollection->find('com')?->registrationPrice)->toBe(8.99)
+        ->and($pricingCollection->find('com')?->renewalPrice)->toBe(10.99)
+        ->and($pricingCollection->find('com')?->transferPrice)->toBe(7.99)
+        ->and($pricingCollection->find('xyz')?->registrationPrice)->toBeNull();
 });
 
 test('cheapest returns sorted items', function (): void {

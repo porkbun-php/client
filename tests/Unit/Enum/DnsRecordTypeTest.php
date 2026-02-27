@@ -18,21 +18,25 @@ test('requiresPriority returns false for other types', function (): void {
         ->and(DnsRecordType::TLSA->requiresPriority())->toBeFalse()
         ->and(DnsRecordType::CAA->requiresPriority())->toBeFalse()
         ->and(DnsRecordType::HTTPS->requiresPriority())->toBeFalse()
-        ->and(DnsRecordType::SVCB->requiresPriority())->toBeFalse();
+        ->and(DnsRecordType::SVCB->requiresPriority())->toBeFalse()
+        ->and(DnsRecordType::ALIAS->requiresPriority())->toBeFalse()
+        ->and(DnsRecordType::SSHFP->requiresPriority())->toBeFalse();
 });
 
-test('getDescription returns description for all types', function (): void {
-    expect(DnsRecordType::A->getDescription())->toBe('IPv4 address record')
-        ->and(DnsRecordType::AAAA->getDescription())->toBe('IPv6 address record')
-        ->and(DnsRecordType::CNAME->getDescription())->toBe('Canonical name record')
-        ->and(DnsRecordType::MX->getDescription())->toBe('Mail exchange record')
-        ->and(DnsRecordType::TXT->getDescription())->toBe('Text record')
-        ->and(DnsRecordType::NS->getDescription())->toBe('Name server record')
-        ->and(DnsRecordType::SRV->getDescription())->toBe('Service locator record')
-        ->and(DnsRecordType::TLSA->getDescription())->toBe('DANE DNS-based Authentication of Named Entities record')
-        ->and(DnsRecordType::CAA->getDescription())->toBe('Certification Authority Authorization record')
-        ->and(DnsRecordType::HTTPS->getDescription())->toBe('HTTPS service binding record')
-        ->and(DnsRecordType::SVCB->getDescription())->toBe('Service binding record');
+test('description returns description for all types', function (): void {
+    expect(DnsRecordType::A->description())->toBe('IPv4 address record')
+        ->and(DnsRecordType::AAAA->description())->toBe('IPv6 address record')
+        ->and(DnsRecordType::CNAME->description())->toBe('Canonical name record')
+        ->and(DnsRecordType::MX->description())->toBe('Mail exchange record')
+        ->and(DnsRecordType::TXT->description())->toBe('Text record')
+        ->and(DnsRecordType::NS->description())->toBe('Name server record')
+        ->and(DnsRecordType::SRV->description())->toBe('Service locator record')
+        ->and(DnsRecordType::TLSA->description())->toBe('DANE DNS-based Authentication of Named Entities record')
+        ->and(DnsRecordType::CAA->description())->toBe('Certification Authority Authorization record')
+        ->and(DnsRecordType::HTTPS->description())->toBe('HTTPS service binding record')
+        ->and(DnsRecordType::SVCB->description())->toBe('Service binding record')
+        ->and(DnsRecordType::ALIAS->description())->toBe('CNAME flattening record')
+        ->and(DnsRecordType::SSHFP->description())->toBe('SSH fingerprint record');
 });
 
 test('validateContent validates A records', function (): void {
@@ -93,4 +97,17 @@ test('validateContent validates CAA records', function (): void {
 test('validateContent allows HTTPS and SVCB content', function (): void {
     expect(DnsRecordType::HTTPS->validateContent('1 . alpn=h2'))->toBeTrue()
         ->and(DnsRecordType::SVCB->validateContent('1 example.com port=443'))->toBeTrue();
+});
+
+test('validateContent validates ALIAS records', function (): void {
+    expect(DnsRecordType::ALIAS->validateContent('example.com'))->toBeTrue()
+        ->and(DnsRecordType::ALIAS->validateContent('sub.example.com'))->toBeTrue()
+        ->and(DnsRecordType::ALIAS->validateContent('-invalid.com'))->toBeFalse();
+});
+
+test('validateContent validates SSHFP records', function (): void {
+    expect(DnsRecordType::SSHFP->validateContent('1 2 abc123def456'))->toBeTrue()
+        ->and(DnsRecordType::SSHFP->validateContent('3 1 AABBCCDD'))->toBeTrue()
+        ->and(DnsRecordType::SSHFP->validateContent('invalid'))->toBeFalse()
+        ->and(DnsRecordType::SSHFP->validateContent('1 2 notahex!'))->toBeFalse();
 });

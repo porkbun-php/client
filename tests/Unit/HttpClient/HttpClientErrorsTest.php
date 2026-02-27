@@ -180,11 +180,11 @@ test('http client hasAuthentication checks credentials', function (): void {
         ->and($partialAuth->hasAuthentication())->toBeFalse();
 });
 
-test('http client getBaseUrl returns base url', function (): void {
+test('http client baseUrl returns base url', function (): void {
     $factory = new Psr17Factory();
     $mock = Mockery::mock(ClientInterface::class);
 
     $httpClient = new HttpClient($mock, $factory, $factory, 'https://custom.api.com');
 
-    expect($httpClient->getBaseUrl())->toBe('https://custom.api.com');
+    expect($httpClient->baseUrl)->toBe('https://custom.api.com');
 });

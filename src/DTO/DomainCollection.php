@@ -56,7 +56,7 @@ final class DomainCollection implements Countable, IteratorAggregate, JsonSerial
         return $this->domains[count($this->domains) - 1];
     }
 
-    public function get(string $domainName): ?Domain
+    public function find(string $domainName): ?Domain
     {
         foreach ($this->domains as $domain) {
             if ($domain->domain === $domainName) {
@@ -69,11 +69,11 @@ final class DomainCollection implements Countable, IteratorAggregate, JsonSerial
 
     public function has(string $domainName): bool
     {
-        return $this->get($domainName) instanceof Domain;
+        return $this->find($domainName) instanceof Domain;
     }
 
     /** @return list<Domain> */
-    public function getExpiringSoon(int $daysThreshold = 30): array
+    public function expiringSoon(int $daysThreshold = 30): array
     {
         return array_values(array_filter(
             $this->domains,

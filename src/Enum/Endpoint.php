@@ -25,11 +25,11 @@ enum Endpoint: string
         };
     }
 
-    public static function getAll(): array
+    public static function all(): array
     {
         $endpoints = [];
         foreach (self::cases() as $endpoint) {
-            $endpoints[$endpoint->getType()] = $endpoint->value;
+            $endpoints[$endpoint->type()] = $endpoint->value;
         }
 
         return $endpoints;
@@ -45,19 +45,19 @@ enum Endpoint: string
         return self::fromUrl($url) instanceof Endpoint;
     }
 
-    public static function getTypeFromUrl(string $url): string
+    public static function typeFromUrl(string $url): string
     {
         $endpoint = self::fromUrl($url);
 
-        return $endpoint?->getType() ?? 'custom';
+        return $endpoint?->type() ?? 'custom';
     }
 
-    public function getUrl(): string
+    public function url(): string
     {
         return $this->value;
     }
 
-    public function getType(): string
+    public function type(): string
     {
         return match ($this) {
             self::DEFAULT => 'default',

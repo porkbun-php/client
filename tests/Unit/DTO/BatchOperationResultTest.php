@@ -36,24 +36,24 @@ test('isSuccess returns correct value', function (): void {
     $success = BatchOperationResult::success('create', 123);
     $failure = BatchOperationResult::failure('create', 'Error');
 
-    expect($success->isSuccess())->toBeTrue()
-        ->and($failure->isSuccess())->toBeFalse();
+    expect($success->success)->toBeTrue()
+        ->and($failure->success)->toBeFalse();
 });
 
 test('isFailure returns correct value', function (): void {
     $success = BatchOperationResult::success('create', 123);
     $failure = BatchOperationResult::failure('create', 'Error');
 
-    expect($success->isFailure())->toBeFalse()
-        ->and($failure->isFailure())->toBeTrue();
+    expect($success->isFailure)->toBeFalse()
+        ->and($failure->isFailure)->toBeTrue();
 });
 
 test('hasRecordId checks for record id presence', function (): void {
     $batchOperationResult = BatchOperationResult::success('create', 123);
     $withoutId = BatchOperationResult::success('delete');
 
-    expect($batchOperationResult->hasRecordId())->toBeTrue()
-        ->and($withoutId->hasRecordId())->toBeFalse();
+    expect($batchOperationResult->hasRecordId)->toBeTrue()
+        ->and($withoutId->hasRecordId)->toBeFalse();
 });
 
 test('toArray serializes success result', function (): void {

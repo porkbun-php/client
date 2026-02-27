@@ -14,41 +14,41 @@ test('all returns all records', function (): void {
     expect($dnsRecordCollection->all())->toHaveCount(2);
 });
 
-test('getRecordsByName filters by name', function (): void {
+test('byName filters by name', function (): void {
     $dnsRecordCollection = DnsRecordCollection::fromArray([
         ['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1'],
         ['id' => '2', 'name' => 'www', 'type' => 'AAAA', 'content' => '2001:db8::1'],
         ['id' => '3', 'name' => 'api', 'type' => 'A', 'content' => '192.0.2.2'],
     ]);
 
-    $records = $dnsRecordCollection->getRecordsByName('www');
+    $records = $dnsRecordCollection->byName('www');
 
     expect($records)->toHaveCount(2)
         ->and(array_keys($records))->toBe([0, 1]);
 });
 
-test('getRootRecords returns only root records', function (): void {
+test('rootRecords returns only root records', function (): void {
     $dnsRecordCollection = DnsRecordCollection::fromArray([
         ['id' => '1', 'name' => '', 'type' => 'A', 'content' => '192.0.2.1'],
         ['id' => '2', 'name' => '@', 'type' => 'MX', 'content' => 'mail.example.com', 'prio' => '10'],
         ['id' => '3', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.2'],
     ]);
 
-    $records = $dnsRecordCollection->getRootRecords();
+    $records = $dnsRecordCollection->rootRecords;
 
     expect($records)->toHaveCount(2)
         ->and($records[0]->id)->toBe(1)
         ->and($records[1]->id)->toBe(2);
 });
 
-test('getRecordsByTypeAndName filters by both', function (): void {
+test('byTypeAndName filters by both', function (): void {
     $dnsRecordCollection = DnsRecordCollection::fromArray([
         ['id' => '1', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1'],
         ['id' => '2', 'name' => 'www', 'type' => 'AAAA', 'content' => '2001:db8::1'],
         ['id' => '3', 'name' => 'api', 'type' => 'A', 'content' => '192.0.2.2'],
     ]);
 
-    $records = $dnsRecordCollection->getRecordsByTypeAndName('A', 'www');
+    $records = $dnsRecordCollection->byTypeAndName('A', 'www');
 
     expect($records)->toHaveCount(1)
         ->and($records[0]->id)->toBe(1);

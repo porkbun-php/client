@@ -21,29 +21,32 @@ final class DnsRecordBuilder
 
     public function name(string $name): self
     {
-        $this->name = $name;
+        $clone = clone $this;
+        $clone->name = $name;
 
-        return $this;
+        return $clone;
     }
 
     public function type(string|DnsRecordType $type): self
     {
+        $clone = clone $this;
+
         if (is_string($type)) {
             $enumValue = DnsRecordType::tryFrom(mb_strtoupper($type));
             if (!$enumValue instanceof DnsRecordType) {
                 throw new InvalidArgumentException("Invalid record type: {$type}");
             }
-            $this->dnsRecordType = $enumValue;
+            $clone->dnsRecordType = $enumValue;
         } else {
-            $this->dnsRecordType = $type;
+            $clone->dnsRecordType = $type;
         }
 
         // Re-validate existing content against the new type
-        if ($this->content !== null && !$this->dnsRecordType->validateContent($this->content)) {
-            throw new InvalidArgumentException("Invalid content for {$this->dnsRecordType->value} record: {$this->content}");
+        if ($clone->content !== null && !$clone->dnsRecordType->validateContent($clone->content)) {
+            throw new InvalidArgumentException("Invalid content for {$clone->dnsRecordType->value} record: {$clone->content}");
         }
 
-        return $this;
+        return $clone;
     }
 
     public function content(string $content): self
@@ -57,9 +60,10 @@ final class DnsRecordBuilder
             throw new InvalidArgumentException("Invalid content for {$this->dnsRecordType->value} record: {$content}");
         }
 
-        $this->content = $content;
+        $clone = clone $this;
+        $clone->content = $content;
 
-        return $this;
+        return $clone;
     }
 
     public function ttl(int $ttl): self
@@ -68,9 +72,10 @@ final class DnsRecordBuilder
             throw new InvalidArgumentException('TTL must be greater than 0');
         }
 
-        $this->ttl = $ttl;
+        $clone = clone $this;
+        $clone->ttl = $ttl;
 
-        return $this;
+        return $clone;
     }
 
     public function priority(int $priority): self
@@ -79,22 +84,24 @@ final class DnsRecordBuilder
             throw new InvalidArgumentException('Priority cannot be negative');
         }
 
-        $this->prio = $priority;
+        $clone = clone $this;
+        $clone->prio = $priority;
 
-        return $this;
+        return $clone;
     }
 
     public function notes(string $notes): self
     {
-        $this->notes = $notes;
+        $clone = clone $this;
+        $clone->notes = $notes;
 
-        return $this;
+        return $clone;
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function getData(): array
+    public function data(): array
     {
         if (!$this->dnsRecordType instanceof DnsRecordType) {
             throw new InvalidArgumentException('Record type is required');
@@ -117,18 +124,6 @@ final class DnsRecordBuilder
         }
 
         return $data;
-    }
-
-    public function reset(): self
-    {
-        $this->name = '';
-        $this->dnsRecordType = null;
-        $this->content = null;
-        $this->ttl = 600;
-        $this->prio = 0;
-        $this->notes = '';
-
-        return $this;
     }
 
     public function a(string $ipAddress): self
@@ -169,5 +164,15 @@ final class DnsRecordBuilder
     public function srv(string $value): self
     {
         return $this->type(DnsRecordType::SRV)->content($value);
+    }
+
+    public function alias(string $target): self
+    {
+        return $this->type(DnsRecordType::ALIAS)->content($target);
+    }
+
+    public function sshfp(string $value): self
+    {
+        return $this->type(DnsRecordType::SSHFP)->content($value);
     }
 }

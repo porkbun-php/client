@@ -34,7 +34,7 @@ test('service integration - dns service full workflow', function (): void {
     expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
         ->and($dnsRecordCollection->isNotEmpty())->toBeTrue();
 
-    $dns->edit(123456, ['content' => '192.0.2.2']);
+    $dns->update(123456, 'www', 'A', '192.0.2.2');
 
     $dns->delete(123456);
 });
@@ -62,7 +62,8 @@ test('service integration - domain check availability', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $domain = new Domain('example.com', createMockContext($httpClient));
+    $clientContext = createMockContext($httpClient);
+    $domain = new Domain('example.com', $clientContext, new Domains($clientContext));
 
     $availability = $domain->check();
     expect($availability)->toBeInstanceOf(Availability::class)
@@ -90,7 +91,8 @@ test('service integration - error handling across services', function (): void {
     ]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $domain = new Domain('nonexistent.com', createMockContext($httpClient));
+    $clientContext = createMockContext($httpClient);
+    $domain = new Domain('nonexistent.com', $clientContext, new Domains($clientContext));
 
     expect(fn (): Availability => $domain->check())
         ->toThrow(ApiException::class, 'Domain not found');

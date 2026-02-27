@@ -6,13 +6,17 @@ namespace Porkbun\DTO;
 
 use DateTimeImmutable;
 use Exception;
+use JsonSerializable;
+use Override;
 
-final readonly class Domain
+final readonly class Domain implements JsonSerializable
 {
+    public string $tld;
+
     public function __construct(
         public string $domain,
         public string $status,
-        public ?string $tld = null,
+        ?string $tld = null,
         public ?DateTimeImmutable $createDate = null,
         public ?DateTimeImmutable $expireDate = null,
         public ?bool $securityLock = null,
@@ -21,6 +25,12 @@ final readonly class Domain
         public ?bool $notLocal = null,
         public ?array $labels = null,
     ) {
+        if ($tld !== null) {
+            $this->tld = $tld;
+        } else {
+            $parts = explode('.', $this->domain);
+            $this->tld = end($parts);
+        }
     }
 
     public static function fromArray(array $data): self
@@ -45,7 +55,10 @@ final readonly class Domain
 
         $labels = null;
         if (isset($data['labels']) && is_array($data['labels'])) {
-            $labels = array_map(DomainLabel::fromArray(...), $data['labels']);
+            $labels = array_map(
+                DomainLabel::fromArray(...),
+                array_filter($data['labels'], is_array(...)),
+            );
         }
 
         return new self(
@@ -67,11 +80,8 @@ final readonly class Domain
         $result = [
             'domain' => $this->domain,
             'status' => $this->status,
+            'tld' => $this->tld,
         ];
-
-        if ($this->tld !== null) {
-            $result['tld'] = $this->tld;
-        }
 
         if ($this->createDate instanceof DateTimeImmutable) {
             $result['createDate'] = $this->createDate->format('Y-m-d H:i:s');
@@ -119,15 +129,10 @@ final readonly class Domain
         return $diff->days !== false && $diff->days <= $daysThreshold && $diff->invert === 0;
     }
 
-    public function getTld(): string
+    #[Override]
+    public function jsonSerialize(): array
     {
-        if ($this->tld !== null) {
-            return $this->tld;
-        }
-
-        $parts = explode('.', $this->domain);
-
-        return end($parts);
+        return $this->toArray();
     }
 
     private static function parseBool(mixed $value): bool

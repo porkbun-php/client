@@ -24,8 +24,8 @@ test('nameservers api can get all nameservers', function (): void {
         ->and($nameserverCollection)->toHaveCount(2)
         ->and($nameserverCollection->first())->toBe('ns1.porkbun.com')
         ->and($nameserverCollection->last())->toBe('ns2.porkbun.com')
-        ->and($nameserverCollection->contains('ns1.porkbun.com'))->toBeTrue()
-        ->and($nameserverCollection->contains('ns3.porkbun.com'))->toBeFalse();
+        ->and($nameserverCollection->has('ns1.porkbun.com'))->toBeTrue()
+        ->and($nameserverCollection->has('ns3.porkbun.com'))->toBeFalse();
 });
 
 test('nameservers api can update nameservers', function (): void {

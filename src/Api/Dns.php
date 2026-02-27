@@ -8,11 +8,15 @@ use Porkbun\Builder\DnsRecordBuilder;
 use Porkbun\DTO\CreateResult;
 use Porkbun\DTO\DnsRecord;
 use Porkbun\DTO\DnsRecordCollection;
-use Porkbun\DTO\DnssecRecordCollection;
+use Porkbun\Enum\DnsRecordType;
 use Porkbun\Internal\ClientContext;
 
 final class Dns extends AbstractApi
 {
+    public private(set) ?string $cloudflare = null;
+
+    public private(set) bool $isCloudflareEnabled = false;
+
     public function __construct(
         ClientContext $clientContext,
         private readonly string $domain,
@@ -27,10 +31,14 @@ final class Dns extends AbstractApi
         /** @var array<array<string, mixed>> $records */
         $records = $response['records'] ?? [];
 
-        /** @var ?string $cloudflare */
-        $cloudflare = $response['cloudflare'] ?? null;
+        $this->cloudflare = $response['cloudflare'] ?? null;
+        $this->isCloudflareEnabled = $this->cloudflare === 'enabled';
 
-        return DnsRecordCollection::fromArray($records, $cloudflare);
+        foreach ($records as &$record) {
+            $record['name'] = $this->normalizeRecordName((string) ($record['name'] ?? ''));
+        }
+
+        return DnsRecordCollection::fromArray($records);
     }
 
     public function find(int $id): ?DnsRecord
@@ -44,11 +52,14 @@ final class Dns extends AbstractApi
             return null;
         }
 
+        $records[0]['name'] = $this->normalizeRecordName((string) ($records[0]['name'] ?? ''));
+
         return DnsRecord::fromArray($records[0]);
     }
 
-    public function findByType(string $type, ?string $name = null): DnsRecordCollection
+    public function findByType(string|DnsRecordType $type, ?string $name = null): DnsRecordCollection
     {
+        $type = $type instanceof DnsRecordType ? $type->value : $type;
         $endpoint = "/dns/retrieveByNameType/{$this->domain}/{$type}";
         if ($name !== null) {
             $endpoint .= "/{$name}";
@@ -59,15 +70,19 @@ final class Dns extends AbstractApi
         /** @var array<array<string, mixed>> $records */
         $records = $response['records'] ?? [];
 
-        /** @var ?string $cloudflare */
-        $cloudflare = $response['cloudflare'] ?? null;
+        $this->cloudflare = $response['cloudflare'] ?? null;
+        $this->isCloudflareEnabled = $this->cloudflare === 'enabled';
 
-        return DnsRecordCollection::fromArray($records, $cloudflare);
+        foreach ($records as &$record) {
+            $record['name'] = $this->normalizeRecordName((string) ($record['name'] ?? ''));
+        }
+
+        return DnsRecordCollection::fromArray($records);
     }
 
     public function create(
         string $name,
-        string $type,
+        string|DnsRecordType $type,
         string $content,
         int|string $ttl = 600,
         int|string $prio = 0,
@@ -75,7 +90,7 @@ final class Dns extends AbstractApi
     ): CreateResult {
         $data = [
             'name' => $name,
-            'type' => $type,
+            'type' => $type instanceof DnsRecordType ? $type->value : $type,
             'content' => $content,
             'ttl' => (string) $ttl,
             'prio' => (string) $prio,
@@ -92,7 +107,7 @@ final class Dns extends AbstractApi
 
     public function createFromBuilder(DnsRecordBuilder $dnsRecordBuilder): CreateResult
     {
-        $data = $dnsRecordBuilder->getData();
+        $data = $dnsRecordBuilder->data();
 
         $response = $this->post("/dns/create/{$this->domain}", $data);
 
@@ -104,18 +119,60 @@ final class Dns extends AbstractApi
         return new DnsRecordBuilder();
     }
 
-    /** @param array<string, mixed> $data */
-    public function edit(int $id, array $data): void
-    {
+    public function update(
+        int $id,
+        string $name,
+        string|DnsRecordType $type,
+        string $content,
+        int|string $ttl = 600,
+        int|string $prio = 0,
+        string $notes = '',
+    ): void {
+        $data = [
+            'name' => $name,
+            'type' => $type instanceof DnsRecordType ? $type->value : $type,
+            'content' => $content,
+            'ttl' => (string) $ttl,
+            'prio' => (string) $prio,
+        ];
+
+        if ($notes !== '') {
+            $data['notes'] = $notes;
+        }
+
         $this->post("/dns/edit/{$this->domain}/{$id}", $data);
     }
 
-    /** @param array<string, mixed> $data Updates ALL matching records */
-    public function update(string $type, ?string $name, array $data): void
+    public function updateFromBuilder(int $id, DnsRecordBuilder $dnsRecordBuilder): void
     {
+        $data = $dnsRecordBuilder->data();
+
+        $this->post("/dns/edit/{$this->domain}/{$id}", $data);
+    }
+
+    /** Updates ALL matching records */
+    public function updateByType(
+        string|DnsRecordType $type,
+        ?string $name,
+        string $content,
+        int|string $ttl = 600,
+        int|string $prio = 0,
+        string $notes = '',
+    ): void {
+        $type = $type instanceof DnsRecordType ? $type->value : $type;
         $endpoint = "/dns/editByNameType/{$this->domain}/{$type}";
         if ($name !== null) {
             $endpoint .= "/{$name}";
+        }
+
+        $data = [
+            'content' => $content,
+            'ttl' => (string) $ttl,
+            'prio' => (string) $prio,
+        ];
+
+        if ($notes !== '') {
+            $data['notes'] = $notes;
         }
 
         $this->post($endpoint, $data);
@@ -126,8 +183,9 @@ final class Dns extends AbstractApi
         $this->post("/dns/delete/{$this->domain}/{$id}");
     }
 
-    public function deleteByType(string $type, ?string $name = null): void
+    public function deleteByType(string|DnsRecordType $type, ?string $name = null): void
     {
+        $type = $type instanceof DnsRecordType ? $type->value : $type;
         $endpoint = "/dns/deleteByNameType/{$this->domain}/{$type}";
         if ($name !== null) {
             $endpoint .= "/{$name}";
@@ -136,24 +194,20 @@ final class Dns extends AbstractApi
         $this->post($endpoint);
     }
 
-    /** @param array{keyTag: string, alg: string, digestType: string, digest: string, keyDataFlags?: string, keyDataProtocol?: string, keyDataAlgo?: string, keyDataPubKey?: string, maxSigLife?: string} $params */
-    public function createDnssec(array $params): void
+    private function normalizeRecordName(string $name): string
     {
-        $this->post("/dns/createDnssecRecord/{$this->domain}", $params);
-    }
+        $name = mb_strtolower(mb_rtrim($name, '.'));
+        $domain = mb_strtolower(mb_rtrim($this->domain, '.'));
 
-    public function getDnssecRecords(): DnssecRecordCollection
-    {
-        $response = $this->post("/dns/getDnssecRecords/{$this->domain}");
+        if ($name === $domain) {
+            return '';
+        }
 
-        /** @var array<array<string, mixed>> $responseRecords */
-        $responseRecords = $response['records'] ?? [];
+        $suffix = ".{$domain}";
+        if (str_ends_with($name, $suffix)) {
+            return mb_substr($name, 0, -mb_strlen($suffix));
+        }
 
-        return DnssecRecordCollection::fromArray($responseRecords);
-    }
-
-    public function deleteDnssec(string $keyTag): void
-    {
-        $this->post("/dns/deleteDnssecRecord/{$this->domain}/{$keyTag}");
+        return $name;
     }
 }

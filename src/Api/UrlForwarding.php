@@ -26,13 +26,25 @@ final class UrlForwarding extends AbstractApi
         return UrlForwardCollection::fromArray($responseForwards);
     }
 
-    /** @param array{subdomain?: string, location: string, type: string, includePath?: string, wildcard?: string} $params */
-    public function add(array $params): void
-    {
-        $this->post("/domain/addUrlForward/{$this->domain}", $params);
+    public function create(
+        string $location,
+        string $type,
+        string $subdomain = '',
+        string $includePath = 'no',
+        string $wildcard = 'no',
+    ): void {
+        $data = [
+            'subdomain' => $subdomain,
+            'location' => $location,
+            'type' => $type,
+            'includePath' => $includePath,
+            'wildcard' => $wildcard,
+        ];
+
+        $this->post("/domain/addUrlForward/{$this->domain}", $data);
     }
 
-    public function delete(int|string $recordId): void
+    public function delete(int $recordId): void
     {
         $this->post("/domain/deleteUrlForward/{$this->domain}/{$recordId}");
     }

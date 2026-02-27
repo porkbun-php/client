@@ -7,13 +7,17 @@ namespace Porkbun\Resource;
 use Porkbun\Api\AutoRenew;
 use Porkbun\Api\Availability as AvailabilityApi;
 use Porkbun\Api\Dns;
+use Porkbun\Api\Dnssec;
+use Porkbun\Api\Domains;
 use Porkbun\Api\GlueRecords;
 use Porkbun\Api\Nameservers;
 use Porkbun\Api\Registration as RegistrationApi;
 use Porkbun\Api\Ssl;
 use Porkbun\Api\UrlForwarding;
 use Porkbun\DTO\Availability;
+use Porkbun\DTO\Domain as DomainDto;
 use Porkbun\DTO\DomainRegistration;
+use Porkbun\Exception\ApiException;
 use Porkbun\Internal\ClientContext;
 
 final class Domain
@@ -23,6 +27,8 @@ final class Domain
     private ?RegistrationApi $registrationApi = null;
 
     private ?Dns $dns = null;
+
+    private ?Dnssec $dnssec = null;
 
     private ?Ssl $ssl = null;
 
@@ -35,14 +41,31 @@ final class Domain
     private ?AutoRenew $autoRenew = null;
 
     public function __construct(
-        private readonly string $name,
+        public readonly string $name,
         private readonly ClientContext $clientContext,
+        private readonly Domains $domains,
     ) {
+    }
+
+    public function details(): DomainDto
+    {
+        return $this->domains->find($this->name)
+            ?? throw new ApiException("Domain '{$this->name}' not found in account");
+    }
+
+    public function get(): DomainDto
+    {
+        return $this->details();
     }
 
     public function dns(): Dns
     {
         return $this->dns ??= new Dns($this->clientContext, $this->name);
+    }
+
+    public function dnssec(): Dnssec
+    {
+        return $this->dnssec ??= new Dnssec($this->clientContext, $this->name);
     }
 
     public function ssl(): Ssl
@@ -68,11 +91,6 @@ final class Domain
     public function autoRenew(): AutoRenew
     {
         return $this->autoRenew ??= new AutoRenew($this->clientContext, $this->name);
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
     }
 
     public function check(): Availability

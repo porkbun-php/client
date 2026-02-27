@@ -22,8 +22,8 @@ test('ssl api can get certificate', function (): void {
     $sslCertificate = $ssl->get();
 
     expect($sslCertificate)->toBeInstanceOf(SslCertificate::class)
-        ->and($sslCertificate->hasCertificate())->toBeTrue()
-        ->and($sslCertificate->hasPrivateKey())->toBeTrue()
+        ->and($sslCertificate->hasCertificate)->toBeTrue()
+        ->and($sslCertificate->hasPrivateKey)->toBeTrue()
         ->and($sslCertificate->certificateChain)->toContain('BEGIN CERTIFICATE');
 });
 
@@ -43,8 +43,8 @@ test('ssl api handles intermediate certificate', function (): void {
 
     $sslCertificate = $ssl->get();
 
-    expect($sslCertificate->hasIntermediateCertificate())->toBeTrue()
-        ->and($sslCertificate->getFullChain())->toContain('INTER');
+    expect($sslCertificate->hasIntermediateCertificate)->toBeTrue()
+        ->and($sslCertificate->fullChain)->toContain('INTER');
 });
 
 test('ssl api throws ApiException when certificate not ready', function (): void {

@@ -15,6 +15,13 @@ final class DnsBatchBuilder
     /** @var list<BatchOperation> */
     private array $operations = [];
 
+    public function add(DnsRecordBuilder $dnsRecordBuilder): self
+    {
+        $this->operations[] = BatchOperation::create($dnsRecordBuilder->data());
+
+        return $this;
+    }
+
     public function addRecord(
         string $name,
         string $type,
@@ -31,16 +38,16 @@ final class DnsBatchBuilder
             ->ttl($ttl)
             ->priority($priority)
             ->notes($notes)
-            ->getData();
+            ->data();
 
         $this->operations[] = BatchOperation::create($data);
 
         return $this;
     }
 
-    public function editRecord(int $recordId, array $data): self
+    public function updateRecord(int $recordId, array $data): self
     {
-        $this->operations[] = BatchOperation::edit($recordId, $data);
+        $this->operations[] = BatchOperation::update($recordId, $data);
 
         return $this;
     }
@@ -70,7 +77,7 @@ final class DnsBatchBuilder
             try {
                 $results[] = match ($operation->type) {
                     BatchOperationType::CREATE => $this->executeCreate($dns, $operation),
-                    BatchOperationType::EDIT => $this->executeEdit($dns, $operation),
+                    BatchOperationType::UPDATE => $this->executeUpdate($dns, $operation),
                     BatchOperationType::DELETE => $this->executeDelete($dns, $operation),
                     BatchOperationType::DELETE_BY_NAME_TYPE => $this->executeDeleteByNameType($dns, $operation),
                 };
@@ -91,7 +98,7 @@ final class DnsBatchBuilder
         return $this;
     }
 
-    public function getOperationsCount(): int
+    public function operationsCount(): int
     {
         return count($this->operations);
     }
@@ -113,13 +120,24 @@ final class DnsBatchBuilder
         return BatchOperationResult::success('create', recordId: $createResult->id);
     }
 
-    private function executeEdit(Dns $dns, BatchOperation $batchOperation): BatchOperationResult
+    private function executeUpdate(Dns $dns, BatchOperation $batchOperation): BatchOperationResult
     {
         assert($batchOperation->id !== null);
 
-        $dns->edit($batchOperation->id, $batchOperation->data);
+        /** @var array{name?: string, type?: string, content?: string, ttl?: int|string, prio?: int|string, notes?: string} $data */
+        $data = $batchOperation->data;
 
-        return BatchOperationResult::success('edit', recordId: $batchOperation->id);
+        $dns->update(
+            $batchOperation->id,
+            (string) ($data['name'] ?? ''),
+            (string) ($data['type'] ?? ''),
+            (string) ($data['content'] ?? ''),
+            (int) ($data['ttl'] ?? 600),
+            (int) ($data['prio'] ?? 0),
+            (string) ($data['notes'] ?? ''),
+        );
+
+        return BatchOperationResult::success('update', recordId: $batchOperation->id);
     }
 
     private function executeDelete(Dns $dns, BatchOperation $batchOperation): BatchOperationResult

@@ -9,12 +9,26 @@ use Override;
 
 final readonly class SslCertificate implements JsonSerializable
 {
+    public string $fullChain;
+
+    public bool $hasCertificate;
+
+    public bool $hasPrivateKey;
+
+    public bool $hasIntermediateCertificate;
+
     public function __construct(
         public string $certificateChain,
         public string $privateKey,
         public string $publicKey,
         public ?string $intermediateCertificate = null,
     ) {
+        $this->fullChain = ($this->intermediateCertificate !== null && $this->intermediateCertificate !== '')
+            ? $this->certificateChain . "\n" . $this->intermediateCertificate
+            : $this->certificateChain;
+        $this->hasCertificate = $this->certificateChain !== '';
+        $this->hasPrivateKey = $this->privateKey !== '';
+        $this->hasIntermediateCertificate = $this->intermediateCertificate !== null && $this->intermediateCertificate !== '';
     }
 
     public static function fromArray(array $data): self
@@ -23,32 +37,8 @@ final readonly class SslCertificate implements JsonSerializable
             certificateChain: (string) ($data['certificatechain'] ?? ''),
             privateKey: (string) ($data['privatekey'] ?? ''),
             publicKey: (string) ($data['publickey'] ?? ''),
-            intermediateCertificate: $data['intermediatecertificate'] ?? null,
+            intermediateCertificate: isset($data['intermediatecertificate']) ? (string) $data['intermediatecertificate'] : null,
         );
-    }
-
-    public function getFullChain(): string
-    {
-        if ($this->intermediateCertificate !== null && $this->intermediateCertificate !== '') {
-            return $this->certificateChain . "\n" . $this->intermediateCertificate;
-        }
-
-        return $this->certificateChain;
-    }
-
-    public function hasCertificate(): bool
-    {
-        return $this->certificateChain !== '';
-    }
-
-    public function hasPrivateKey(): bool
-    {
-        return $this->privateKey !== '';
-    }
-
-    public function hasIntermediateCertificate(): bool
-    {
-        return $this->intermediateCertificate !== null && $this->intermediateCertificate !== '';
     }
 
     public function toArray(): array

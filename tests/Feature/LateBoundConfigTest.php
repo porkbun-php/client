@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Nyholm\Psr7\Factory\Psr17Factory;
 use Porkbun\Client;
 use Porkbun\DTO\DnsRecordCollection;
 use Porkbun\DTO\PingResult;
@@ -46,8 +45,7 @@ test('cached domain uses credentials added after creation', function (): void {
             ]));
         });
 
-    $factory = new Psr17Factory();
-    $client = new Client($mock, $factory, $factory);
+    $client = new Client($mock);
 
     $domain = $client->domain('example.com');
     $dns = $domain->dns();
@@ -81,8 +79,7 @@ test('cached domain uses endpoint changed after creation', function (): void {
             ]));
         });
 
-    $factory = new Psr17Factory();
-    $client = new Client($mock, $factory, $factory);
+    $client = new Client($mock);
     $client->authenticate('pk1_key', 'sk1_secret');
 
     $domain = $client->domain('example.com');
@@ -116,17 +113,16 @@ test('ping uses current credentials after authenticate call', function (): void 
             ]));
         });
 
-    $factory = new Psr17Factory();
-    $client = new Client($mock, $factory, $factory);
+    $client = new Client($mock);
 
     $client->authenticate('pk1_key', 'sk1_secret');
     $pingResult = $client->ping();
 
     expect($pingResult)->toBeInstanceOf(PingResult::class);
-    expect($pingResult->ip())->toBe('203.0.113.42');
+    expect($pingResult->resolvedIp)->toBe('203.0.113.42');
 });
 
-test('getLastResponse resets to null after config change', function (): void {
+test('lastResponse resets to null after config change', function (): void {
     $mock = Mockery::mock(ClientInterface::class);
     $mock->shouldReceive('sendRequest')
         ->twice()
@@ -134,22 +130,21 @@ test('getLastResponse resets to null after config change', function (): void {
             'status' => 'SUCCESS', 'records' => [],
         ])));
 
-    $factory = new Psr17Factory();
-    $client = new Client($mock, $factory, $factory);
+    $client = new Client($mock);
     $client->authenticate('pk1_key', 'sk1_secret');
 
     $dns = $client->domain('example.com')->dns();
 
-    expect($dns->getLastResponse())->toBeNull();
+    expect($dns->lastResponse())->toBeNull();
 
     $dns->all();
-    expect($dns->getLastResponse())->not->toBeNull();
+    expect($dns->lastResponse())->not->toBeNull();
 
     $client->useIpv4Endpoint();
-    expect($dns->getLastResponse())->toBeNull();
+    expect($dns->lastResponse())->toBeNull();
 
     $dns->all();
-    expect($dns->getLastResponse())->not->toBeNull();
+    expect($dns->lastResponse())->not->toBeNull();
 });
 
 test('services cache preserves late-binding behavior', function (): void {
@@ -168,8 +163,7 @@ test('services cache preserves late-binding behavior', function (): void {
             ]));
         });
 
-    $factory = new Psr17Factory();
-    $client = new Client($mock, $factory, $factory);
+    $client = new Client($mock);
     $client->authenticate('pk1_key', 'sk1_secret');
 
     $domain = $client->domain('example.com');

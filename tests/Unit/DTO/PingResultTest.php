@@ -30,8 +30,8 @@ test('ip returns forwarded ip when available', function (): void {
         'yourIp' => '192.0.2.1',
     ]);
 
-    expect($pingResult->ip())->toBe('10.0.0.1')
-        ->and($withoutForwarded->ip())->toBe('192.0.2.1');
+    expect($pingResult->resolvedIp)->toBe('10.0.0.1')
+        ->and($withoutForwarded->resolvedIp)->toBe('192.0.2.1');
 });
 
 test('hasIp checks for non-empty yourIp', function (): void {
@@ -39,9 +39,9 @@ test('hasIp checks for non-empty yourIp', function (): void {
     $emptyIp = PingResult::fromArray(['yourIp' => '']);
     $nullIp = PingResult::fromArray([]);
 
-    expect($pingResult->hasIp())->toBeTrue()
-        ->and($emptyIp->hasIp())->toBeFalse()
-        ->and($nullIp->hasIp())->toBeFalse();
+    expect($pingResult->hasIp)->toBeTrue()
+        ->and($emptyIp->hasIp)->toBeFalse()
+        ->and($nullIp->hasIp)->toBeFalse();
 });
 
 test('hasForwardedIp checks for non-empty xForwardedFor', function (): void {
@@ -49,9 +49,9 @@ test('hasForwardedIp checks for non-empty xForwardedFor', function (): void {
     $emptyForwarded = PingResult::fromArray(['xForwardedFor' => '']);
     $withoutForwarded = PingResult::fromArray(['yourIp' => '192.0.2.1']);
 
-    expect($pingResult->hasForwardedIp())->toBeTrue()
-        ->and($emptyForwarded->hasForwardedIp())->toBeFalse()
-        ->and($withoutForwarded->hasForwardedIp())->toBeFalse();
+    expect($pingResult->hasForwardedIp)->toBeTrue()
+        ->and($emptyForwarded->hasForwardedIp)->toBeFalse()
+        ->and($withoutForwarded->hasForwardedIp)->toBeFalse();
 });
 
 test('toArray serializes correctly', function (): void {

@@ -9,6 +9,12 @@ use Override;
 
 final readonly class UrlForward implements JsonSerializable
 {
+    public bool $isPermanent;
+
+    public bool $isTemporary;
+
+    public bool $isRootDomain;
+
     public function __construct(
         public int $id,
         public string $subdomain,
@@ -17,6 +23,9 @@ final readonly class UrlForward implements JsonSerializable
         public bool $includePath,
         public bool $wildcard,
     ) {
+        $this->isPermanent = $this->type === 'permanent';
+        $this->isTemporary = $this->type === 'temporary';
+        $this->isRootDomain = $this->subdomain === '';
     }
 
     public static function fromArray(array $data): self
@@ -49,24 +58,9 @@ final readonly class UrlForward implements JsonSerializable
         return $this->toArray();
     }
 
-    public function isPermanent(): bool
+    public function fullUrl(string $domain): string
     {
-        return $this->type === 'permanent';
-    }
-
-    public function isTemporary(): bool
-    {
-        return $this->type === 'temporary';
-    }
-
-    public function isRootDomain(): bool
-    {
-        return $this->subdomain === '';
-    }
-
-    public function getFullUrl(string $domain): string
-    {
-        if ($this->isRootDomain()) {
+        if ($this->isRootDomain) {
             return $domain;
         }
 

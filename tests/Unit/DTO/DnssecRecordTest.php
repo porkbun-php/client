@@ -88,7 +88,7 @@ it('identifies algorithm names correctly', function (): void {
             digest: 'ABC',
         );
 
-        expect($record->getAlgorithmName())->toBe($expectedName);
+        expect($record->algorithmName)->toBe($expectedName);
     }
 });
 
@@ -108,7 +108,7 @@ it('identifies digest type names correctly', function (): void {
             digest: 'ABC',
         );
 
-        expect($record->getDigestTypeName())->toBe($expectedName);
+        expect($record->digestTypeName)->toBe($expectedName);
     }
 });
 
@@ -122,9 +122,9 @@ it('detects KSK and ZSK keys correctly', function (): void {
         flags: 257,
     );
 
-    expect($ksk->isKsk())->toBeTrue()
-        ->and($ksk->isZsk())->toBeFalse()
-        ->and($ksk->isSecureEntryPoint())->toBeTrue();
+    expect($ksk->isKsk)->toBeTrue()
+        ->and($ksk->isZsk)->toBeFalse()
+        ->and($ksk->isSecureEntryPoint)->toBeTrue();
 
     // ZSK (Zone Signing Key) - flags = 256
     $zsk = new DnssecRecord(
@@ -135,9 +135,9 @@ it('detects KSK and ZSK keys correctly', function (): void {
         flags: 256,
     );
 
-    expect($zsk->isKsk())->toBeFalse()
-        ->and($zsk->isZsk())->toBeTrue()
-        ->and($zsk->isSecureEntryPoint())->toBeFalse();
+    expect($zsk->isKsk)->toBeFalse()
+        ->and($zsk->isZsk)->toBeTrue()
+        ->and($zsk->isSecureEntryPoint)->toBeFalse();
 });
 
 it('identifies modern algorithms and digest types', function (): void {
@@ -148,8 +148,8 @@ it('identifies modern algorithms and digest types', function (): void {
         digest: 'ABC',
     );
 
-    expect($modernRecord->isModernAlgorithm())->toBeTrue()
-        ->and($modernRecord->isModernDigestType())->toBeTrue();
+    expect($modernRecord->isModernAlgorithm)->toBeTrue()
+        ->and($modernRecord->isModernDigestType)->toBeTrue();
 
     $legacyRecord = new DnssecRecord(
         keyTag: 2,
@@ -158,8 +158,8 @@ it('identifies modern algorithms and digest types', function (): void {
         digest: 'DEF',
     );
 
-    expect($legacyRecord->isModernAlgorithm())->toBeFalse()
-        ->and($legacyRecord->isModernDigestType())->toBeFalse();
+    expect($legacyRecord->isModernAlgorithm)->toBeFalse()
+        ->and($legacyRecord->isModernDigestType)->toBeFalse();
 });
 
 it('handles optional fields correctly', function (): void {

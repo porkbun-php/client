@@ -162,6 +162,7 @@ test('toArray omits null optional fields', function (): void {
     expect($array)->toBe([
         'domain' => 'example.com',
         'status' => 'ACTIVE',
+        'tld' => 'com',
     ]);
 });
 
@@ -197,7 +198,7 @@ test('isExpiringSoon with custom threshold', function (): void {
         ->and($domain->isExpiringSoon(60))->toBeTrue();
 });
 
-test('getTld returns explicit tld or extracts from domain', function (): void {
+test('tld is explicit or extracted from domain', function (): void {
     $withTld = new Domain(
         domain: 'example.com',
         status: 'ACTIVE',
@@ -208,6 +209,6 @@ test('getTld returns explicit tld or extracts from domain', function (): void {
         status: 'ACTIVE',
     );
 
-    expect($withTld->getTld())->toBe('com')
-        ->and($withoutTld->getTld())->toBe('uk');
+    expect($withTld->tld)->toBe('com')
+        ->and($withoutTld->tld)->toBe('uk');
 });

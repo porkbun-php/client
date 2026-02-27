@@ -40,16 +40,16 @@ test('integration - dns service batch operations', function (): void {
     $batch = new DnsBatchBuilder();
     $results = $batch
         ->addRecord('www', 'A', '192.0.2.1')
-        ->editRecord(456, ['ttl' => '7200'])
+        ->updateRecord(456, ['ttl' => '7200'])
         ->execute($dns);
 
     expect($results)->toHaveCount(2);
 
     expect($results[0])->toBeInstanceOf(BatchOperationResult::class)
-        ->and($results[0]->isSuccess())->toBeTrue();
+        ->and($results[0]->success)->toBeTrue();
 
     expect($results[1])->toBeInstanceOf(BatchOperationResult::class)
-        ->and($results[1]->isSuccess())->toBeTrue();
+        ->and($results[1]->success)->toBeTrue();
 });
 
 test('integration - pricing service with response objects', function (): void {
@@ -70,7 +70,7 @@ test('integration - pricing service with response objects', function (): void {
 
     expect($pricingCollection)->toBeInstanceOf(PricingCollection::class)
         ->and($pricingCollection->has('com'))->toBeTrue()
-        ->and($pricingCollection->get('com')?->registrationPrice)->toBe(8.68)
+        ->and($pricingCollection->find('com')?->registrationPrice)->toBe(8.68)
         ->and($pricingCollection->tlds())->toBe(['com', 'net']);
 });
 
@@ -93,7 +93,7 @@ test('integration - dns service with typed requests', function (): void {
 
     expect($createResult)->toBeInstanceOf(CreateResult::class)
         ->and($createResult->id)->toBe(789123)
-        ->and($createResult->hasValidId())->toBeTrue();
+        ->and($createResult->hasValidId)->toBeTrue();
 });
 
 test('integration - dns service all with response objects', function (): void {
@@ -115,11 +115,11 @@ test('integration - dns service all with response objects', function (): void {
     expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
         ->and($dnsRecordCollection->count())->toBe(2);
 
-    $record = $dnsRecordCollection->getRecordById(123);
+    $record = $dnsRecordCollection->find(123);
     expect($record)->not()->toBeNull();
     if ($record instanceof DnsRecord) {
         expect($record->name)->toBe('www');
     }
 
-    expect($dnsRecordCollection->getRecordsByType('A'))->toHaveCount(2);
+    expect($dnsRecordCollection->byType('A'))->toHaveCount(2);
 });

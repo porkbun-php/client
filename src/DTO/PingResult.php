@@ -9,33 +9,27 @@ use Override;
 
 final readonly class PingResult implements JsonSerializable
 {
+    public ?string $resolvedIp;
+
+    public bool $hasIp;
+
+    public bool $hasForwardedIp;
+
     public function __construct(
         public ?string $yourIp,
         public ?string $xForwardedFor,
     ) {
+        $this->resolvedIp = $this->xForwardedFor ?? $this->yourIp;
+        $this->hasIp = $this->yourIp !== null && $this->yourIp !== '';
+        $this->hasForwardedIp = $this->xForwardedFor !== null && $this->xForwardedFor !== '';
     }
 
     public static function fromArray(array $data): self
     {
         return new self(
-            yourIp: $data['yourIp'] ?? null,
-            xForwardedFor: $data['xForwardedFor'] ?? null,
+            yourIp: isset($data['yourIp']) ? (string) $data['yourIp'] : null,
+            xForwardedFor: isset($data['xForwardedFor']) ? (string) $data['xForwardedFor'] : null,
         );
-    }
-
-    public function ip(): ?string
-    {
-        return $this->xForwardedFor ?? $this->yourIp;
-    }
-
-    public function hasIp(): bool
-    {
-        return $this->yourIp !== null && $this->yourIp !== '';
-    }
-
-    public function hasForwardedIp(): bool
-    {
-        return $this->xForwardedFor !== null && $this->xForwardedFor !== '';
     }
 
     public function toArray(): array

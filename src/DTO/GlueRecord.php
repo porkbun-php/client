@@ -9,10 +9,33 @@ use Override;
 
 final readonly class GlueRecord implements JsonSerializable
 {
+    /** @var list<string> */
+    public array $ipv4Addresses;
+
+    /** @var list<string> */
+    public array $ipv6Addresses;
+
+    public bool $hasIpv4;
+
+    public bool $hasIpv6;
+
+    public int $ipCount;
+
     public function __construct(
         public string $host,
         public array $ips,
     ) {
+        $this->ipv4Addresses = array_values(array_filter(
+            $this->ips,
+            static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false
+        ));
+        $this->ipv6Addresses = array_values(array_filter(
+            $this->ips,
+            static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+        ));
+        $this->hasIpv4 = $this->ipv4Addresses !== [];
+        $this->hasIpv6 = $this->ipv6Addresses !== [];
+        $this->ipCount = count($this->ips);
     }
 
     public static function fromArray(array $data): self
@@ -52,39 +75,12 @@ final readonly class GlueRecord implements JsonSerializable
         return $this->toArray();
     }
 
-    public function hasIpv4(): bool
+    public function fullHostname(string $domain): string
     {
-        return array_any($this->ips, fn ($ip): bool => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false);
-    }
+        if ($this->host === '') {
+            return $domain;
+        }
 
-    public function hasIpv6(): bool
-    {
-        return array_any($this->ips, fn ($ip): bool => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false);
-    }
-
-    public function getIpv4Addresses(): array
-    {
-        return array_values(array_filter(
-            $this->ips,
-            static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false
-        ));
-    }
-
-    public function getIpv6Addresses(): array
-    {
-        return array_values(array_filter(
-            $this->ips,
-            static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
-        ));
-    }
-
-    public function getIpCount(): int
-    {
-        return count($this->ips);
-    }
-
-    public function getFullHostname(string $domain): string
-    {
         return "{$this->host}.{$domain}";
     }
 }

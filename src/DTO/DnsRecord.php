@@ -11,6 +11,8 @@ use Porkbun\Exception\InvalidArgumentException;
 
 final readonly class DnsRecord implements JsonSerializable
 {
+    public bool $isRootRecord;
+
     public function __construct(
         public int $id,
         public string $name,
@@ -20,6 +22,7 @@ final readonly class DnsRecord implements JsonSerializable
         public int $priority,
         public ?string $notes = null
     ) {
+        $this->isRootRecord = $this->name === '' || $this->name === '@';
     }
 
     public static function fromArray(array $data): self
@@ -53,11 +56,6 @@ final readonly class DnsRecord implements JsonSerializable
             'prio' => $this->priority,
             'notes' => $this->notes,
         ];
-    }
-
-    public function isRootRecord(): bool
-    {
-        return $this->name === '' || $this->name === '@';
     }
 
     #[Override]

@@ -63,9 +63,9 @@ test('isRootRecord detects root records', function (): void {
     $root2 = new DnsRecord(2, '@', DnsRecordType::A, '192.0.2.1', 600, 0);
     $subdomain = new DnsRecord(3, 'www', DnsRecordType::A, '192.0.2.1', 600, 0);
 
-    expect($root1->isRootRecord())->toBeTrue()
-        ->and($root2->isRootRecord())->toBeTrue()
-        ->and($subdomain->isRootRecord())->toBeFalse();
+    expect($root1->isRootRecord)->toBeTrue()
+        ->and($root2->isRootRecord)->toBeTrue()
+        ->and($subdomain->isRootRecord)->toBeFalse();
 });
 
 test('isType checks type with string', function (): void {
@@ -82,4 +82,32 @@ test('isType checks type with enum', function (): void {
 
     expect($record->isType(DnsRecordType::A))->toBeTrue()
         ->and($record->isType(DnsRecordType::MX))->toBeFalse();
+});
+
+test('it creates ALIAS record from array', function (): void {
+    $dnsRecord = DnsRecord::fromArray([
+        'id' => '100',
+        'name' => '',
+        'type' => 'ALIAS',
+        'content' => 'other.example.com',
+        'ttl' => '600',
+        'prio' => '0',
+    ]);
+
+    expect($dnsRecord->dnsRecordType)->toBe(DnsRecordType::ALIAS)
+        ->and($dnsRecord->content)->toBe('other.example.com');
+});
+
+test('it creates SSHFP record from array', function (): void {
+    $dnsRecord = DnsRecord::fromArray([
+        'id' => '101',
+        'name' => '',
+        'type' => 'SSHFP',
+        'content' => '1 2 abc123def456',
+        'ttl' => '600',
+        'prio' => '0',
+    ]);
+
+    expect($dnsRecord->dnsRecordType)->toBe(DnsRecordType::SSHFP)
+        ->and($dnsRecord->content)->toBe('1 2 abc123def456');
 });

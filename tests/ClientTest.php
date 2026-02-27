@@ -2,47 +2,37 @@
 
 declare(strict_types=1);
 
-use Nyholm\Psr7\Factory\Psr17Factory;
 use Porkbun\Api\Domains;
 use Porkbun\Api\Pricing;
 use Porkbun\Client;
 use Porkbun\Enum\Endpoint;
-use Porkbun\Exception\InvalidArgumentException;
 use Porkbun\Resource\Domain;
 use Psr\Http\Client\ClientInterface;
 
-test('client can be instantiated with PSR interfaces', function (): void {
+test('client can be instantiated with custom HTTP client', function (): void {
     $mock = Mockery::mock(ClientInterface::class);
-    $factory = new Psr17Factory();
 
-    $client = new Client($mock, $factory, $factory);
+    $client = new Client($mock);
 
     expect($client)->toBeInstanceOf(Client::class);
 });
 
-test('client can be created with static factory', function (): void {
-    $client = Client::create();
+test('client can be instantiated without arguments', function (): void {
+    $client = new Client();
 
     expect($client)->toBeInstanceOf(Client::class)
         ->and($client->isAuthenticated())->toBeFalse();
 });
 
-test('client can be created with authentication', function (): void {
-    $client = Client::create('pk1_key', 'sk1_secret');
+test('client can authenticate after construction', function (): void {
+    $client = new Client();
+    $client->authenticate('pk1_key', 'sk1_secret');
 
     expect($client->isAuthenticated())->toBeTrue();
 });
 
-test('client rejects partial authentication', function (): void {
-    expect(fn (): Client => Client::create('pk1_key'))
-        ->toThrow(InvalidArgumentException::class, 'Both apiKey and secretKey must be provided together');
-
-    expect(fn (): Client => Client::create(null, 'sk1_secret'))
-        ->toThrow(InvalidArgumentException::class, 'Both apiKey and secretKey must be provided together');
-});
-
 test('client can set and clear auth dynamically', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
     expect($client->isAuthenticated())->toBeFalse();
 
@@ -54,47 +44,47 @@ test('client can set and clear auth dynamically', function (): void {
 });
 
 test('client provides API factories', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
     expect($client->pricing())->toBeInstanceOf(Pricing::class)
         ->and($client->domains())->toBeInstanceOf(Domains::class);
 });
 
 test('client provides domain facade', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
     $domain = $client->domain('example.com');
 
     expect($domain)->toBeInstanceOf(Domain::class)
-        ->and($domain->getName())->toBe('example.com');
+        ->and($domain->name)->toBe('example.com');
 });
 
 test('client can switch to ipv4 endpoint', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
-    expect($client->getEndpoint())->toBe(Endpoint::DEFAULT);
+    expect($client->endpoint)->toBe(Endpoint::DEFAULT);
 
     $client->useIpv4Endpoint();
-    expect($client->getEndpoint())->toBe(Endpoint::IPV4);
+    expect($client->endpoint)->toBe(Endpoint::IPV4);
 
     $client->useDefaultEndpoint();
-    expect($client->getEndpoint())->toBe(Endpoint::DEFAULT);
+    expect($client->endpoint)->toBe(Endpoint::DEFAULT);
 });
 
 test('client can use custom endpoint', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
     $client->useEndpoint(Endpoint::IPV4);
-    expect($client->getEndpoint())->toBe(Endpoint::IPV4);
+    expect($client->endpoint)->toBe(Endpoint::IPV4);
 });
 
 test('client cannot be cloned', function (): void {
-    $client = Client::create();
+    $client = new Client();
     expect(fn (): Client => clone $client)->toThrow(Error::class);
 });
 
 test('client endpoint methods are fluent', function (): void {
-    $client = Client::create();
+    $client = new Client();
 
     $result1 = $client->useIpv4Endpoint();
     expect($result1)->toBe($client);

@@ -22,9 +22,9 @@ abstract class AbstractApi
      * etc.) since the last request — configuration changes recreate the
      * underlying HTTP client.
      */
-    public function getLastResponse(): ?ResponseInterface
+    public function lastResponse(): ?ResponseInterface
     {
-        return $this->context->httpClient()->getLastResponse();
+        return $this->context->httpClient()->lastResponse;
     }
 
     protected function post(string $path, array $data = []): array

@@ -45,7 +45,7 @@ final class NameserverCollection implements Countable, IteratorAggregate, JsonSe
         return $this->nameservers[count($this->nameservers) - 1];
     }
 
-    public function contains(string $nameserver): bool
+    public function has(string $nameserver): bool
     {
         return in_array($nameserver, $this->nameservers, true);
     }

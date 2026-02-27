@@ -20,7 +20,6 @@ use Porkbun\Resource\Domain;
  * @method static Client useIpv4Endpoint()
  * @method static Client useDefaultEndpoint()
  * @method static Client useEndpoint(Endpoint $endpoint)
- * @method static Endpoint getEndpoint()
  * @method static Pricing pricing()
  * @method static PingResult ping()
  * @method static Domains domains()

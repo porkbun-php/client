@@ -120,9 +120,9 @@ test('hasPromoPrice detects promotional pricing', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'registration'],
     ]);
 
-    expect($availability->hasPromoPrice())->toBeTrue()
-        ->and($withoutPromo->hasPromoPrice())->toBeFalse()
-        ->and($noPrice->hasPromoPrice())->toBeFalse();
+    expect($availability->hasPromoPrice)->toBeTrue()
+        ->and($withoutPromo->hasPromoPrice)->toBeFalse()
+        ->and($noPrice->hasPromoPrice)->toBeFalse();
 });
 
 test('hasRenewalPromo detects renewal promotional pricing', function (): void {
@@ -145,8 +145,8 @@ test('hasRenewalPromo detects renewal promotional pricing', function (): void {
         ],
     ]);
 
-    expect($availability->hasRenewalPromo())->toBeTrue()
-        ->and($withoutPromo->hasRenewalPromo())->toBeFalse();
+    expect($availability->hasRenewalPromo)->toBeTrue()
+        ->and($withoutPromo->hasRenewalPromo)->toBeFalse();
 });
 
 test('hasTransferPromo detects transfer promotional pricing', function (): void {
@@ -169,8 +169,8 @@ test('hasTransferPromo detects transfer promotional pricing', function (): void 
         ],
     ]);
 
-    expect($availability->hasTransferPromo())->toBeTrue()
-        ->and($withoutPromo->hasTransferPromo())->toBeFalse();
+    expect($availability->hasTransferPromo)->toBeTrue()
+        ->and($withoutPromo->hasTransferPromo)->toBeFalse();
 });
 
 test('getPromoSavings calculates savings', function (): void {
@@ -181,8 +181,8 @@ test('getPromoSavings calculates savings', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'registration', 'price' => '12.99', 'regularPrice' => '12.99'],
     ]);
 
-    expect($availability->getPromoSavings())->toBe(7.0)
-        ->and($noPromo->getPromoSavings())->toBeNull();
+    expect($availability->promoSavings)->toBe(7.0)
+        ->and($noPromo->promoSavings)->toBeNull();
 });
 
 test('getEffectivePrice returns price or regular price', function (): void {
@@ -196,9 +196,9 @@ test('getEffectivePrice returns price or regular price', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'registration'],
     ]);
 
-    expect($availability->getEffectivePrice())->toBe(5.99)
-        ->and($onlyRegular->getEffectivePrice())->toBe(12.99)
-        ->and($noPrice->getEffectivePrice())->toBeNull();
+    expect($availability->effectivePrice)->toBe(5.99)
+        ->and($onlyRegular->effectivePrice)->toBe(12.99)
+        ->and($noPrice->effectivePrice)->toBeNull();
 });
 
 test('hasRateLimitInfo checks for limit data', function (): void {
@@ -210,8 +210,8 @@ test('hasRateLimitInfo checks for limit data', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'registration'],
     ]);
 
-    expect($availability->hasRateLimitInfo())->toBeTrue()
-        ->and($noLimits->hasRateLimitInfo())->toBeFalse();
+    expect($availability->hasRateLimitInfo)->toBeTrue()
+        ->and($noLimits->hasRateLimitInfo)->toBeFalse();
 });
 
 test('getRemainingChecks calculates remaining', function (): void {
@@ -220,7 +220,7 @@ test('getRemainingChecks calculates remaining', function (): void {
         'limits' => ['limit' => 100, 'used' => 25],
     ]);
 
-    expect($availability->getRemainingChecks())->toBe(75);
+    expect($availability->remainingChecks)->toBe(75);
 });
 
 test('getRemainingChecks returns null without limits', function (): void {
@@ -228,7 +228,7 @@ test('getRemainingChecks returns null without limits', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'registration'],
     ]);
 
-    expect($availability->getRemainingChecks())->toBeNull();
+    expect($availability->remainingChecks)->toBeNull();
 });
 
 test('getRateLimitUsagePercentage calculates percentage', function (): void {
@@ -237,7 +237,7 @@ test('getRateLimitUsagePercentage calculates percentage', function (): void {
         'limits' => ['limit' => 100, 'used' => 25],
     ]);
 
-    expect($availability->getRateLimitUsagePercentage())->toBe(25.0);
+    expect($availability->rateLimitUsagePercentage)->toBe(25.0);
 });
 
 test('getRateLimitUsagePercentage handles zero limit', function (): void {
@@ -246,7 +246,7 @@ test('getRateLimitUsagePercentage handles zero limit', function (): void {
         'limits' => ['limit' => 0, 'used' => 0],
     ]);
 
-    expect($availability->getRateLimitUsagePercentage())->toBeNull();
+    expect($availability->rateLimitUsagePercentage)->toBeNull();
 });
 
 test('isRateLimitNearExhausted detects high usage', function (): void {
@@ -259,8 +259,8 @@ test('isRateLimitNearExhausted detects high usage', function (): void {
         'limits' => ['limit' => 100, 'used' => 50],
     ]);
 
-    expect($availability->isRateLimitNearExhausted())->toBeTrue()
-        ->and($low->isRateLimitNearExhausted())->toBeFalse();
+    expect($availability->isRateLimitNearExhausted)->toBeTrue()
+        ->and($low->isRateLimitNearExhausted)->toBeFalse();
 });
 
 test('isAvailableAndAffordable checks both conditions', function (): void {
@@ -274,9 +274,9 @@ test('isAvailableAndAffordable checks both conditions', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'registration', 'price' => '50.00'],
     ]);
 
-    expect($availability->isAvailableAndAffordable(10.0))->toBeTrue()
-        ->and($unavailable->isAvailableAndAffordable(10.0))->toBeFalse()
-        ->and($expensive->isAvailableAndAffordable(10.0))->toBeFalse();
+    expect($availability->isAffordable(10.0))->toBeTrue()
+        ->and($unavailable->isAffordable(10.0))->toBeFalse()
+        ->and($expensive->isAffordable(10.0))->toBeFalse();
 });
 
 test('toArray serializes data correctly', function (): void {

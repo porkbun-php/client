@@ -9,14 +9,14 @@ test('endpoint has correct urls', function (): void {
         ->and(Endpoint::IPV4->value)->toBe('https://api-ipv4.porkbun.com/api/json/v3');
 });
 
-test('getUrl returns endpoint value', function (): void {
-    expect(Endpoint::DEFAULT->getUrl())->toBe('https://api.porkbun.com/api/json/v3')
-        ->and(Endpoint::IPV4->getUrl())->toBe('https://api-ipv4.porkbun.com/api/json/v3');
+test('url returns endpoint value', function (): void {
+    expect(Endpoint::DEFAULT->url())->toBe('https://api.porkbun.com/api/json/v3')
+        ->and(Endpoint::IPV4->url())->toBe('https://api-ipv4.porkbun.com/api/json/v3');
 });
 
-test('getType returns type name', function (): void {
-    expect(Endpoint::DEFAULT->getType())->toBe('default')
-        ->and(Endpoint::IPV4->getType())->toBe('ipv4');
+test('type returns type name', function (): void {
+    expect(Endpoint::DEFAULT->type())->toBe('default')
+        ->and(Endpoint::IPV4->type())->toBe('ipv4');
 });
 
 test('fromUrl finds endpoint by url', function (): void {
@@ -43,8 +43,8 @@ test('fromType returns null for unknown type', function (): void {
     expect(Endpoint::fromType('unknown'))->toBeNull();
 });
 
-test('getAll returns all endpoints', function (): void {
-    $all = Endpoint::getAll();
+test('all returns all endpoints', function (): void {
+    $all = Endpoint::all();
 
     expect($all)->toBe([
         'default' => 'https://api.porkbun.com/api/json/v3',
@@ -62,8 +62,8 @@ test('isKnownUrl checks if url is known', function (): void {
         ->and(Endpoint::isKnownUrl('https://unknown.example.com'))->toBeFalse();
 });
 
-test('getTypeFromUrl returns type or custom', function (): void {
-    expect(Endpoint::getTypeFromUrl('https://api.porkbun.com/api/json/v3'))->toBe('default')
-        ->and(Endpoint::getTypeFromUrl('https://api-ipv4.porkbun.com/api/json/v3'))->toBe('ipv4')
-        ->and(Endpoint::getTypeFromUrl('https://custom.example.com'))->toBe('custom');
+test('typeFromUrl returns type or custom', function (): void {
+    expect(Endpoint::typeFromUrl('https://api.porkbun.com/api/json/v3'))->toBe('default')
+        ->and(Endpoint::typeFromUrl('https://api-ipv4.porkbun.com/api/json/v3'))->toBe('ipv4')
+        ->and(Endpoint::typeFromUrl('https://custom.example.com'))->toBe('custom');
 });

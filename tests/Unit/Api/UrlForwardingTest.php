@@ -36,7 +36,7 @@ test('url forwarding api can get all forwards', function (): void {
         ->and($last->subdomain)->toBe('blog');
 });
 
-test('url forwarding api can add forward', function (): void {
+test('url forwarding api can create forward', function (): void {
     $mock = Mockery::mock(ClientInterface::class);
 
     $mock->shouldReceive('sendRequest')
@@ -47,7 +47,9 @@ test('url forwarding api can add forward', function (): void {
             $body = json_decode((string) $request->getBody(), true);
             expect($body)->toHaveKey('subdomain', 'www')
                 ->and($body)->toHaveKey('location', 'https://target.com')
-                ->and($body)->toHaveKey('type', 'temporary');
+                ->and($body)->toHaveKey('type', 'temporary')
+                ->and($body)->toHaveKey('includePath', 'no')
+                ->and($body)->toHaveKey('wildcard', 'no');
 
             return true;
         }))
@@ -56,11 +58,7 @@ test('url forwarding api can add forward', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $urlForwarding = new UrlForwarding(createMockContext($httpClient), 'example.com');
 
-    $urlForwarding->add([
-        'subdomain' => 'www',
-        'location' => 'https://target.com',
-        'type' => 'temporary',
-    ]);
+    $urlForwarding->create('https://target.com', 'temporary', subdomain: 'www');
 });
 
 test('url forwarding api can delete forward', function (): void {

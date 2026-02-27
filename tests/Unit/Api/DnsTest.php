@@ -7,8 +7,6 @@ use Porkbun\Builder\DnsRecordBuilder;
 use Porkbun\DTO\CreateResult;
 use Porkbun\DTO\DnsRecord;
 use Porkbun\DTO\DnsRecordCollection;
-use Porkbun\DTO\DnssecRecord;
-use Porkbun\DTO\DnssecRecordCollection;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
 
@@ -24,7 +22,7 @@ test('dns api can create record', function (): void {
 
     expect($createResult)->toBeInstanceOf(CreateResult::class)
         ->and($createResult->id)->toBe(123456)
-        ->and($createResult->hasValidId())->toBeTrue();
+        ->and($createResult->hasValidId)->toBeTrue();
 });
 
 test('dns api can create record from builder', function (): void {
@@ -82,8 +80,9 @@ test('dns api captures cloudflare status', function (): void {
 
     $dnsRecordCollection = $dns->all();
 
-    expect($dnsRecordCollection->getCloudflare())->toBe('enabled')
-        ->and($dnsRecordCollection->isCloudflareEnabled())->toBeTrue();
+    expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($dns->cloudflare)->toBe('enabled')
+        ->and($dns->isCloudflareEnabled)->toBeTrue();
 });
 
 test('dns api handles missing cloudflare status', function (): void {
@@ -101,8 +100,9 @@ test('dns api handles missing cloudflare status', function (): void {
 
     $dnsRecordCollection = $dns->all();
 
-    expect($dnsRecordCollection->getCloudflare())->toBeNull()
-        ->and($dnsRecordCollection->isCloudflareEnabled())->toBeFalse();
+    expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($dns->cloudflare)->toBeNull()
+        ->and($dns->isCloudflareEnabled)->toBeFalse();
 });
 
 test('dns api can find record by id', function (): void {
@@ -172,8 +172,8 @@ test('dns api findByType captures cloudflare status', function (): void {
     $dnsRecordCollection = $dns->findByType('TXT');
 
     expect($dnsRecordCollection->count())->toBe(2)
-        ->and($dnsRecordCollection->getCloudflare())->toBe('enabled')
-        ->and($dnsRecordCollection->isCloudflareEnabled())->toBeTrue();
+        ->and($dns->cloudflare)->toBe('enabled')
+        ->and($dns->isCloudflareEnabled)->toBeTrue();
 });
 
 test('dns api findByType with subdomain', function (): void {
@@ -203,10 +203,10 @@ test('dns api findByType with subdomain', function (): void {
 
     $first = $dnsRecordCollection->first();
     assert($first instanceof DnsRecord);
-    expect($first->name)->toBe('mail._domainkey.example.com');
+    expect($first->name)->toBe('mail._domainkey');
 });
 
-test('dns api can edit record', function (): void {
+test('dns api can update record', function (): void {
     $mock = Mockery::mock(ClientInterface::class);
 
     $mock->shouldReceive('sendRequest')
@@ -215,7 +215,12 @@ test('dns api can edit record', function (): void {
             expect((string) $request->getUri())->toContain('/dns/edit/example.com/123');
 
             $body = json_decode((string) $request->getBody(), true);
-            expect($body)->toHaveKey('content', '192.0.2.2');
+            expect($body)
+                ->toHaveKey('name', 'www')
+                ->toHaveKey('type', 'A')
+                ->toHaveKey('content', '192.0.2.2')
+                ->toHaveKey('ttl', '600')
+                ->toHaveKey('prio', '0');
 
             return true;
         }))
@@ -224,7 +229,59 @@ test('dns api can edit record', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->edit(123, ['content' => '192.0.2.2']);
+    $dns->update(123, 'www', 'A', '192.0.2.2');
+});
+
+test('dns api can update record with optional params', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)
+                ->toHaveKey('ttl', '3600')
+                ->toHaveKey('prio', '10')
+                ->toHaveKey('notes', 'Updated record');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dns->update(123, 'mail', 'MX', 'mail.example.com', ttl: 3600, prio: 10, notes: 'Updated record');
+});
+
+test('dns api can update record from builder', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            expect((string) $request->getUri())->toContain('/dns/edit/example.com/789');
+
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)
+                ->toHaveKey('name', 'api')
+                ->toHaveKey('type', 'A')
+                ->toHaveKey('content', '10.0.0.1')
+                ->toHaveKey('ttl', '7200');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dnsRecordBuilder = new DnsRecordBuilder()
+        ->name('api')
+        ->a('10.0.0.1')
+        ->ttl(7200);
+
+    $dns->updateFromBuilder(789, $dnsRecordBuilder);
 });
 
 test('dns api can update by type and name', function (): void {
@@ -235,6 +292,12 @@ test('dns api can update by type and name', function (): void {
         ->with(Mockery::on(function (RequestInterface $request): bool {
             expect((string) $request->getUri())->toContain('/dns/editByNameType/example.com/A/www');
 
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)
+                ->toHaveKey('content', '192.0.2.3')
+                ->toHaveKey('ttl', '600')
+                ->toHaveKey('prio', '0');
+
             return true;
         }))
         ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
@@ -242,7 +305,7 @@ test('dns api can update by type and name', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->update('A', 'www', ['content' => '192.0.2.3']);
+    $dns->updateByType('A', 'www', '192.0.2.3');
 });
 
 test('dns api can delete record', function (): void {
@@ -281,81 +344,6 @@ test('dns api can delete by type', function (): void {
     $dns->deleteByType('A', 'www');
 });
 
-test('dns api can create dnssec record', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-
-    $mock->shouldReceive('sendRequest')
-        ->once()
-        ->with(Mockery::on(function (RequestInterface $request): bool {
-            expect((string) $request->getUri())->toContain('/dns/createDnssecRecord/example.com');
-
-            return true;
-        }))
-        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
-
-    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
-    $dns = new Dns(createMockContext($httpClient), 'example.com');
-
-    $dns->createDnssec([
-        'keyTag' => '12345',
-        'alg' => '13',
-        'digestType' => '2',
-        'digest' => 'abc123',
-    ]);
-});
-
-test('dns api can get dnssec records', function (): void {
-    // Real API returns records as associative object keyed by keyTag
-    $mockClient = createMockHttpClient([
-        [
-            'status' => 'SUCCESS',
-            'records' => [
-                '2371' => [
-                    'keyTag' => '2371',
-                    'alg' => '13',
-                    'digestType' => '2',
-                    'digest' => '40A829ECBBC0ABBDD8DCB23526BE8FD25A2D6F49E70260BDB101A42AF6F35E07',
-                ],
-            ],
-        ],
-    ]);
-
-    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $dns = new Dns(createMockContext($httpClient), 'example.com');
-
-    $dnssecRecordCollection = $dns->getDnssecRecords();
-
-    expect($dnssecRecordCollection)->toBeInstanceOf(DnssecRecordCollection::class)
-        ->and($dnssecRecordCollection)->toHaveCount(1);
-
-    $record = $dnssecRecordCollection->first();
-    assert($record instanceof DnssecRecord);
-    expect($record->keyTag)->toBe(2371)
-        ->and($record->algorithm)->toBe(13)
-        ->and($record->digestType)->toBe(2)
-        ->and($record->digest)->toBe('40A829ECBBC0ABBDD8DCB23526BE8FD25A2D6F49E70260BDB101A42AF6F35E07')
-        ->and($record->getAlgorithmName())->toBe('ECDSAP256SHA256')
-        ->and($record->getDigestTypeName())->toBe('SHA-256');
-});
-
-test('dns api can delete dnssec record', function (): void {
-    $mock = Mockery::mock(ClientInterface::class);
-
-    $mock->shouldReceive('sendRequest')
-        ->once()
-        ->with(Mockery::on(function (RequestInterface $request): bool {
-            expect((string) $request->getUri())->toContain('/dns/deleteDnssecRecord/example.com/12345');
-
-            return true;
-        }))
-        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
-
-    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
-    $dns = new Dns(createMockContext($httpClient), 'example.com');
-
-    $dns->deleteDnssec('12345');
-});
-
 test('dns api provides record builder', function (): void {
     $mockClient = createMockHttpClient([]);
 
@@ -363,4 +351,98 @@ test('dns api provides record builder', function (): void {
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     expect($dns->record())->toBeInstanceOf(DnsRecordBuilder::class);
+});
+
+test('dns api all normalizes FQDN names', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'records' => [
+                ['id' => '1', 'name' => 'www.example.com', 'type' => 'A', 'content' => '192.0.2.1', 'ttl' => '600', 'prio' => '0'],
+                ['id' => '2', 'name' => 'example.com', 'type' => 'A', 'content' => '192.0.2.2', 'ttl' => '600', 'prio' => '0'],
+                ['id' => '3', 'name' => 'deep.sub.example.com', 'type' => 'CNAME', 'content' => 'target.com', 'ttl' => '600', 'prio' => '0'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dnsRecordCollection = $dns->all();
+
+    $first = $dnsRecordCollection->first();
+    assert($first instanceof DnsRecord);
+    expect($first->name)->toBe('www')
+        ->and($first->isRootRecord)->toBeFalse();
+
+    $items = iterator_to_array($dnsRecordCollection);
+    expect($items[1]->name)->toBe('')
+        ->and($items[1]->isRootRecord)->toBeTrue()
+        ->and($items[2]->name)->toBe('deep.sub');
+});
+
+test('dns api find normalizes FQDN name', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'records' => [
+                ['id' => '1', 'name' => 'www.example.com', 'type' => 'A', 'content' => '192.0.2.1', 'ttl' => '600', 'prio' => '0'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $record = $dns->find(1);
+
+    assert($record instanceof DnsRecord);
+    expect($record->name)->toBe('www');
+});
+
+test('dns api normalization is case-insensitive and handles trailing dots', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'records' => [
+                ['id' => '1', 'name' => 'WWW.Example.COM', 'type' => 'A', 'content' => '192.0.2.1', 'ttl' => '600', 'prio' => '0'],
+                ['id' => '2', 'name' => 'Example.COM.', 'type' => 'A', 'content' => '192.0.2.2', 'ttl' => '600', 'prio' => '0'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dnsRecordCollection = $dns->all();
+    $items = iterator_to_array($dnsRecordCollection);
+
+    expect($items[0]->name)->toBe('www')
+        ->and($items[1]->name)->toBe('')
+        ->and($items[1]->isRootRecord)->toBeTrue();
+});
+
+test('dns api findByType normalizes FQDN names', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'records' => [
+                ['id' => '1', 'name' => 'example.com', 'type' => 'A', 'content' => '192.0.2.1', 'ttl' => '600', 'prio' => '0'],
+                ['id' => '2', 'name' => 'www.example.com', 'type' => 'A', 'content' => '192.0.2.2', 'ttl' => '600', 'prio' => '0'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dnsRecordCollection = $dns->findByType('A');
+
+    $first = $dnsRecordCollection->first();
+    assert($first instanceof DnsRecord);
+    expect($first->name)->toBe('')
+        ->and($first->isRootRecord)->toBeTrue();
+
+    $items = iterator_to_array($dnsRecordCollection);
+    expect($items[1]->name)->toBe('www');
 });
