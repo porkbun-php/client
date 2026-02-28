@@ -9,6 +9,10 @@ use Override;
 
 final readonly class DomainRegistration implements JsonSerializable
 {
+    public float $costInDollars;
+
+    public float $balanceInDollars;
+
     public bool $hasLimits;
 
     public ?array $attemptsLimit;
@@ -27,6 +31,9 @@ final readonly class DomainRegistration implements JsonSerializable
         /** @var ?array{attempts?: array{limit: int, used: int}, success?: array{limit: int, used: int}} */
         public ?array $limits = null,
     ) {
+        $this->costInDollars = $this->cost / 100;
+        $this->balanceInDollars = $this->balance / 100;
+
         $this->hasLimits = $this->limits !== null && $this->limits !== [];
         $this->attemptsLimit = $this->limits['attempts'] ?? null;
         $this->successLimit = $this->limits['success'] ?? null;
@@ -57,18 +64,6 @@ final readonly class DomainRegistration implements JsonSerializable
             balance: (int) ($data['balance'] ?? 0),
             limits: isset($data['limits']) && is_array($data['limits']) ? $data['limits'] : null,
         );
-    }
-
-    /** Cost in dollars (e.g., 1108 cents = $11.08) */
-    public function costInDollars(): float
-    {
-        return $this->cost / 100;
-    }
-
-    /** Balance in dollars */
-    public function balanceInDollars(): float
-    {
-        return $this->balance / 100;
     }
 
     public function toArray(): array

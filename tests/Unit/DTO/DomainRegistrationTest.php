@@ -58,7 +58,7 @@ test('costInDollars converts cents to dollars', function (): void {
         'balance' => 0,
     ]);
 
-    expect($domainRegistration->costInDollars())->toBe(11.08);
+    expect($domainRegistration->costInDollars)->toBe(11.08);
 });
 
 test('balanceInDollars converts cents to dollars', function (): void {
@@ -69,7 +69,7 @@ test('balanceInDollars converts cents to dollars', function (): void {
         'balance' => 10000,
     ]);
 
-    expect($domainRegistration->balanceInDollars())->toBe(100.00);
+    expect($domainRegistration->balanceInDollars)->toBe(100.00);
 });
 
 test('remainingAttempts calculates correctly', function (): void {

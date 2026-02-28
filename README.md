@@ -100,8 +100,6 @@ $pricing->find('com')?->registrationPrice;  // float
 $pricing->find('com')?->renewalPrice;       // float
 $pricing->cheapest(10);                     // Top 10 cheapest TLDs
 $pricing->tlds();                           // All available TLD keys
-$pricing->first();                          // First PricingItem
-$pricing->last();                           // Last PricingItem
 ```
 
 ### Ping (Auth Test)
@@ -147,8 +145,8 @@ $result = $client->domain('newdomain.com')->register(868);
 
 $result->domain;                 // 'newdomain.com'
 $result->orderId;                // int
-$result->costInDollars();        // float
-$result->balanceInDollars();     // float
+$result->costInDollars;          // float
+$result->balanceInDollars;       // float
 ```
 
 ### DNS Records
@@ -164,9 +162,6 @@ $dns->all();                          // DnsRecordCollection
 $dns->find($recordId);               // DnsRecord or null
 $dns->findByType('A');                // DnsRecordCollection
 $dns->findByType('A', 'www');         // By type and subdomain
-$dns->all()->first();                 // First DnsRecord or null
-$dns->all()->last();                  // Last DnsRecord or null
-
 // Create (direct)
 $result = $dns->create('A', 'www', '192.0.2.1', ttl: 3600);
 echo "Created record: {$result->id}";
@@ -199,7 +194,7 @@ $dns->updateByType('A', 'www', '192.0.2.3');
 $dns->delete($recordId);
 $dns->deleteByType('A', 'old-subdomain');
 
-// Collection helpers
+// Collection helpers (all collections support first(), last(), count())
 $records = $dns->all();
 $records->byType('MX');
 $records->byName('www');
@@ -262,8 +257,6 @@ $cert->hasIntermediateCertificate;  // bool
 $ns = $client->domain('example.com')->nameservers();
 
 $ns->all();              // NameserverCollection: ['ns1.porkbun.com', 'ns2.porkbun.com']
-$ns->all()->first();    // 'ns1.porkbun.com' or null
-$ns->all()->last();     // 'ns2.porkbun.com' or null
 $ns->update(['ns1.custom.com', 'ns2.custom.com']);
 ```
 
@@ -273,7 +266,6 @@ $ns->update(['ns1.custom.com', 'ns2.custom.com']);
 $forwards = $client->domain('example.com')->urlForwarding();
 
 $forwards->all();              // UrlForwardCollection
-$forwards->all()->first();    // UrlForward or null
 $forwards->create('https://destination.example.com', 'temporary', subdomain: 'go');
 $forwards->delete($recordId);
 ```
@@ -284,7 +276,6 @@ $forwards->delete($recordId);
 $glue = $client->domain('example.com')->glue();
 
 $glue->all();              // GlueRecordCollection
-$glue->all()->first();    // GlueRecord or null
 $glue->create('ns1', ['192.0.2.1', '192.0.2.2']);
 $glue->update('ns1', ['192.0.2.10']);
 $glue->delete('ns1');
