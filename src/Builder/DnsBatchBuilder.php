@@ -84,7 +84,7 @@ final class DnsBatchBuilder
     public function deleteByNameType(string|DnsRecordType $type, ?string $subdomain = null): self
     {
         $this->operations[] = BatchOperation::deleteByNameType(
-            $type instanceof DnsRecordType ? $type->value : $type,
+            DnsRecordType::resolve($type)->value,
             $subdomain,
         );
 

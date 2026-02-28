@@ -75,7 +75,7 @@ test('dns record builder validates record type', function (): void {
     $builder = new DnsRecordBuilder();
 
     expect(fn (): DnsRecordBuilder => $builder->type('INVALID'))
-        ->toThrow(InvalidArgumentException::class, 'Invalid record type: INVALID');
+        ->toThrow(InvalidArgumentException::class, 'Invalid DNS record type: INVALID');
 });
 
 test('dns record builder validates empty content', function (): void {

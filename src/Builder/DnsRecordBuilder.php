@@ -30,18 +30,8 @@ final class DnsRecordBuilder
     public function type(string|DnsRecordType $type): self
     {
         $clone = clone $this;
+        $clone->type = DnsRecordType::resolve($type);
 
-        if (is_string($type)) {
-            $enumValue = DnsRecordType::tryFrom(mb_strtoupper($type));
-            if (!$enumValue instanceof DnsRecordType) {
-                throw new InvalidArgumentException("Invalid record type: {$type}");
-            }
-            $clone->type = $enumValue;
-        } else {
-            $clone->type = $type;
-        }
-
-        // Re-validate existing content against the new type
         if ($clone->content !== null && !$clone->type->validateContent($clone->content)) {
             throw new InvalidArgumentException("Invalid content for {$clone->type->value} record: {$clone->content}");
         }

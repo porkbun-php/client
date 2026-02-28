@@ -59,8 +59,8 @@ final class Dns extends AbstractApi
 
     public function findByType(string|DnsRecordType $type, ?string $name = null): DnsRecordCollection
     {
-        $type = $type instanceof DnsRecordType ? $type->value : $type;
-        $endpoint = "/dns/retrieveByNameType/{$this->domain}/{$type}";
+        $resolvedType = DnsRecordType::resolve($type)->value;
+        $endpoint = "/dns/retrieveByNameType/{$this->domain}/{$resolvedType}";
         if ($name !== null) {
             $endpoint .= "/{$name}";
         }
@@ -90,7 +90,7 @@ final class Dns extends AbstractApi
     ): CreateResult {
         $data = [
             'name' => $name,
-            'type' => $type instanceof DnsRecordType ? $type->value : $type,
+            'type' => DnsRecordType::resolve($type)->value,
             'content' => $content,
             'ttl' => (string) $ttl,
             'prio' => (string) $priority,
@@ -130,7 +130,7 @@ final class Dns extends AbstractApi
     ): void {
         $data = [
             'name' => $name,
-            'type' => $type instanceof DnsRecordType ? $type->value : $type,
+            'type' => DnsRecordType::resolve($type)->value,
             'content' => $content,
             'ttl' => (string) $ttl,
             'prio' => (string) $priority,
@@ -159,8 +159,8 @@ final class Dns extends AbstractApi
         int $priority = 0,
         ?string $notes = null,
     ): void {
-        $type = $type instanceof DnsRecordType ? $type->value : $type;
-        $endpoint = "/dns/editByNameType/{$this->domain}/{$type}";
+        $resolvedType = DnsRecordType::resolve($type)->value;
+        $endpoint = "/dns/editByNameType/{$this->domain}/{$resolvedType}";
         if ($name !== null) {
             $endpoint .= "/{$name}";
         }
@@ -185,8 +185,8 @@ final class Dns extends AbstractApi
 
     public function deleteByType(string|DnsRecordType $type, ?string $name = null): void
     {
-        $type = $type instanceof DnsRecordType ? $type->value : $type;
-        $endpoint = "/dns/deleteByNameType/{$this->domain}/{$type}";
+        $resolvedType = DnsRecordType::resolve($type)->value;
+        $endpoint = "/dns/deleteByNameType/{$this->domain}/{$resolvedType}";
         if ($name !== null) {
             $endpoint .= "/{$name}";
         }

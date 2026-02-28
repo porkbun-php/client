@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Porkbun\Enum;
 
+use Porkbun\Exception\InvalidArgumentException;
+
 enum DnsRecordType: string
 {
     case A = 'A';
@@ -19,6 +21,16 @@ enum DnsRecordType: string
     case SVCB = 'SVCB';
     case ALIAS = 'ALIAS';
     case SSHFP = 'SSHFP';
+
+    public static function resolve(string|self $type): self
+    {
+        if ($type instanceof self) {
+            return $type;
+        }
+
+        return self::tryFrom(mb_strtoupper($type))
+            ?? throw new InvalidArgumentException("Invalid DNS record type: {$type}");
+    }
 
     public function requiresPriority(): bool
     {
