@@ -172,10 +172,7 @@ test('domain facade can register domain', function (): void {
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $domain = createDomainFacade('newdomain.com', $httpClient);
 
-    $domainRegistration = $domain->register(868, [
-        'years' => 1,
-        'addPrivacy' => true,
-    ]);
+    $domainRegistration = $domain->register(868);
 
     expect($domainRegistration)->toBeInstanceOf(DomainRegistration::class)
         ->and($domainRegistration->domain)->toBe('newdomain.com')

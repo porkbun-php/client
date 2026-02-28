@@ -143,18 +143,7 @@ $result->effectivePrice;        // float (promo price if available, else regular
 ### Domain Registration
 
 ```php
-$result = $client->domain('newdomain.com')->register(868, [
-    'years' => 1,
-    'addPrivacy' => true,
-    'coupon' => 'SAVE10',
-    'ns' => ['ns1.custom.com', 'ns2.custom.com'],
-    'whois' => [
-        'firstName' => 'John',
-        'lastName' => 'Doe',
-        'email' => 'john@example.com',
-        // ... other WHOIS fields
-    ],
-]);
+$result = $client->domain('newdomain.com')->register(868);
 
 $result->domain;                 // 'newdomain.com'
 $result->orderId;                // int

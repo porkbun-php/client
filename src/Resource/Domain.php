@@ -100,19 +100,10 @@ final class Domain
         return $api->get();
     }
 
-    /**
-     * @param array{
-     *     years?: int,
-     *     coupon?: string,
-     *     addPrivacy?: bool,
-     *     ns?: array<string>,
-     *     whois?: array<string, string>
-     * } $options
-     */
-    public function register(int $cost, array $options = []): DomainRegistration
+    public function register(int $cost): DomainRegistration
     {
         $api = $this->registrationApi ??= new RegistrationApi($this->clientContext, $this->name);
 
-        return $api->register($cost, $options);
+        return $api->register($cost);
     }
 }

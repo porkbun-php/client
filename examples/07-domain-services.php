@@ -91,9 +91,5 @@ try {
 }
 
 // Domain Registration (commented out — purchases a domain)
-// $result = $client->domain('newdomain.com')->register(868, [
-//     'years' => 1,
-//     'addPrivacy' => true,
-//     'ns' => ['ns1.custom.com', 'ns2.custom.com'],
-// ]);
+// $result = $client->domain('newdomain.com')->register(868);
 // echo "Registered: {$result->domain}, order #{$result->orderId}\n";
