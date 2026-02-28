@@ -73,12 +73,15 @@ jobs:
         run: composer update --${{ matrix.dependency-version }} --no-progress --no-interaction
 
       - name: Check code style
+        if: matrix.dependency-version == 'prefer-stable'
         run: composer run pint
 
       - name: Run static analysis
+        if: matrix.dependency-version == 'prefer-stable'
         run: composer run phpstan
 
       - name: Check rector
+        if: matrix.dependency-version == 'prefer-stable'
         run: composer run rector
 
       - name: Run tests
