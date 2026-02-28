@@ -22,8 +22,8 @@ $dns = $client->domain($domainName)->dns();
 // Mix builder and raw approaches in one batch
 $batch = new DnsBatchBuilder();
 $batch
-    ->add($dns->record()->name('www')->a('192.0.2.1')->ttl(3600))
-    ->add($dns->record()->name('mail')->mx('mail.example.com', 10))
+    ->add($dns->record()->a('192.0.2.1')->name('www')->ttl(3600))
+    ->add($dns->record()->mx('mail.example.com', 10)->name('mail'))
     ->addRecord('A', 'api', '192.0.2.2', ttl: 600);
 
 echo "Queued operations: {$batch->operationsCount()}\n";
@@ -37,9 +37,9 @@ echo "Queued operations: {$batch->operationsCount()}\n";
 $base = $dns->record()->ttl(3600)->notes('Load balancer');
 $lbBatch = new DnsBatchBuilder();
 $lbBatch
-    ->add($base->name('lb1')->a('10.0.1.1'))
-    ->add($base->name('lb2')->a('10.0.1.2'))
-    ->add($base->name('lb3')->a('10.0.1.3'));
+    ->add($base->a('10.0.1.1')->name('lb1'))
+    ->add($base->a('10.0.1.2')->name('lb2'))
+    ->add($base->a('10.0.1.3')->name('lb3'));
 
 echo "Load balancer batch: {$lbBatch->operationsCount()} operations\n";
 

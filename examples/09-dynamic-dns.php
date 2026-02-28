@@ -21,6 +21,10 @@ $client->authenticate($apiKey, $secretKey);
 // Use IPv4-only endpoint to get a deterministic IPv4 address
 $client->useIpv4Endpoint();
 $currentIp = $client->ping()->resolvedIp;
+if ($currentIp === null) {
+    echo "Could not resolve current IP address.\n";
+    exit(1);
+}
 echo "Current IPv4: {$currentIp}\n";
 
 $dns = $client->domain($domainName)->dns();

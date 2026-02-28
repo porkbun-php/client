@@ -41,9 +41,9 @@ $dns = $client->domain($domainName)->dns();
 
 // Immutable template pattern — $base is never mutated
 $base = $dns->record()->ttl(3600)->notes('Production');
-$web1 = $base->name('web1')->a('10.0.1.1');
-$web2 = $base->name('web2')->a('10.0.1.2');
-$mail = $base->name('mail')->mx('mail.example.com', 10);
+$web1 = $base->a('10.0.1.1')->name('web1');
+$web2 = $base->a('10.0.1.2')->name('web2');
+$mail = $base->mx('mail.example.com', 10)->name('mail');
 
 echo "Template-based records ready to create:\n";
 echo "  web1: {$web1->data()['content']} (TTL {$web1->data()['ttl']})\n";
