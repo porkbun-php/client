@@ -9,7 +9,7 @@ test('getPriceInCents returns price in cents', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'standard', 'price' => '8.68'],
     ]);
 
-    expect($availability->priceInCents())->toBe(868);
+    expect($availability->priceInCents)->toBe(868);
 });
 
 test('getPriceInCents returns null when no price', function (): void {
@@ -17,7 +17,7 @@ test('getPriceInCents returns null when no price', function (): void {
         'response' => ['avail' => 'no', 'type' => 'standard'],
     ]);
 
-    expect($availability->priceInCents())->toBeNull();
+    expect($availability->priceInCents)->toBeNull();
 });
 
 test('getPriceInCents handles fractional cents correctly', function (): void {
@@ -25,7 +25,7 @@ test('getPriceInCents handles fractional cents correctly', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'standard', 'price' => '12.345'],
     ]);
 
-    expect($availability->priceInCents())->toBe(1235);
+    expect($availability->priceInCents)->toBe(1235);
 });
 
 test('getPriceInCents falls back to regularPrice', function (): void {
@@ -33,5 +33,5 @@ test('getPriceInCents falls back to regularPrice', function (): void {
         'response' => ['avail' => 'yes', 'type' => 'standard', 'regularPrice' => '15.00'],
     ]);
 
-    expect($availability->priceInCents())->toBe(1500);
+    expect($availability->priceInCents)->toBe(1500);
 });

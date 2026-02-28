@@ -136,7 +136,7 @@ $result = $client->domain('example.com')->check();
 $result->isAvailable;           // bool
 $result->price;                 // float (registration price)
 $result->type;                  // 'standard', 'premium', etc.
-$result->priceInCents();        // int (e.g., 999 for $9.99)
+$result->priceInCents;          // int (e.g., 999 for $9.99)
 $result->effectivePrice;        // float (promo price if available, else regular)
 ```
 

@@ -11,6 +11,8 @@ final readonly class Availability implements JsonSerializable
 {
     public ?float $effectivePrice;
 
+    public ?int $priceInCents;
+
     public bool $hasPromoPrice;
 
     public bool $hasRenewalPromo;
@@ -45,6 +47,10 @@ final readonly class Availability implements JsonSerializable
         public ?string $limitNaturalLanguage = null,
     ) {
         $this->effectivePrice = $this->price ?? $this->regularPrice;
+
+        $this->priceInCents = $this->effectivePrice !== null
+            ? (int) round($this->effectivePrice * 100)
+            : null;
 
         $this->hasPromoPrice = $this->price !== null
             && $this->regularPrice !== null
@@ -100,15 +106,6 @@ final readonly class Availability implements JsonSerializable
             limitTtl: isset($limits['TTL']) ? (int) $limits['TTL'] : null,
             limitNaturalLanguage: isset($limits['naturalLanguage']) ? (string) $limits['naturalLanguage'] : null,
         );
-    }
-
-    public function priceInCents(): ?int
-    {
-        if ($this->effectivePrice === null) {
-            return null;
-        }
-
-        return (int) round($this->effectivePrice * 100);
     }
 
     public function isAffordable(float $maxBudget): bool
