@@ -81,8 +81,8 @@ final class Dns extends AbstractApi
     }
 
     public function create(
-        string $name,
         string|DnsRecordType $type,
+        string $name,
         string $content,
         int $ttl = 600,
         int $priority = 0,
@@ -121,8 +121,8 @@ final class Dns extends AbstractApi
 
     public function update(
         int $id,
-        string $name,
         string|DnsRecordType $type,
+        string $name,
         string $content,
         int $ttl = 600,
         int $priority = 0,

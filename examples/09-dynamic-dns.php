@@ -30,6 +30,6 @@ if ($existing->isNotEmpty()) {
     $dns->updateByType('A', $subdomain, $currentIp);
     echo "Updated {$subdomain}.{$domainName} -> {$currentIp}\n";
 } else {
-    $dns->create($subdomain, 'A', $currentIp, ttl: 600);
+    $dns->create('A', $subdomain, $currentIp, ttl: 600);
     echo "Created {$subdomain}.{$domainName} -> {$currentIp}\n";
 }

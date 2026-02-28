@@ -24,12 +24,12 @@ $batch = new DnsBatchBuilder();
 $batch
     ->add($dns->record()->name('www')->a('192.0.2.1')->ttl(3600))
     ->add($dns->record()->name('mail')->mx('mail.example.com', 10))
-    ->addRecord('api', 'A', '192.0.2.2', ttl: 600);
+    ->addRecord('A', 'api', '192.0.2.2', ttl: 600);
 
 echo "Queued operations: {$batch->operationsCount()}\n";
 
 // Edit and delete can also be batched
-// $batch->updateRecord($existingId, 'www', 'A', '192.0.2.100', ttl: 1800);
+// $batch->updateRecord($existingId, 'A', 'www', '192.0.2.100', ttl: 1800);
 // $batch->deleteRecord($oldRecordId);
 // $batch->deleteByNameType('A', 'deprecated-subdomain');
 

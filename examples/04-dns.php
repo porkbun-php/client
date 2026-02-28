@@ -56,11 +56,11 @@ echo "\nTXT records from API: " . count($txtRecords) . "\n";
 // $record = $dns->find(123456789);
 
 // Create a record (commented out — creates real DNS record)
-// $result = $dns->create('test', 'A', '192.0.2.1', ttl: 600, notes: 'Test record');
+// $result = $dns->create('A', 'test', '192.0.2.1', ttl: 600, notes: 'Test record');
 // echo "Created record ID: {$result->id}\n";
 
 // Update by ID (commented out — modifies real record)
-// $dns->update($recordId, 'test', 'A', '192.0.2.100', ttl: 1800);
+// $dns->update($recordId, 'A', 'test', '192.0.2.100', ttl: 1800);
 
 // Update all matching records by type and name (commented out)
 // $dns->updateByType('A', 'test', '192.0.2.200');

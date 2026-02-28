@@ -18,7 +18,7 @@ test('dns api can create record', function (): void {
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $createResult = $dns->create('www', 'A', '192.0.2.1', 3600);
+    $createResult = $dns->create('A', 'www', '192.0.2.1', 3600);
 
     expect($createResult)->toBeInstanceOf(CreateResult::class)
         ->and($createResult->id)->toBe(123456)
@@ -229,7 +229,7 @@ test('dns api can update record', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->update(123, 'www', 'A', '192.0.2.2');
+    $dns->update(123, 'A', 'www', '192.0.2.2');
 });
 
 test('dns api can update record with optional params', function (): void {
@@ -251,7 +251,7 @@ test('dns api can update record with optional params', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->update(123, 'mail', 'MX', 'mail.example.com', ttl: 3600, priority: 10, notes: 'Updated record');
+    $dns->update(123, 'MX', 'mail', 'mail.example.com', ttl: 3600, priority: 10, notes: 'Updated record');
 });
 
 test('dns api update sends empty string notes to clear them', function (): void {
@@ -271,7 +271,7 @@ test('dns api update sends empty string notes to clear them', function (): void 
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->update(123, 'www', 'A', '192.0.2.1', notes: '');
+    $dns->update(123, 'A', 'www', '192.0.2.1', notes: '');
 });
 
 test('dns api update omits notes when null', function (): void {
@@ -290,7 +290,7 @@ test('dns api update omits notes when null', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->update(123, 'www', 'A', '192.0.2.1');
+    $dns->update(123, 'A', 'www', '192.0.2.1');
 });
 
 test('dns api can update record from builder', function (): void {

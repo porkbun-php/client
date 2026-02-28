@@ -12,9 +12,9 @@ test('dns batch builder can add operations', function (): void {
     $batch = new DnsBatchBuilder();
 
     $batch
-        ->addRecord('www', 'A', '192.0.2.1')
-        ->addRecord('mail', 'MX', 'mail.example.com', 600, 10)
-        ->updateRecord(123, 'www', 'A', '192.0.2.2')
+        ->addRecord('A', 'www', '192.0.2.1')
+        ->addRecord('MX', 'mail', 'mail.example.com', 600, 10)
+        ->updateRecord(123, 'A', 'www', '192.0.2.2')
         ->deleteRecord(456)
         ->deleteByNameType('CNAME', 'old');
 
@@ -32,8 +32,8 @@ test('dns batch builder can execute operations', function (): void {
 
     $batch = new DnsBatchBuilder();
     $results = $batch
-        ->addRecord('www', 'A', '192.0.2.1')
-        ->updateRecord(123, 'www', 'A', '192.0.2.2')
+        ->addRecord('A', 'www', '192.0.2.1')
+        ->updateRecord(123, 'A', 'www', '192.0.2.2')
         ->execute($dns);
 
     expect($results)->toHaveCount(2);
@@ -58,7 +58,7 @@ test('dns batch builder handles errors gracefully', function (): void {
 
     $batch = new DnsBatchBuilder();
     $results = $batch
-        ->addRecord('www', 'A', '192.0.2.1')
+        ->addRecord('A', 'www', '192.0.2.1')
         ->execute($dns);
 
     expect($results)->toHaveCount(1);
@@ -78,7 +78,7 @@ test('dns batch builder clears operations after execute', function (): void {
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     $batch = new DnsBatchBuilder();
-    $batch->addRecord('www', 'A', '192.0.2.1');
+    $batch->addRecord('A', 'www', '192.0.2.1');
 
     expect($batch->operationsCount())->toBe(1);
 
@@ -88,7 +88,7 @@ test('dns batch builder clears operations after execute', function (): void {
 
 test('dns batch builder can rollback operations', function (): void {
     $batch = new DnsBatchBuilder();
-    $batch->addRecord('www', 'A', '192.0.2.1');
+    $batch->addRecord('A', 'www', '192.0.2.1');
 
     expect($batch->operationsCount())->toBe(1);
 
@@ -101,8 +101,8 @@ test('dns batch builder is fluent', function (): void {
 
     $dnsBatchBuilder = $batch
         ->add(new DnsRecordBuilder()->name('www')->a('192.0.2.1'))
-        ->addRecord('api', 'A', '192.0.2.2')
-        ->updateRecord(123, 'www', 'A', '192.0.2.1', ttl: 7200)
+        ->addRecord('A', 'api', '192.0.2.2')
+        ->updateRecord(123, 'A', 'www', '192.0.2.1', ttl: 7200)
         ->deleteRecord(456);
 
     expect($dnsBatchBuilder)->toBe($batch);
@@ -135,8 +135,8 @@ test('dns batch builder add method mixed with raw methods', function (): void {
 
     $batch
         ->add(new DnsRecordBuilder()->name('www')->a('192.0.2.1'))
-        ->addRecord('api', 'A', '192.0.2.2')
-        ->updateRecord(123, 'api', 'A', '10.0.0.1')
+        ->addRecord('A', 'api', '192.0.2.2')
+        ->updateRecord(123, 'A', 'api', '10.0.0.1')
         ->add(new DnsRecordBuilder()->name('_dmarc')->txt('v=DMARC1; p=reject'))
         ->deleteRecord(456);
 

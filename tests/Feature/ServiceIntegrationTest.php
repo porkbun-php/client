@@ -26,7 +26,7 @@ test('service integration - dns service full workflow', function (): void {
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $createResult = $dns->create('www', 'A', '192.0.2.1', 3600);
+    $createResult = $dns->create('A', 'www', '192.0.2.1', 3600);
     expect($createResult)->toBeInstanceOf(CreateResult::class)
         ->and($createResult->id)->toBe(123456);
 
@@ -34,7 +34,7 @@ test('service integration - dns service full workflow', function (): void {
     expect($dnsRecordCollection)->toBeInstanceOf(DnsRecordCollection::class)
         ->and($dnsRecordCollection->isNotEmpty())->toBeTrue();
 
-    $dns->update(123456, 'www', 'A', '192.0.2.2');
+    $dns->update(123456, 'A', 'www', '192.0.2.2');
 
     $dns->delete(123456);
 });

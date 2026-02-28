@@ -39,8 +39,8 @@ test('integration - dns service batch operations', function (): void {
 
     $batch = new DnsBatchBuilder();
     $results = $batch
-        ->addRecord('www', 'A', '192.0.2.1')
-        ->updateRecord(456, 'www', 'A', '192.0.2.1', ttl: 7200)
+        ->addRecord('A', 'www', '192.0.2.1')
+        ->updateRecord(456, 'A', 'www', '192.0.2.1', ttl: 7200)
         ->execute($dns);
 
     expect($results)->toHaveCount(2);
@@ -83,8 +83,8 @@ test('integration - dns service with typed requests', function (): void {
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
     $createResult = $dns->create(
-        'api',
         'A',
+        'api',
         '198.51.100.1',
         7200,
         0,

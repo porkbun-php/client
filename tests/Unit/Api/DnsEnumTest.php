@@ -31,7 +31,7 @@ test('create accepts DnsRecordType enum', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_test', 'sk1_test');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $createResult = $dns->create('www', DnsRecordType::A, '192.0.2.1');
+    $createResult = $dns->create(DnsRecordType::A, 'www', '192.0.2.1');
 
     expect($createResult->id)->toBe(12345);
 });

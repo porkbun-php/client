@@ -168,31 +168,31 @@ $dns->all()->first();                 // First DnsRecord or null
 $dns->all()->last();                  // Last DnsRecord or null
 
 // Create (direct)
-$result = $dns->create('www', 'A', '192.0.2.1', ttl: 3600);
+$result = $dns->create('A', 'www', '192.0.2.1', ttl: 3600);
 echo "Created record: {$result->id}";
 
 // Create (builder - recommended)
 $result = $dns->createFromBuilder(
     $dns->record()
-        ->name('api')
         ->a('192.0.2.2')
+        ->name('api')
         ->ttl(3600)
         ->notes('API server')
 );
 
 // Builder convenience methods
-$dns->record()->name('mail')->mx('mail.provider.com', priority: 10);
-$dns->record()->name('_dmarc')->txt('v=DMARC1; p=reject');
-$dns->record()->name('blog')->cname('blog.provider.com');
-$dns->record()->name('app')->aaaa('2001:db8::1');
+$dns->record()->mx('mail.provider.com', priority: 10)->name('mail');
+$dns->record()->txt('v=DMARC1; p=reject')->name('_dmarc');
+$dns->record()->cname('blog.provider.com')->name('blog');
+$dns->record()->aaaa('2001:db8::1')->name('app');
 
 // Enum types are also accepted
 use Porkbun\Enum\DnsRecordType;
 $dns->findByType(DnsRecordType::A);
-$dns->create('www', DnsRecordType::A, '192.0.2.1');
+$dns->create(DnsRecordType::A, 'www', '192.0.2.1');
 
 // Update
-$dns->update($recordId, 'www', 'A', '192.0.2.3');
+$dns->update($recordId, 'A', 'www', '192.0.2.3');
 $dns->updateByType('A', 'www', '192.0.2.3');
 
 // Delete
@@ -227,9 +227,9 @@ $dns = $client->domain('example.com')->dns();
 $batch = new DnsBatchBuilder();
 
 $results = $batch
-    ->addRecord('www', 'A', '192.0.2.1')
-    ->addRecord('api', 'A', '192.0.2.2')
-    ->updateRecord($existingId, 'www', 'A', '192.0.2.3', ttl: 3600)
+    ->addRecord('A', 'www', '192.0.2.1')
+    ->addRecord('A', 'api', '192.0.2.2')
+    ->updateRecord($existingId, 'A', 'www', '192.0.2.3', ttl: 3600)
     ->deleteRecord($oldRecordId)
     ->execute($dns);
 

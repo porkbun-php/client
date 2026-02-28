@@ -24,8 +24,8 @@ final class DnsBatchBuilder
     }
 
     public function addRecord(
-        string $name,
         string|DnsRecordType $type,
+        string $name,
         string $content,
         int $ttl = 600,
         int $priority = 0,
@@ -50,8 +50,8 @@ final class DnsBatchBuilder
 
     public function updateRecord(
         int $recordId,
-        string $name,
         string|DnsRecordType $type,
+        string $name,
         string $content,
         int $ttl = 600,
         int $priority = 0,
@@ -134,8 +134,8 @@ final class DnsBatchBuilder
         $data = $batchOperation->data;
 
         $createResult = $dns->create(
-            (string) $data['name'],
             (string) $data['type'],
+            (string) $data['name'],
             (string) $data['content'],
             (int) $data['ttl'],
             (int) $data['prio'],
@@ -154,8 +154,8 @@ final class DnsBatchBuilder
 
         $dns->update(
             $batchOperation->id,
-            $data['name'],
             $data['type'],
+            $data['name'],
             $data['content'],
             (int) $data['ttl'],
             (int) $data['prio'],

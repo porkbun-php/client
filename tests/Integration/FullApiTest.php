@@ -195,7 +195,7 @@ test('dns: full CRUD lifecycle', function () use ($domainResource): void {
     }
 
     // --- Create via direct method ---
-    $createResult = $dns->create('_test-integ', 'TXT', 'porkbun-php-test-direct', 600);
+    $createResult = $dns->create('TXT', '_test-integ', 'porkbun-php-test-direct', 600);
 
     expect($createResult)->toBeInstanceOf(CreateResult::class)
         ->and($createResult->id)->toBeGreaterThan(0)
@@ -222,7 +222,7 @@ test('dns: full CRUD lifecycle', function () use ($domainResource): void {
     expect($found)->not->toBeNull();
 
     // --- Edit by ID (Porkbun requires name, type, content in edit payload) ---
-    $dns->update($recordId, '_test-integ', 'TXT', 'porkbun-php-test-edited', ttl: 300);
+    $dns->update($recordId, 'TXT', '_test-integ', 'porkbun-php-test-edited', ttl: 300);
 
     $edited = $dns->find($recordId);
     expect($edited->content)->toBe('porkbun-php-test-edited')
@@ -266,7 +266,7 @@ test('dns: update by type/name', function () use ($domainResource): void {
     $dns = $domainResource->dns();
 
     // Create a record to update
-    $createResult = $dns->create('_test-update', 'TXT', 'before-update', 600);
+    $createResult = $dns->create('TXT', '_test-update', 'before-update', 600);
     $recordId = $createResult->id;
 
     try {
