@@ -164,12 +164,6 @@ test('domain: details returns domain DTO with metadata', function () use ($domai
         ->and($details->securityLock)->toBeBool()
         ->and($details->whoisPrivacy)->toBeBool()
         ->and($details->expireDate)->toBeInstanceOf(DateTimeImmutable::class);
-
-    // get() is an alias and returns the same data
-    $get = $domainResource->get();
-    expect($get)->toBeInstanceOf(Domain::class)
-        ->and($get->domain)->toBe($domain)
-        ->and($get->status)->toBe($details->status);
 })->group('integration');
 
 test('domains: allPages generator yields domains', function () use ($client, $domain): void {
@@ -214,7 +208,7 @@ test('dns: full CRUD lifecycle', function () use ($domainResource): void {
 
     expect($record)->toBeInstanceOf(DnsRecord::class)
         ->and($record->id)->toBe($recordId)
-        ->and($record->dnsRecordType)->toBe(DnsRecordType::TXT)
+        ->and($record->type)->toBe(DnsRecordType::TXT)
         ->and($record->content)->toBe('porkbun-php-test-direct')
         ->and($record->ttl)->toBe(600);
 
@@ -277,7 +271,7 @@ test('dns: update by type/name', function () use ($domainResource): void {
 
     try {
         // Update by type + name
-        $dns->updateByType('TXT', '_test-update', 'after-update');
+        $dns->updateByType('TXT', 'after-update', '_test-update');
 
         $updated = $dns->find($recordId);
         expect($updated->content)->toBe('after-update');
@@ -298,7 +292,7 @@ test('dns: all() returns collection', function () use ($domainResource): void {
     foreach ($all as $record) {
         expect($record)->toBeInstanceOf(DnsRecord::class)
             ->and($record->id)->toBeGreaterThan(0)
-            ->and($record->dnsRecordType)->toBeInstanceOf(DnsRecordType::class);
+            ->and($record->type)->toBeInstanceOf(DnsRecordType::class);
     }
 })->group('integration');
 

@@ -6,6 +6,7 @@ namespace Porkbun\Builder;
 
 use Porkbun\Api\Dns;
 use Porkbun\DTO\BatchOperationResult;
+use Porkbun\Enum\DnsRecordType;
 use Porkbun\Exception\PorkbunApiException;
 use Porkbun\Internal\BatchOperation;
 use Porkbun\Internal\BatchOperationType;
@@ -24,7 +25,7 @@ final class DnsBatchBuilder
 
     public function addRecord(
         string $name,
-        string $type,
+        string|DnsRecordType $type,
         string $content,
         int $ttl = 600,
         int $priority = 0,
@@ -50,7 +51,7 @@ final class DnsBatchBuilder
     public function updateRecord(
         int $recordId,
         string $name,
-        string $type,
+        string|DnsRecordType $type,
         string $content,
         int $ttl = 600,
         int $priority = 0,
@@ -80,9 +81,12 @@ final class DnsBatchBuilder
         return $this;
     }
 
-    public function deleteByNameType(string $type, ?string $subdomain = null): self
+    public function deleteByNameType(string|DnsRecordType $type, ?string $subdomain = null): self
     {
-        $this->operations[] = BatchOperation::deleteByNameType($type, $subdomain);
+        $this->operations[] = BatchOperation::deleteByNameType(
+            $type instanceof DnsRecordType ? $type->value : $type,
+            $subdomain,
+        );
 
         return $this;
     }
@@ -135,7 +139,7 @@ final class DnsBatchBuilder
             (string) $data['content'],
             (int) $data['ttl'],
             (int) $data['prio'],
-            (string) ($data['notes'] ?? '')
+            $data['notes'] ?? null,
         );
 
         return BatchOperationResult::success('create', recordId: $createResult->id);

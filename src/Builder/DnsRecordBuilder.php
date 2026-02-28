@@ -11,10 +11,10 @@ final class DnsRecordBuilder
 {
     public function __construct(
         private string $name = '',
-        private ?DnsRecordType $dnsRecordType = null,
+        private ?DnsRecordType $type = null,
         private ?string $content = null,
         private int $ttl = 600,
-        private int $prio = 0,
+        private int $priority = 0,
         private ?string $notes = null,
     ) {
     }
@@ -36,14 +36,14 @@ final class DnsRecordBuilder
             if (!$enumValue instanceof DnsRecordType) {
                 throw new InvalidArgumentException("Invalid record type: {$type}");
             }
-            $clone->dnsRecordType = $enumValue;
+            $clone->type = $enumValue;
         } else {
-            $clone->dnsRecordType = $type;
+            $clone->type = $type;
         }
 
         // Re-validate existing content against the new type
-        if ($clone->content !== null && !$clone->dnsRecordType->validateContent($clone->content)) {
-            throw new InvalidArgumentException("Invalid content for {$clone->dnsRecordType->value} record: {$clone->content}");
+        if ($clone->content !== null && !$clone->type->validateContent($clone->content)) {
+            throw new InvalidArgumentException("Invalid content for {$clone->type->value} record: {$clone->content}");
         }
 
         return $clone;
@@ -56,8 +56,8 @@ final class DnsRecordBuilder
         }
 
         // Validate content based on record type if type is set
-        if ($this->dnsRecordType instanceof DnsRecordType && !$this->dnsRecordType->validateContent($content)) {
-            throw new InvalidArgumentException("Invalid content for {$this->dnsRecordType->value} record: {$content}");
+        if ($this->type instanceof DnsRecordType && !$this->type->validateContent($content)) {
+            throw new InvalidArgumentException("Invalid content for {$this->type->value} record: {$content}");
         }
 
         $clone = clone $this;
@@ -85,7 +85,7 @@ final class DnsRecordBuilder
         }
 
         $clone = clone $this;
-        $clone->prio = $priority;
+        $clone->priority = $priority;
 
         return $clone;
     }
@@ -103,7 +103,7 @@ final class DnsRecordBuilder
      */
     public function data(): array
     {
-        if (!$this->dnsRecordType instanceof DnsRecordType) {
+        if (!$this->type instanceof DnsRecordType) {
             throw new InvalidArgumentException('Record type is required');
         }
 
@@ -113,10 +113,10 @@ final class DnsRecordBuilder
 
         $data = [
             'name' => $this->name,
-            'type' => $this->dnsRecordType->value,
+            'type' => $this->type->value,
             'content' => $this->content,
             'ttl' => (string) $this->ttl,
-            'prio' => (string) $this->prio,
+            'prio' => (string) $this->priority,
         ];
 
         if ($this->notes !== null) {

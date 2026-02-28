@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Porkbun\Api;
 
 use Generator;
+use Porkbun\DTO\AutoRenewResult;
 use Porkbun\DTO\Domain;
 use Porkbun\DTO\DomainCollection;
 use Porkbun\Exception\InvalidArgumentException;
@@ -56,19 +57,19 @@ final class Domains extends AbstractApi
         } while ($pageCount >= self::PAGE_SIZE);
     }
 
-    /** @return array<string, array{status: string, message?: string}> */
+    /** @return list<AutoRenewResult> */
     public function enableAutoRenew(string ...$domains): array
     {
         return $this->updateAutoRenew(true, ...$domains);
     }
 
-    /** @return array<string, array{status: string, message?: string}> */
+    /** @return list<AutoRenewResult> */
     public function disableAutoRenew(string ...$domains): array
     {
         return $this->updateAutoRenew(false, ...$domains);
     }
 
-    /** @return array<string, array{status: string, message?: string}> */
+    /** @return list<AutoRenewResult> */
     private function updateAutoRenew(bool $enable, string ...$domains): array
     {
         if ($domains === []) {
@@ -86,6 +87,9 @@ final class Domains extends AbstractApi
 
         $response = $this->post($endpoint, $data);
 
-        return $response['results'] ?? [];
+        /** @var array<string, array{status: string, message?: string}> $results */
+        $results = $response['results'] ?? [];
+
+        return AutoRenewResult::fromResults($results);
     }
 }

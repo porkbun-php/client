@@ -60,7 +60,7 @@ $domain = $client->domain('example.com');
 
 // List DNS records
 foreach ($domain->dns()->all() as $record) {
-    echo "{$record->name} {$record->dnsRecordType->value} {$record->content}\n";
+    echo "{$record->name} {$record->type->value} {$record->content}\n";
 }
 
 // Get SSL certificate
@@ -193,7 +193,7 @@ $dns->create('www', DnsRecordType::A, '192.0.2.1');
 
 // Update
 $dns->update($recordId, 'www', 'A', '192.0.2.3');
-$dns->updateByType('A', 'www', '192.0.2.3');
+$dns->updateByType('A', '192.0.2.3', 'www');
 
 // Delete
 $dns->delete($recordId);
@@ -204,7 +204,7 @@ $records = $dns->all();
 $records->byType('MX');
 $records->byName('www');
 $records->rootRecords;
-$records->byType('A')[0] ?? null;
+$records->byType('A')->first();
 
 ```
 

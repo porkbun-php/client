@@ -53,11 +53,6 @@ final class Domain
             ?? throw new ApiException("Domain '{$this->name}' not found in account");
     }
 
-    public function get(): DomainDto
-    {
-        return $this->details();
-    }
-
     public function dns(): Dns
     {
         return $this->dns ??= new Dns($this->clientContext, $this->name);

@@ -31,7 +31,7 @@ echo "DNS records for {$domainName}:\n";
 echo str_repeat('-', 60) . "\n";
 
 foreach ($records as $record) {
-    printf("%-20s %-6s %s\n", $record->name ?: '@', $record->dnsRecordType->value, $record->content);
+    printf("%-20s %-6s %s\n", $record->name ?: '@', $record->type->value, $record->content);
 }
 
 echo "\nTotal: " . count($records) . " records\n";
@@ -39,7 +39,7 @@ echo "\nTotal: " . count($records) . " records\n";
 // Collection helpers
 $aRecords = $records->byType('A');
 $rootRecords = $records->rootRecords;
-$firstMx = $records->byType('MX')[0] ?? null;
+$firstMx = $records->byType('MX')->first();
 echo "A records: " . count($aRecords) . ", root records: " . count($rootRecords) . "\n";
 if ($firstMx !== null) {
     echo "First MX: {$firstMx->content} (priority {$firstMx->priority})\n";
@@ -63,7 +63,7 @@ echo "\nTXT records from API: " . count($txtRecords) . "\n";
 // $dns->update($recordId, 'test', 'A', '192.0.2.100', ttl: 1800);
 
 // Update all matching records by type and name (commented out)
-// $dns->updateByType('A', 'test', '192.0.2.200');
+// $dns->updateByType('A', '192.0.2.200', 'test');
 
 // Delete by ID (commented out)
 // $dns->delete($recordId);

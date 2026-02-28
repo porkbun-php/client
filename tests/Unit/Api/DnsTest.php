@@ -251,7 +251,7 @@ test('dns api can update record with optional params', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->update(123, 'mail', 'MX', 'mail.example.com', ttl: 3600, prio: 10, notes: 'Updated record');
+    $dns->update(123, 'mail', 'MX', 'mail.example.com', ttl: 3600, priority: 10, notes: 'Updated record');
 });
 
 test('dns api update sends empty string notes to clear them', function (): void {
@@ -344,7 +344,7 @@ test('dns api can update by type and name', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->updateByType('A', 'www', '192.0.2.3');
+    $dns->updateByType('A', '192.0.2.3', 'www');
 });
 
 test('dns api can delete record', function (): void {

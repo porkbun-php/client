@@ -18,7 +18,7 @@ test('it creates dns record from array', function (): void {
 
     expect($dnsRecord->id)->toBe(123)
         ->and($dnsRecord->name)->toBe('www')
-        ->and($dnsRecord->dnsRecordType)->toBe(DnsRecordType::A)
+        ->and($dnsRecord->type)->toBe(DnsRecordType::A)
         ->and($dnsRecord->content)->toBe('192.0.2.1')
         ->and($dnsRecord->ttl)->toBe(3600)
         ->and($dnsRecord->priority)->toBe(0)
@@ -40,7 +40,7 @@ test('toArray serializes all fields', function (): void {
     $record = new DnsRecord(
         id: 456,
         name: 'mail',
-        dnsRecordType: DnsRecordType::MX,
+        type: DnsRecordType::MX,
         content: 'mail.example.com',
         ttl: 7200,
         priority: 10,
@@ -94,7 +94,7 @@ test('it creates ALIAS record from array', function (): void {
         'prio' => '0',
     ]);
 
-    expect($dnsRecord->dnsRecordType)->toBe(DnsRecordType::ALIAS)
+    expect($dnsRecord->type)->toBe(DnsRecordType::ALIAS)
         ->and($dnsRecord->content)->toBe('other.example.com');
 });
 
@@ -108,6 +108,6 @@ test('it creates SSHFP record from array', function (): void {
         'prio' => '0',
     ]);
 
-    expect($dnsRecord->dnsRecordType)->toBe(DnsRecordType::SSHFP)
+    expect($dnsRecord->type)->toBe(DnsRecordType::SSHFP)
         ->and($dnsRecord->content)->toBe('1 2 abc123def456');
 });

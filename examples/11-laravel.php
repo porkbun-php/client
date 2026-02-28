@@ -65,7 +65,7 @@ use Porkbun\Laravel\Facades\Porkbun;
 //
 //         $this->table(
 //             ['Name', 'Type', 'Content', 'TTL'],
-//             $records->all()->map(fn ($r) => [$r->name, $r->dnsRecordType->value, $r->content, $r->ttl])
+//             $records->all()->map(fn ($r) => [$r->name, $r->type->value, $r->content, $r->ttl])
 //         );
 //
 //         return self::SUCCESS;

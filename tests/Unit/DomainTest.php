@@ -201,25 +201,6 @@ test('domain facade details returns domain DTO', function (): void {
         ->and($details->status)->toBe('ACTIVE');
 });
 
-test('domain facade get is alias for details', function (): void {
-    $mockClient = createMockHttpClient([
-        [
-            'status' => 'SUCCESS',
-            'domains' => [
-                ['domain' => 'example.com', 'status' => 'ACTIVE'],
-            ],
-        ],
-    ]);
-
-    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $domain = createDomainFacade('example.com', $httpClient);
-
-    $result = $domain->get();
-
-    expect($result)->toBeInstanceOf(DomainDto::class)
-        ->and($result->domain)->toBe('example.com');
-});
-
 test('domain facade details throws when domain not found', function (): void {
     $mockClient = createMockHttpClient([
         [

@@ -27,13 +27,13 @@ final class Dnssec extends AbstractApi
     }
 
     public function create(
-        int|string $keyTag,
-        int|string $algorithm,
-        int|string $digestType,
+        int $keyTag,
+        int $algorithm,
+        int $digestType,
         string $digest,
-        int|string|null $maxSigLife = null,
-        int|string|null $flags = null,
-        int|string|null $protocol = null,
+        ?int $maxSigLife = null,
+        ?int $flags = null,
+        ?int $protocol = null,
         ?string $publicKey = null,
     ): void {
         $data = [
@@ -63,7 +63,7 @@ final class Dnssec extends AbstractApi
         $this->post("/dns/createDnssecRecord/{$this->domain}", $data);
     }
 
-    public function delete(int|string $keyTag): void
+    public function delete(int $keyTag): void
     {
         $this->post("/dns/deleteDnssecRecord/{$this->domain}/{$keyTag}");
     }

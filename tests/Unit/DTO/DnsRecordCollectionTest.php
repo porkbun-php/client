@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Porkbun\DTO\DnsRecord;
 use Porkbun\DTO\DnsRecordCollection;
 
-test('byType returns 0-indexed array', function (): void {
+test('byType returns a filtered collection', function (): void {
     $records = [
         DnsRecord::fromArray(['id' => '1', 'name' => '', 'type' => 'MX', 'content' => 'mail.example.com', 'prio' => '10']),
         DnsRecord::fromArray(['id' => '2', 'name' => 'www', 'type' => 'A', 'content' => '192.0.2.1']),
@@ -17,10 +17,15 @@ test('byType returns 0-indexed array', function (): void {
 
     $aRecords = $collection->byType('A');
 
-    // Should be 0-indexed, not preserve original keys
-    expect(array_keys($aRecords))->toBe([0, 1])
-        ->and($aRecords[0]->id)->toBe(2)
-        ->and($aRecords[1]->id)->toBe(4);
+    $first = $aRecords->first();
+    $last = $aRecords->last();
+
+    assert($first instanceof DnsRecord);
+    assert($last instanceof DnsRecord);
+    expect($aRecords)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($aRecords)->toHaveCount(2)
+        ->and($first->id)->toBe(2)
+        ->and($last->id)->toBe(4);
 });
 
 test('collection is iterable', function (): void {

@@ -44,12 +44,10 @@ final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSer
         return $this->records;
     }
 
-    public function find(int|string $id): ?DnsRecord
+    public function find(int $id): ?DnsRecord
     {
-        $targetId = (int) $id;
-
         foreach ($this->records as $record) {
-            if ($record->id === $targetId) {
+            if ($record->id === $id) {
                 return $record;
             }
         }
@@ -57,22 +55,22 @@ final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSer
         return null;
     }
 
-    public function byType(string $type): array
+    public function byType(string $type): self
     {
-        return array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->isType($type)));
+        return new self(array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->isType($type))));
     }
 
-    public function byName(string $name): array
+    public function byName(string $name): self
     {
-        return array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->name === $name));
+        return new self(array_values(array_filter($this->records, fn (DnsRecord $dnsRecord): bool => $dnsRecord->name === $name)));
     }
 
-    public function byTypeAndName(string $type, string $name): array
+    public function byTypeAndName(string $type, string $name): self
     {
-        return array_values(array_filter(
+        return new self(array_values(array_filter(
             $this->records,
             fn (DnsRecord $dnsRecord): bool => $dnsRecord->isType($type) && $dnsRecord->name === $name
-        ));
+        )));
     }
 
     public function first(): ?DnsRecord
@@ -99,9 +97,9 @@ final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSer
         return !$this->isEmpty();
     }
 
-    public function filter(callable $callback): array
+    public function filter(callable $callback): self
     {
-        return array_values(array_filter($this->records, $callback));
+        return new self(array_values(array_filter($this->records, $callback)));
     }
 
     #[Override]

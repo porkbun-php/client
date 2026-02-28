@@ -12,9 +12,9 @@ final class NetworkException extends PorkbunApiException
     public function __construct(
         string $message = 'Network or HTTP client error',
         int $statusCode = 0,
-        ?Throwable $throwable = null,
+        ?Throwable $previous = null,
         ?RequestInterface $request = null
     ) {
-        parent::__construct($message, $statusCode, $throwable, $request);
+        parent::__construct($message, $statusCode, $previous, $request);
     }
 }

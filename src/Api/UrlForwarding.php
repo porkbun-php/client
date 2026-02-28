@@ -30,15 +30,15 @@ final class UrlForwarding extends AbstractApi
         string $location,
         string $type,
         string $subdomain = '',
-        string $includePath = 'no',
-        string $wildcard = 'no',
+        bool $includePath = false,
+        bool $wildcard = false,
     ): void {
         $data = [
             'subdomain' => $subdomain,
             'location' => $location,
             'type' => $type,
-            'includePath' => $includePath,
-            'wildcard' => $wildcard,
+            'includePath' => $includePath ? 'yes' : 'no',
+            'wildcard' => $wildcard ? 'yes' : 'no',
         ];
 
         $this->post("/domain/addUrlForward/{$this->domain}", $data);

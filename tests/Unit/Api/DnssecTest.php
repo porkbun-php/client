@@ -121,5 +121,5 @@ test('dnssec api can delete record', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dnssec = new Dnssec(createMockContext($httpClient), 'example.com');
 
-    $dnssec->delete('12345');
+    $dnssec->delete(12345);
 });

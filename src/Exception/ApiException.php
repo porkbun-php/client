@@ -13,11 +13,11 @@ final class ApiException extends PorkbunApiException
     public function __construct(
         string $message = '',
         int $statusCode = 0,
-        ?Throwable $throwable = null,
+        ?Throwable $previous = null,
         ?RequestInterface $request = null,
         private readonly ?ResponseInterface $response = null
     ) {
-        parent::__construct($message, $statusCode, $throwable, $request);
+        parent::__construct($message, $statusCode, $previous, $request);
     }
 
     public function getResponse(): ?ResponseInterface

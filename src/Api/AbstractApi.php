@@ -31,9 +31,4 @@ abstract class AbstractApi
     {
         return $this->context->httpClient()->post($path, $data);
     }
-
-    protected function httpGet(string $path, array $params = []): array
-    {
-        return $this->context->httpClient()->get($path, $params);
-    }
 }

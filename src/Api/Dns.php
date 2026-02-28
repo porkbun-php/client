@@ -84,8 +84,8 @@ final class Dns extends AbstractApi
         string $name,
         string|DnsRecordType $type,
         string $content,
-        int|string $ttl = 600,
-        int|string $prio = 0,
+        int $ttl = 600,
+        int $priority = 0,
         ?string $notes = null,
     ): CreateResult {
         $data = [
@@ -93,7 +93,7 @@ final class Dns extends AbstractApi
             'type' => $type instanceof DnsRecordType ? $type->value : $type,
             'content' => $content,
             'ttl' => (string) $ttl,
-            'prio' => (string) $prio,
+            'prio' => (string) $priority,
         ];
 
         if ($notes !== null) {
@@ -124,8 +124,8 @@ final class Dns extends AbstractApi
         string $name,
         string|DnsRecordType $type,
         string $content,
-        int|string $ttl = 600,
-        int|string $prio = 0,
+        int $ttl = 600,
+        int $priority = 0,
         ?string $notes = null,
     ): void {
         $data = [
@@ -133,7 +133,7 @@ final class Dns extends AbstractApi
             'type' => $type instanceof DnsRecordType ? $type->value : $type,
             'content' => $content,
             'ttl' => (string) $ttl,
-            'prio' => (string) $prio,
+            'prio' => (string) $priority,
         ];
 
         if ($notes !== null) {
@@ -153,10 +153,10 @@ final class Dns extends AbstractApi
     /** Updates ALL matching records */
     public function updateByType(
         string|DnsRecordType $type,
-        ?string $name,
         string $content,
-        int|string $ttl = 600,
-        int|string $prio = 0,
+        ?string $name = null,
+        int $ttl = 600,
+        int $priority = 0,
         ?string $notes = null,
     ): void {
         $type = $type instanceof DnsRecordType ? $type->value : $type;
@@ -168,7 +168,7 @@ final class Dns extends AbstractApi
         $data = [
             'content' => $content,
             'ttl' => (string) $ttl,
-            'prio' => (string) $prio,
+            'prio' => (string) $priority,
         ];
 
         if ($notes !== null) {

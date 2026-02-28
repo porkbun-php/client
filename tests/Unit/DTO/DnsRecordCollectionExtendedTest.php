@@ -23,8 +23,8 @@ test('byName filters by name', function (): void {
 
     $records = $dnsRecordCollection->byName('www');
 
-    expect($records)->toHaveCount(2)
-        ->and(array_keys($records))->toBe([0, 1]);
+    expect($records)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($records)->toHaveCount(2);
 });
 
 test('rootRecords returns only root records', function (): void {
@@ -50,8 +50,12 @@ test('byTypeAndName filters by both', function (): void {
 
     $records = $dnsRecordCollection->byTypeAndName('A', 'www');
 
-    expect($records)->toHaveCount(1)
-        ->and($records[0]->id)->toBe(1);
+    $first = $records->first();
+
+    assert($first instanceof DnsRecord);
+    expect($records)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($records)->toHaveCount(1)
+        ->and($first->id)->toBe(1);
 });
 
 test('filter applies custom callback', function (): void {
@@ -63,8 +67,8 @@ test('filter applies custom callback', function (): void {
 
     $filtered = $dnsRecordCollection->filter(fn (DnsRecord $dnsRecord): bool => $dnsRecord->ttl >= 3600);
 
-    expect($filtered)->toHaveCount(2)
-        ->and(array_keys($filtered))->toBe([0, 1]);
+    expect($filtered)->toBeInstanceOf(DnsRecordCollection::class)
+        ->and($filtered)->toHaveCount(2);
 });
 
 test('toArray serializes all records', function (): void {

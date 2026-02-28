@@ -16,7 +16,7 @@ final readonly class DnsRecord implements JsonSerializable
     public function __construct(
         public int $id,
         public string $name,
-        public DnsRecordType $dnsRecordType,
+        public DnsRecordType $type,
         public string $content,
         public int $ttl,
         public int $priority,
@@ -37,7 +37,7 @@ final readonly class DnsRecord implements JsonSerializable
         return new self(
             id: (int) ($data['id'] ?? 0),
             name: (string) ($data['name'] ?? ''),
-            dnsRecordType: $type,
+            type: $type,
             content: (string) ($data['content'] ?? ''),
             ttl: (int) ($data['ttl'] ?? 600),
             priority: (int) ($data['prio'] ?? 0),
@@ -50,7 +50,7 @@ final readonly class DnsRecord implements JsonSerializable
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'type' => $this->dnsRecordType->value,
+            'type' => $this->type->value,
             'content' => $this->content,
             'ttl' => $this->ttl,
             'prio' => $this->priority,
@@ -72,9 +72,9 @@ final readonly class DnsRecord implements JsonSerializable
                 return false;
             }
 
-            return $this->dnsRecordType === $enumValue;
+            return $this->type === $enumValue;
         }
 
-        return $this->dnsRecordType === $type;
+        return $this->type === $type;
     }
 }

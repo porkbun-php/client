@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Porkbun\Api\Domains;
+use Porkbun\DTO\AutoRenewResult;
 use Porkbun\DTO\Domain;
 use Porkbun\DTO\DomainCollection;
 use Porkbun\DTO\DomainLabel;
@@ -178,8 +179,11 @@ test('domains api can enable auto renew for single domain', function (): void {
 
     $results = $domains->enableAutoRenew('example.com');
 
-    expect($results)->toHaveKey('example.com')
-        ->and($results['example.com']['status'])->toBe('SUCCESS');
+    expect($results)->toHaveCount(1)
+        ->and($results[0])->toBeInstanceOf(AutoRenewResult::class)
+        ->and($results[0]->domain)->toBe('example.com')
+        ->and($results[0]->success)->toBeTrue()
+        ->and($results[0]->message)->toBe('Auto renew status updated.');
 });
 
 test('domains api rejects empty domain list for auto renew', function (): void {
@@ -251,6 +255,9 @@ test('domains api can disable auto renew for multiple domains', function (): voi
     $results = $domains->disableAutoRenew('example1.com', 'example2.com');
 
     expect($results)->toHaveCount(2)
-        ->and($results['example1.com']['status'])->toBe('SUCCESS')
-        ->and($results['example2.com']['status'])->toBe('SUCCESS');
+        ->and($results[0])->toBeInstanceOf(AutoRenewResult::class)
+        ->and($results[0]->domain)->toBe('example1.com')
+        ->and($results[0]->success)->toBeTrue()
+        ->and($results[1]->domain)->toBe('example2.com')
+        ->and($results[1]->success)->toBeTrue();
 });
