@@ -1,6 +1,6 @@
 # Porkbun PHP API Client
 
-[![Tests](https://img.shields.io/github/actions/workflow/status/porkbun-php/client/tests.yml?branch=main&label=tests&style=round-square)](https://github.com/porkbun-php/client/actions/workflows/tests.yml)
+[![Tests](https://github.com/porkbun-php/client/actions/workflows/tests.yml/badge.svg)](https://github.com/porkbun-php/client/actions/workflows/tests.yml)
 [![Latest Stable Version](https://poser.pugx.org/porkbun-php/client/v)](https://packagist.org/packages/porkbun-php/client)
 [![License](https://poser.pugx.org/porkbun-php/client/license)](https://packagist.org/packages/porkbun-php/client)
 
