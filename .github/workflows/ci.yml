@@ -32,11 +32,16 @@ jobs:
       fail-fast: false
       matrix:
         php-version: ['8.4']
+        dependency-version: [prefer-stable, prefer-lowest]
         include:
           - php-version: '8.5'
+            dependency-version: prefer-stable
+            experimental: true
+          - php-version: '8.5'
+            dependency-version: prefer-lowest
             experimental: true
 
-    name: PHP ${{ matrix.php-version }}
+    name: PHP ${{ matrix.php-version }} — ${{ matrix.dependency-version }}
 
     continue-on-error: ${{ matrix.experimental || false }}
 
@@ -60,12 +65,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ hashFiles('composer.json') }}
+          key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ matrix.dependency-version }}-${{ hashFiles('composer.json') }}
           restore-keys: |
-            ${{ runner.os }}-composer-${{ matrix.php-version }}-
+            ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ matrix.dependency-version }}-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-interaction
+        run: composer update --${{ matrix.dependency-version }} --no-progress --no-interaction
 
       - name: Check code style
         run: composer run pint
@@ -76,11 +81,15 @@ jobs:
       - name: Check rector
         run: composer run rector
 
+      - name: Run tests
+        run: vendor/bin/pest
+
       - name: Run tests with coverage
+        if: matrix.php-version == '8.4' && matrix.dependency-version == 'prefer-stable'
         run: vendor/bin/pest --coverage --coverage-clover coverage/clover.xml
 
       - name: Upload coverage artifact
-        if: matrix.php-version == '8.4' && always()
+        if: matrix.php-version == '8.4' && matrix.dependency-version == 'prefer-stable' && always()
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
