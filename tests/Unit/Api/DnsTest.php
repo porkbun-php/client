@@ -344,7 +344,7 @@ test('dns api can update by type and name', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->updateByType('A', '192.0.2.3', 'www');
+    $dns->updateByType('A', 'www', '192.0.2.3');
 });
 
 test('dns api can delete record', function (): void {

@@ -44,7 +44,7 @@ test('updateByType accepts DnsRecordType enum', function (): void {
     $httpClient = createHttpClient($mock, 'pk1_test', 'sk1_test');
     $dns = new Dns(createMockContext($httpClient), 'example.com');
 
-    $dns->updateByType(DnsRecordType::A, '192.0.2.2', 'www');
+    $dns->updateByType(DnsRecordType::A, 'www', '192.0.2.2');
 
     expect(true)->toBeTrue();
 });

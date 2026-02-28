@@ -271,7 +271,7 @@ test('dns: update by type/name', function () use ($domainResource): void {
 
     try {
         // Update by type + name
-        $dns->updateByType('TXT', 'after-update', '_test-update');
+        $dns->updateByType('TXT', '_test-update', 'after-update');
 
         $updated = $dns->find($recordId);
         expect($updated->content)->toBe('after-update');

@@ -193,7 +193,7 @@ $dns->create('www', DnsRecordType::A, '192.0.2.1');
 
 // Update
 $dns->update($recordId, 'www', 'A', '192.0.2.3');
-$dns->updateByType('A', '192.0.2.3', 'www');
+$dns->updateByType('A', 'www', '192.0.2.3');
 
 // Delete
 $dns->delete($recordId);

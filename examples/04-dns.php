@@ -63,7 +63,7 @@ echo "\nTXT records from API: " . count($txtRecords) . "\n";
 // $dns->update($recordId, 'test', 'A', '192.0.2.100', ttl: 1800);
 
 // Update all matching records by type and name (commented out)
-// $dns->updateByType('A', '192.0.2.200', 'test');
+// $dns->updateByType('A', 'test', '192.0.2.200');
 
 // Delete by ID (commented out)
 // $dns->delete($recordId);

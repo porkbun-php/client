@@ -153,8 +153,8 @@ final class Dns extends AbstractApi
     /** Updates ALL matching records */
     public function updateByType(
         string|DnsRecordType $type,
-        string $content,
         ?string $name = null,
+        string $content = '',
         int $ttl = 600,
         int $priority = 0,
         ?string $notes = null,
