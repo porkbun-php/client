@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\Naming\Rector\Assign\RenameVariableToMatchMethodCallReturnTypeRector;
+use Rector\Naming\Rector\Class_\RenamePropertyToMatchTypeRector;
 use Rector\Php81\Rector\Property\ReadOnlyPropertyRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
@@ -27,6 +29,9 @@ return static function (RectorConfig $rectorConfig): void {
         StrictArrayParamDimFetchRector::class => [
             __DIR__ . '/src/Laravel/PorkbunServiceProvider.php',
         ],
+        // Semantic names like $type and $aRecords are clearer than type-derived names
+        RenamePropertyToMatchTypeRector::class,
+        RenameVariableToMatchMethodCallReturnTypeRector::class,
     ]);
 
     $rectorConfig->sets([
