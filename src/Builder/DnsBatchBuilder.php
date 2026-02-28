@@ -28,7 +28,33 @@ final class DnsBatchBuilder
         string $content,
         int $ttl = 600,
         int $priority = 0,
-        string $notes = '',
+        ?string $notes = null,
+    ): self {
+        $dnsRecordBuilder = new DnsRecordBuilder();
+        $builder = $dnsRecordBuilder
+            ->name($name)
+            ->type($type)
+            ->content($content)
+            ->ttl($ttl)
+            ->priority($priority);
+
+        if ($notes !== null) {
+            $builder = $builder->notes($notes);
+        }
+
+        $this->operations[] = BatchOperation::create($builder->data());
+
+        return $this;
+    }
+
+    public function updateRecord(
+        int $recordId,
+        string $name,
+        string $type,
+        string $content,
+        int $ttl = 600,
+        int $priority = 0,
+        ?string $notes = null,
     ): self {
         $dnsRecordBuilder = new DnsRecordBuilder();
         $data = $dnsRecordBuilder
@@ -36,18 +62,13 @@ final class DnsBatchBuilder
             ->type($type)
             ->content($content)
             ->ttl($ttl)
-            ->priority($priority)
-            ->notes($notes)
-            ->data();
+            ->priority($priority);
 
-        $this->operations[] = BatchOperation::create($data);
+        if ($notes !== null) {
+            $data = $data->notes($notes);
+        }
 
-        return $this;
-    }
-
-    public function updateRecord(int $recordId, array $data): self
-    {
-        $this->operations[] = BatchOperation::update($recordId, $data);
+        $this->operations[] = BatchOperation::update($recordId, $data->data());
 
         return $this;
     }
@@ -124,17 +145,17 @@ final class DnsBatchBuilder
     {
         assert($batchOperation->id !== null);
 
-        /** @var array{name?: string, type?: string, content?: string, ttl?: int|string, prio?: int|string, notes?: string} $data */
+        /** @var array{name: string, type: string, content: string, ttl: string, prio: string, notes?: string} $data */
         $data = $batchOperation->data;
 
         $dns->update(
             $batchOperation->id,
-            (string) ($data['name'] ?? ''),
-            (string) ($data['type'] ?? ''),
-            (string) ($data['content'] ?? ''),
-            (int) ($data['ttl'] ?? 600),
-            (int) ($data['prio'] ?? 0),
-            (string) ($data['notes'] ?? ''),
+            $data['name'],
+            $data['type'],
+            $data['content'],
+            (int) $data['ttl'],
+            (int) $data['prio'],
+            $data['notes'] ?? null,
         );
 
         return BatchOperationResult::success('update', recordId: $batchOperation->id);

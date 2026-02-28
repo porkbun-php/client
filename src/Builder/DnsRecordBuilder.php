@@ -15,7 +15,7 @@ final class DnsRecordBuilder
         private ?string $content = null,
         private int $ttl = 600,
         private int $prio = 0,
-        private string $notes = ''
+        private ?string $notes = null,
     ) {
     }
 
@@ -119,7 +119,7 @@ final class DnsRecordBuilder
             'prio' => (string) $this->prio,
         ];
 
-        if ($this->notes !== '') {
+        if ($this->notes !== null) {
             $data['notes'] = $this->notes;
         }
 

@@ -229,7 +229,7 @@ $batch = new DnsBatchBuilder();
 $results = $batch
     ->addRecord('www', 'A', '192.0.2.1')
     ->addRecord('api', 'A', '192.0.2.2')
-    ->updateRecord($existingId, ['ttl' => '3600'])
+    ->updateRecord($existingId, 'www', 'A', '192.0.2.3', ttl: 3600)
     ->deleteRecord($oldRecordId)
     ->execute($dns);
 
@@ -261,9 +261,9 @@ $cert->hasIntermediateCertificate;  // bool
 ```php
 $ns = $client->domain('example.com')->nameservers();
 
-$ns->all();     // NameserverCollection: ['ns1.porkbun.com', 'ns2.porkbun.com']
-$ns->first();   // 'ns1.porkbun.com' or null
-$ns->last();    // 'ns2.porkbun.com' or null
+$ns->all();              // NameserverCollection: ['ns1.porkbun.com', 'ns2.porkbun.com']
+$ns->all()->first();    // 'ns1.porkbun.com' or null
+$ns->all()->last();     // 'ns2.porkbun.com' or null
 $ns->update(['ns1.custom.com', 'ns2.custom.com']);
 ```
 
@@ -272,8 +272,8 @@ $ns->update(['ns1.custom.com', 'ns2.custom.com']);
 ```php
 $forwards = $client->domain('example.com')->urlForwarding();
 
-$forwards->all();     // UrlForwardCollection
-$forwards->first();   // UrlForward or null
+$forwards->all();              // UrlForwardCollection
+$forwards->all()->first();    // UrlForward or null
 $forwards->create('https://destination.example.com', 'temporary', subdomain: 'go');
 $forwards->delete($recordId);
 ```
@@ -283,8 +283,8 @@ $forwards->delete($recordId);
 ```php
 $glue = $client->domain('example.com')->glue();
 
-$glue->all();     // GlueRecordCollection
-$glue->first();   // GlueRecord or null
+$glue->all();              // GlueRecordCollection
+$glue->all()->first();    // GlueRecord or null
 $glue->create('ns1', ['192.0.2.1', '192.0.2.2']);
 $glue->update('ns1', ['192.0.2.10']);
 $glue->delete('ns1');

@@ -254,6 +254,45 @@ test('dns api can update record with optional params', function (): void {
     $dns->update(123, 'mail', 'MX', 'mail.example.com', ttl: 3600, prio: 10, notes: 'Updated record');
 });
 
+test('dns api update sends empty string notes to clear them', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)
+                ->toHaveKey('notes', '');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dns->update(123, 'www', 'A', '192.0.2.1', notes: '');
+});
+
+test('dns api update omits notes when null', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)->not->toHaveKey('notes');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dns->update(123, 'www', 'A', '192.0.2.1');
+});
+
 test('dns api can update record from builder', function (): void {
     $mock = Mockery::mock(ClientInterface::class);
 

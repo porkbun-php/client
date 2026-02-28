@@ -29,7 +29,7 @@ $batch
 echo "Queued operations: {$batch->operationsCount()}\n";
 
 // Edit and delete can also be batched
-// $batch->updateRecord($existingId, ['content' => '192.0.2.100', 'ttl' => '1800']);
+// $batch->updateRecord($existingId, 'www', 'A', '192.0.2.100', ttl: 1800);
 // $batch->deleteRecord($oldRecordId);
 // $batch->deleteByNameType('A', 'deprecated-subdomain');
 

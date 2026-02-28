@@ -86,7 +86,7 @@ final class Dns extends AbstractApi
         string $content,
         int|string $ttl = 600,
         int|string $prio = 0,
-        string $notes = '',
+        ?string $notes = null,
     ): CreateResult {
         $data = [
             'name' => $name,
@@ -96,7 +96,7 @@ final class Dns extends AbstractApi
             'prio' => (string) $prio,
         ];
 
-        if ($notes !== '') {
+        if ($notes !== null) {
             $data['notes'] = $notes;
         }
 
@@ -126,7 +126,7 @@ final class Dns extends AbstractApi
         string $content,
         int|string $ttl = 600,
         int|string $prio = 0,
-        string $notes = '',
+        ?string $notes = null,
     ): void {
         $data = [
             'name' => $name,
@@ -136,7 +136,7 @@ final class Dns extends AbstractApi
             'prio' => (string) $prio,
         ];
 
-        if ($notes !== '') {
+        if ($notes !== null) {
             $data['notes'] = $notes;
         }
 
@@ -157,7 +157,7 @@ final class Dns extends AbstractApi
         string $content,
         int|string $ttl = 600,
         int|string $prio = 0,
-        string $notes = '',
+        ?string $notes = null,
     ): void {
         $type = $type instanceof DnsRecordType ? $type->value : $type;
         $endpoint = "/dns/editByNameType/{$this->domain}/{$type}";
@@ -171,7 +171,7 @@ final class Dns extends AbstractApi
             'prio' => (string) $prio,
         ];
 
-        if ($notes !== '') {
+        if ($notes !== null) {
             $data['notes'] = $notes;
         }
 
