@@ -19,6 +19,9 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 
+/**
+ * @internal This class is not part of the public API and may change without notice.
+ */
 final class HttpClient
 {
     private const string CONTENT_TYPE = 'application/json';

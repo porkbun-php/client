@@ -17,7 +17,7 @@ use Traversable;
 final class DnsRecordCollection implements Countable, IteratorAggregate, JsonSerializable
 {
     /** @var list<DnsRecord> */
-    public array $rootRecords;
+    public readonly array $rootRecords;
 
     /** @var list<DnsRecord> */
     private array $records;

@@ -7,6 +7,9 @@ namespace Porkbun\Api;
 use Porkbun\Internal\ClientContext;
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * @internal This class is not part of the public API and may change without notice.
+ */
 abstract class AbstractApi
 {
     public function __construct(
