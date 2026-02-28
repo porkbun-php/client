@@ -1,39 +1,72 @@
 # Contributing
 
-Thanks for considering a contribution! Here's how to get started.
+Contributions are welcome and accepted via pull requests.
+Please review these guidelines before submitting any pull requests.
+
+## Process
+
+1. Fork the project
+2. Create a new branch from `main`
+3. Code, test, commit and push
+4. Open a pull request detailing your changes
+
+## Guidelines
+
+- Please ensure all quality checks pass by running `composer run check`
+- Send a coherent commit history, making sure each individual commit in your pull request is meaningful
+- You may need to [rebase](https://git-scm.com/book/en/v2/Git-Branching-Rebasing) to avoid merge conflicts
+- Please remember that we follow [SemVer](https://semver.org/)
 
 ## Setup
 
+Clone your fork, then install the dev dependencies:
+
 ```bash
-git clone https://github.com/porkbun-php/client.git
-cd client
 composer install
 ```
 
-## Development Workflow
+## Code Style
 
-Run all quality checks (style, static analysis, tests) before submitting a PR:
+Check code style:
 
 ```bash
-composer run check
+composer run pint
 ```
 
-Fix auto-fixable code style issues:
+Fix auto-fixable issues:
 
 ```bash
 composer run fix
 ```
 
-Run individual checks as needed:
+## Static Analysis
+
+Run PHPStan (level max):
 
 ```bash
-composer run test         # Pest test suite
-composer run pint         # Code style (PSR-12 via Laravel Pint)
-composer run phpstan      # Static analysis (level max)
+composer run phpstan
 ```
 
-## Pull Requests
+## Tests
 
-- Branch from `main`
-- Keep changes focused — one feature or fix per PR
-- Ensure `composer run check` passes before requesting review
+Run all tests:
+
+```bash
+composer run test
+```
+
+Run a specific test file:
+
+```bash
+vendor/bin/pest tests/Unit/Api/DnsTest.php
+```
+
+## All Checks
+
+Run everything at once (style, static analysis, rector, tests):
+
+```bash
+composer run check
+```
+
+This is what CI runs — make sure it passes before opening a PR.
