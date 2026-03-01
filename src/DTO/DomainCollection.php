@@ -59,7 +59,7 @@ final class DomainCollection implements Countable, IteratorAggregate, JsonSerial
     public function find(string $domainName): ?Domain
     {
         foreach ($this->domains as $domain) {
-            if ($domain->domain === $domainName) {
+            if (strcasecmp($domain->domain, $domainName) === 0) {
                 return $domain;
             }
         }
@@ -81,10 +81,9 @@ final class DomainCollection implements Countable, IteratorAggregate, JsonSerial
         ));
     }
 
-    /** @return list<Domain> */
-    public function filter(callable $callback): array
+    public function filter(callable $callback): self
     {
-        return array_values(array_filter($this->domains, $callback));
+        return new self(array_values(array_filter($this->domains, $callback)));
     }
 
     public function isEmpty(): bool

@@ -84,9 +84,10 @@ test('filter applies callback', function (): void {
 
     $filtered = $dnssecRecordCollection->filter(fn (DnssecRecord $dnssecRecord): bool => $dnssecRecord->algorithm === 13);
 
-    expect($filtered)->toHaveCount(2)
-        ->and($filtered[0]->keyTag)->toBe(111)
-        ->and($filtered[1]->keyTag)->toBe(333);
+    expect($filtered)->toBeInstanceOf(DnssecRecordCollection::class)
+        ->and($filtered)->toHaveCount(2)
+        ->and($filtered->first()?->keyTag)->toBe(111)
+        ->and($filtered->last()?->keyTag)->toBe(333);
 });
 
 test('isEmpty and isNotEmpty', function (): void {

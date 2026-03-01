@@ -67,10 +67,9 @@ final class DnssecRecordCollection implements Countable, IteratorAggregate, Json
         return null;
     }
 
-    /** @return list<DnssecRecord> */
-    public function filter(callable $callback): array
+    public function filter(callable $callback): self
     {
-        return array_values(array_filter($this->records, $callback));
+        return new self(array_values(array_filter($this->records, $callback)));
     }
 
     public function isEmpty(): bool

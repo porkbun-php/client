@@ -72,8 +72,9 @@ test('filter applies callback', function (): void {
 
     $filtered = $glueRecordCollection->filter(fn (GlueRecord $glueRecord): bool => count($glueRecord->ips) > 1);
 
-    expect($filtered)->toHaveCount(2)
-        ->and($filtered[0]->host)->toBe('ns2');
+    expect($filtered)->toBeInstanceOf(GlueRecordCollection::class)
+        ->and($filtered)->toHaveCount(2)
+        ->and($filtered->first()?->host)->toBe('ns2');
 });
 
 test('isEmpty and isNotEmpty', function (): void {

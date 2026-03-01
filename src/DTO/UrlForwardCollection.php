@@ -56,10 +56,9 @@ final class UrlForwardCollection implements Countable, IteratorAggregate, JsonSe
         return $this->forwards[count($this->forwards) - 1];
     }
 
-    /** @return list<UrlForward> */
-    public function filter(callable $callback): array
+    public function filter(callable $callback): self
     {
-        return array_values(array_filter($this->forwards, $callback));
+        return new self(array_values(array_filter($this->forwards, $callback)));
     }
 
     public function isEmpty(): bool

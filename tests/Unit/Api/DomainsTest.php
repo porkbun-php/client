@@ -30,6 +30,26 @@ test('domains api can find a domain by name', function (): void {
         ->and($domain->domain)->toBe('example.com');
 });
 
+test('domains api find is case-insensitive', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'domains' => [
+                ['domain' => 'Example.COM', 'status' => 'ACTIVE'],
+            ],
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domains = new Domains(createMockContext($httpClient));
+
+    $domain = $domains->find('example.com');
+
+    assert($domain instanceof Domain);
+    expect($domain)->toBeInstanceOf(Domain::class)
+        ->and($domain->domain)->toBe('Example.COM');
+});
+
 test('domains api find returns null for unknown domain', function (): void {
     $mockClient = createMockHttpClient([
         [

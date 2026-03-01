@@ -67,10 +67,9 @@ final class GlueRecordCollection implements Countable, IteratorAggregate, JsonSe
         return null;
     }
 
-    /** @return list<GlueRecord> */
-    public function filter(callable $callback): array
+    public function filter(callable $callback): self
     {
-        return array_values(array_filter($this->records, $callback));
+        return new self(array_values(array_filter($this->records, $callback)));
     }
 
     public function isEmpty(): bool

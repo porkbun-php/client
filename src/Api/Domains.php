@@ -17,7 +17,7 @@ final class Domains extends AbstractApi
     public function find(string $domain): ?Domain
     {
         foreach ($this->allPages() as $d) {
-            if ($d->domain === $domain) {
+            if (strcasecmp($d->domain, $domain) === 0) {
                 return $d;
             }
         }

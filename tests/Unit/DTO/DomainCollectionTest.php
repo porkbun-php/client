@@ -55,6 +55,26 @@ test('find finds domain by name', function (): void {
         ->and($found?->domain)->toBe('example.org');
 });
 
+test('find is case-insensitive', function (): void {
+    $domainCollection = DomainCollection::fromArray([
+        ['domain' => 'Example.COM', 'status' => 'ACTIVE'],
+    ]);
+
+    $found = $domainCollection->find('example.com');
+
+    expect($found)->toBeInstanceOf(Domain::class)
+        ->and($found?->domain)->toBe('Example.COM');
+});
+
+test('has is case-insensitive', function (): void {
+    $domainCollection = DomainCollection::fromArray([
+        ['domain' => 'Example.COM', 'status' => 'ACTIVE'],
+    ]);
+
+    expect($domainCollection->has('example.com'))->toBeTrue()
+        ->and($domainCollection->has('EXAMPLE.COM'))->toBeTrue();
+});
+
 test('find returns null for unknown domain', function (): void {
     $domainCollection = DomainCollection::fromArray([
         ['domain' => 'example.com', 'status' => 'ACTIVE'],
@@ -96,7 +116,8 @@ test('filter applies callback', function (): void {
 
     $filtered = $domainCollection->filter(fn (Domain $domain): bool => $domain->autoRenew === true);
 
-    expect($filtered)->toHaveCount(2);
+    expect($filtered)->toBeInstanceOf(DomainCollection::class)
+        ->and($filtered)->toHaveCount(2);
 });
 
 test('isEmpty and isNotEmpty', function (): void {

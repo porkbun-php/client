@@ -52,9 +52,10 @@ test('filter applies callback', function (): void {
 
     $filtered = $urlForwardCollection->filter(fn (UrlForward $urlForward): bool => $urlForward->isPermanent);
 
-    expect($filtered)->toHaveCount(2)
-        ->and($filtered[0]->subdomain)->toBe('shop')
-        ->and($filtered[1]->subdomain)->toBe('blog');
+    expect($filtered)->toBeInstanceOf(UrlForwardCollection::class)
+        ->and($filtered)->toHaveCount(2)
+        ->and($filtered->first()?->subdomain)->toBe('shop')
+        ->and($filtered->last()?->subdomain)->toBe('blog');
 });
 
 test('isEmpty and isNotEmpty', function (): void {
