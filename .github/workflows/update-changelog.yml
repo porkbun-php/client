@@ -34,13 +34,23 @@ jobs:
             exit 1
           fi
 
+      - name: Skip if version already in CHANGELOG
+        id: check
+        run: |
+          VERSION=$(echo "${{ github.event.release.tag_name }}" | sed 's/^v//')
+          if grep -qF "## [${VERSION}]" CHANGELOG.md; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Extract release date from tag
+        if: steps.check.outputs.skip != 'true'
         id: date
         run: |
           date=$(git log -1 --format='%ai' "${{ github.event.release.tag_name }}" | cut -d ' ' -f 1)
           echo "date=$date" >> "$GITHUB_OUTPUT"
 
       - name: Update CHANGELOG
+        if: steps.check.outputs.skip != 'true'
         uses: stefanzweifel/changelog-updater-action@v1
         with:
           latest-version: ${{ github.event.release.tag_name }}
@@ -48,6 +58,7 @@ jobs:
           release-date: ${{ steps.date.outputs.date }}
 
       - name: Commit updated CHANGELOG
+        if: steps.check.outputs.skip != 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Update CHANGELOG for ${{ github.event.release.tag_name }}
