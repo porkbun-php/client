@@ -38,6 +38,11 @@ final readonly class AutoRenewResult implements JsonSerializable
         return $items;
     }
 
+    public function toArray(): array
+    {
+        return $this->jsonSerialize();
+    }
+
     #[Override]
     public function jsonSerialize(): array
     {
