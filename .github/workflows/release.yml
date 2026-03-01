@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -15,10 +19,55 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
+        id: release
         with:
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
+
+      - name: Fetch release notes
+        id: notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            echo "body<<NOTES_EOF"
+            gh release view "$GITHUB_REF_NAME" --json body --jq '.body'
+            echo "NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Skip if version already in CHANGELOG
+        id: check
+        run: |
+          VERSION=$(echo "$GITHUB_REF_NAME" | sed 's/^v//')
+          if grep -qF "## [${VERSION}]" CHANGELOG.md; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Extract release date from tag
+        if: steps.check.outputs.skip != 'true'
+        id: date
+        run: |
+          date=$(git log -1 --format='%ai' "$GITHUB_REF_NAME" | cut -d ' ' -f 1)
+          echo "date=$date" >> "$GITHUB_OUTPUT"
+
+      - name: Update CHANGELOG
+        if: steps.check.outputs.skip != 'true'
+        uses: stefanzweifel/changelog-updater-action@v1
+        with:
+          latest-version: ${{ github.ref_name }}
+          release-notes: ${{ steps.notes.outputs.body }}
+          release-date: ${{ steps.date.outputs.date }}
+
+      - name: Commit updated CHANGELOG
+        if: steps.check.outputs.skip != 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Update CHANGELOG for ${{ github.ref_name }}
+          file_pattern: CHANGELOG.md
+          branch: main
