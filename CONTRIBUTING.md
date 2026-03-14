@@ -13,6 +13,7 @@ Please review these guidelines before submitting any pull requests.
 ## Guidelines
 
 - Please ensure all quality checks pass by running `composer run check`
+- Write commit messages as short imperative sentences, no conventional commit prefixes (e.g., `Add DNS batch support`, `Fix DNSSEC parameter bug`)
 - Send a coherent commit history, making sure each individual commit in your pull request is meaningful
 - You may need to [rebase](https://git-scm.com/book/en/v2/Git-Branching-Rebasing) to avoid merge conflicts
 - Please remember that we follow [SemVer](https://semver.org/)
