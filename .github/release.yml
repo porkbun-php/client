@@ -1,0 +1,23 @@
+changelog:
+  exclude:
+    labels:
+      - dependencies
+  categories:
+    - title: Breaking Changes
+      labels:
+        - breaking
+    - title: Added
+      labels:
+        - feature
+        - enhancement
+    - title: Fixed
+      labels:
+        - fix
+        - bug
+    - title: Changed
+      labels:
+        - refactor
+        - improvement
+    - title: Documentation
+      labels:
+        - docs

@@ -1,0 +1,75 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.4']
+        dependency-version: [prefer-stable, prefer-lowest]
+        include:
+          - php-version: '8.5'
+            dependency-version: prefer-stable
+            experimental: true
+          - php-version: '8.5'
+            dependency-version: prefer-lowest
+            experimental: true
+
+    name: PHP ${{ matrix.php-version }} — ${{ matrix.dependency-version }}
+
+    continue-on-error: ${{ matrix.experimental || false }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: curl, json, mbstring, xml
+          coverage: xdebug
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ matrix.dependency-version }}-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-${{ matrix.php-version }}-${{ matrix.dependency-version }}-
+
+      - name: Install dependencies
+        run: composer update --${{ matrix.dependency-version }} --no-progress --no-interaction
+
+      - name: Run tests
+        run: vendor/bin/pest --exclude-group=integration
+
+      - name: Run tests with coverage
+        if: matrix.php-version == '8.4' && matrix.dependency-version == 'prefer-stable'
+        run: vendor/bin/pest --exclude-group=integration --coverage --coverage-clover coverage/clover.xml
+
+      - name: Upload coverage artifact
+        if: matrix.php-version == '8.4' && matrix.dependency-version == 'prefer-stable' && always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7

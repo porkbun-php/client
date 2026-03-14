@@ -1,0 +1,56 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  code-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    name: Pint, PHPStan & Rector
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # v2
+        with:
+          php-version: '8.4'
+          extensions: curl, json, mbstring, xml
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-8.4-prefer-stable-${{ hashFiles('composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-8.4-prefer-stable-
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --no-progress --no-interaction
+
+      - name: Check composer.json normalization
+        run: composer run normalize:check
+
+      - name: Check code style
+        run: composer run pint
+
+      - name: Run static analysis
+        run: composer run phpstan
+
+      - name: Check rector
+        run: composer run rector
