@@ -177,6 +177,7 @@ final class Dns extends AbstractApi
         return OperationResult::fromArray($response);
     }
 
+    /** Deletes ALL matching records. Pass null for $name to delete all records of the given type. */
     public function deleteByType(string|DnsRecordType $type, ?string $name = null): OperationResult
     {
         $resolvedType = DnsRecordType::resolve($type)->value;
