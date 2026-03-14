@@ -5,7 +5,7 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-## [1.0.0] - 2026-03-01
+## [1.0.0] - 2026-03-14
 
 ### Added
 
@@ -14,19 +14,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Typed immutable DTOs for all API responses
 - Fluent DNS record builder with validation and convenience methods
 - Batch DNS operations via `DnsBatchBuilder`
-- Backed enums (`DnsRecordType`, `Endpoint`) with behavior methods
+- Backed enums (`DnsRecordType`, `Endpoint`, `UrlForwardType`, `BatchOperationType`)
 - Structured exception hierarchy (`ApiException`, `AuthenticationException`, `NetworkException`)
 - Collection classes with filtering, iteration, and convenience methods
 - DNS: full CRUD plus `findByType()`, `updateByType()`, `deleteByType()`
 - DNSSEC record management
 - SSL certificate retrieval
 - Nameserver management
-- URL forwarding management
+- URL forwarding management with typed forward types
 - Glue record management
 - Domain availability check and registration
-- Auto-renewal management
-- Domain listing with pagination and `allPages()` generator
+- Auto-renewal management (single domain and bulk)
+- Domain listing with pagination and `all()` generator
 - IPv4-only endpoint support
-- Runtime credential switching and `clearAuth()`
+- Runtime credential switching via `authenticate()` and `clearAuth()`
 - Laravel integration: deferred service provider, facade, config publishing
 - PSR-18 HTTP client auto-discovery
