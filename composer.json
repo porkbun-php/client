@@ -1,0 +1,102 @@
+{
+    "name": "porkbun-php/client",
+    "description": "PHP client for the Porkbun API v3 with domain-centric design, typed DTOs, and complete endpoint coverage",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "porkbun",
+        "api",
+        "api-client",
+        "dns",
+        "domain",
+        "domain-registration",
+        "ssl"
+    ],
+    "authors": [
+        {
+            "name": "Ilya Glebov",
+            "email": "oss@ilyaglebov.dev",
+            "homepage": "https://ilyaglebov.dev"
+        }
+    ],
+    "homepage": "https://github.com/porkbun-php/client",
+    "support": {
+        "issues": "https://github.com/porkbun-php/client/issues",
+        "source": "https://github.com/porkbun-php/client"
+    },
+    "require": {
+        "php": "^8.4",
+        "nyholm/psr7": "^1.8",
+        "php-http/discovery": "^1.19",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.0",
+        "psr/http-message": "^2.0"
+    },
+    "require-dev": {
+        "ergebnis/composer-normalize": "^2.45",
+        "guzzlehttp/guzzle": "^7.9",
+        "guzzlehttp/psr7": "^2.7",
+        "illuminate/support": "^11.0 || ^12.0",
+        "laravel/pint": "^1.25",
+        "mockery/mockery": "^1.6",
+        "pestphp/pest": "^3.8 || ^4.0",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "rector/rector": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Porkbun\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Porkbun\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "ergebnis/composer-normalize": true,
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "aliases": {
+                "Porkbun": "Porkbun\\Laravel\\Facades\\Porkbun"
+            },
+            "providers": [
+                "Porkbun\\Laravel\\PorkbunServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "check": [
+            "@normalize:check",
+            "@pint",
+            "@phpstan",
+            "@rector",
+            "@test"
+        ],
+        "fix": [
+            "@normalize:fix",
+            "@pint:fix",
+            "@rector:fix"
+        ],
+        "normalize:check": "composer normalize --dry-run",
+        "normalize:fix": "composer normalize",
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "pint": "pint --test",
+        "pint:check": "@pint",
+        "pint:fix": "pint",
+        "rector": "vendor/bin/rector process --dry-run",
+        "rector:dry-run": "@rector",
+        "rector:fix": "vendor/bin/rector process",
+        "test": "pest --exclude-group=integration",
+        "test:coverage": "pest --exclude-group=integration --coverage",
+        "test:integration": "pest --group=integration tests/Integration"
+    }
+}

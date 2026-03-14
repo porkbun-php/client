@@ -1,0 +1,24 @@
+parameters:
+    level: 8
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - examples
+        - tests/Integration
+    ignoreErrors:
+        # Array value types - we prefer clean code without verbose @param array<string, mixed> annotations
+        - identifier: missingType.iterableValue
+        # Mockery type hints in tests
+        - '#Call to an undefined method Mockery\\ExpectationInterface|Mockery\\HigherOrderMessage::#'
+        - '#Parameter .* of class .* constructor expects .*, Mockery\\MockInterface given#'
+        - '#Parameter .* expects Mockery\\MockInterface&Psr\\Http\\Client\\ClientInterface, Mockery\\MockInterface given#'
+        - '#Parameter .* of function createMockResponse expects string, string\|false given#'
+        - '#Parameter .* of function createHttpClient expects Mockery\\MockInterface&Psr\\Http\\Client\\ClientInterface, Mockery\\MockInterface given#'
+        - '#Call to method ReflectionClass.*::isSubclassOf.*will always evaluate to true#'
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
+
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
