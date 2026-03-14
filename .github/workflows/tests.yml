@@ -25,9 +25,6 @@ on:
       - '.github/workflows/release.yml'
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
 
@@ -58,7 +55,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@db91e1a0e48e84637d325a7ee4d2677e146ceec4 # v2.36.0
+        uses: shivammathur/setup-php@a33066c0017f7fe81bdb8e24512c418a6f7eb08a # v2 node24
         with:
           php-version: ${{ matrix.php-version }}
           extensions: curl, json, mbstring, xml
