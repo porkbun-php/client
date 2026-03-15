@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="art/example.png" alt="Porkbun PHP API Client">
+</p>
+
 # Porkbun PHP API Client
 
 [![Tests](https://github.com/porkbun-php/client/actions/workflows/tests.yml/badge.svg)](https://github.com/porkbun-php/client/actions/workflows/tests.yml)
