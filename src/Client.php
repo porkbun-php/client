@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Porkbun;
 
+use Http\Discovery\Exception\NotFoundException;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
 use Porkbun\Api\Domains;
 use Porkbun\Api\Pricing;
 use Porkbun\DTO\PingResult;
 use Porkbun\Enum\Endpoint;
+use Porkbun\Exception\InvalidArgumentException;
 use Porkbun\Internal\ClientContext;
 use Porkbun\Resource\Domain;
 use Psr\Http\Client\ClientInterface;
@@ -36,9 +38,18 @@ final class Client
 
     public function __construct(?ClientInterface $httpClient = null)
     {
-        $this->psrClient = $httpClient ?? Psr18ClientDiscovery::find();
-        $this->requestFactory = Psr17FactoryDiscovery::findRequestFactory();
-        $this->streamFactory = Psr17FactoryDiscovery::findStreamFactory();
+        try {
+            $this->psrClient = $httpClient ?? Psr18ClientDiscovery::find();
+            $this->requestFactory = Psr17FactoryDiscovery::findRequestFactory();
+            $this->streamFactory = Psr17FactoryDiscovery::findStreamFactory();
+        } catch (NotFoundException $e) {
+            throw new InvalidArgumentException(
+                'No PSR-18 HTTP client found. Install one, e.g.: composer require guzzlehttp/guzzle',
+                $e->getCode(),
+                previous: $e,
+            );
+        }
+
         $this->clientContext = new ClientContext(fn (): HttpClient => $this->getHttpClient());
     }
 

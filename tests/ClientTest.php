@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use Http\Discovery\ClassDiscovery;
 use Porkbun\Api\Domains;
 use Porkbun\Api\Pricing;
 use Porkbun\Client;
 use Porkbun\Enum\Endpoint;
+use Porkbun\Exception\InvalidArgumentException;
 use Porkbun\Resource\Domain;
 use Psr\Http\Client\ClientInterface;
 
@@ -81,6 +83,20 @@ test('client can use custom endpoint', function (): void {
 test('client cannot be cloned', function (): void {
     $client = new Client();
     expect(fn (): Client => clone $client)->toThrow(Error::class);
+});
+
+test('client throws clear error when no PSR-18 client is available', function (): void {
+    $strategies = ClassDiscovery::getStrategies();
+    ClassDiscovery::setStrategies([]);
+
+    try {
+        expect(fn (): Client => new Client())->toThrow(
+            InvalidArgumentException::class,
+            'No PSR-18 HTTP client found',
+        );
+    } finally {
+        ClassDiscovery::setStrategies([...$strategies]);
+    }
 });
 
 test('client endpoint methods are fluent', function (): void {
