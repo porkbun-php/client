@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths-ignore:
       - '**.md'
+      - 'art/**'
       - 'examples/**'
       - 'LICENSE'
       - '.editorconfig'
@@ -16,6 +17,7 @@ on:
     branches: [main]
     paths-ignore:
       - '**.md'
+      - 'art/**'
       - 'examples/**'
       - 'LICENSE'
       - '.editorconfig'
