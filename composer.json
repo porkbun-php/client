@@ -36,7 +36,7 @@
         "ergebnis/composer-normalize": "^2.45",
         "guzzlehttp/guzzle": "^7.9",
         "guzzlehttp/psr7": "^2.7",
-        "illuminate/support": "^11.0 || ^12.0",
+        "illuminate/support": "^11.0 || ^12.0 || ^13.0",
         "laravel/pint": "^1.25",
         "mockery/mockery": "^1.6",
         "pestphp/pest": "^3.8 || ^4.0",
