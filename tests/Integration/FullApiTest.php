@@ -464,7 +464,7 @@ test('glue records: create, update, delete lifecycle', function () use ($domainR
     $subdomain = 'testns1';
 
     try {
-        $glue->create($subdomain, '192.0.2.1');
+        $glue->create($subdomain, '192.0.2.1', '2001:db8::1');
     } catch (ApiException $e) {
         // Glue records require custom nameservers — skip if not supported
         $this->markTestSkipped("Glue records not supported on this domain: {$e->getMessage()}");
@@ -477,7 +477,7 @@ test('glue records: create, update, delete lifecycle', function () use ($domainR
 
         $found = $all->find($subdomain);
         expect($found)->not->toBeNull()
-            ->and($found->ips)->toContain('192.0.2.1');
+            ->and($found->ips)->toEqualCanonicalizing(['192.0.2.1', '2001:db8::1']);
 
         // Update
         $glue->update($subdomain, '192.0.2.2');
@@ -485,7 +485,7 @@ test('glue records: create, update, delete lifecycle', function () use ($domainR
         $afterUpdate = $glue->all();
         $updated = $afterUpdate->find($subdomain);
         expect($updated)->not->toBeNull()
-            ->and($updated->ips)->toContain('192.0.2.2');
+            ->and($updated->ips)->toBe(['192.0.2.2']);
     } finally {
         $glue->delete($subdomain);
     }

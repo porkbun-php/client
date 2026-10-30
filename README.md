@@ -9,11 +9,11 @@
 [![Latest Stable Version](https://poser.pugx.org/porkbun-php/client/v)](https://packagist.org/packages/porkbun-php/client)
 [![License](https://poser.pugx.org/porkbun-php/client/license)](https://packagist.org/packages/porkbun-php/client)
 
-A community-maintained PHP 8.4+ client for the [Porkbun API v3](https://porkbun.com/api/json/v3/documentation) with complete endpoint coverage, domain-centric design, and Laravel integration.
+A community-maintained PHP 8.4+ client for the [Porkbun API v3](https://porkbun.com/api/json/v3/documentation) with domain-centric design and Laravel integration.
 
 ## Features
 
-- **Complete API coverage** — all 27 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, domains, pricing, and more
+- **Core API coverage** — 27 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, domains, pricing, and more
 - **Domain-centric design** — fluent API: `$client->domain('example.com')->dns()->all()`
 - **Typed everything** — immutable DTOs, backed enums, strict return types throughout
 - **Fluent builders** — validated DNS record construction with convenience methods
