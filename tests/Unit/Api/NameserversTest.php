@@ -38,8 +38,7 @@ test('nameservers api can update nameservers', function (): void {
             expect((string) $request->getUri())->toContain('/domain/updateNs/example.com');
 
             $body = json_decode((string) $request->getBody(), true);
-            expect($body)->toHaveKey('ns1', 'ns1.provider.com')
-                ->and($body)->toHaveKey('ns2', 'ns2.provider.com');
+            expect($body['ns'])->toBe(['ns1.provider.com', 'ns2.provider.com']);
 
             return true;
         }))

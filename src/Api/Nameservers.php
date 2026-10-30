@@ -29,13 +29,9 @@ final class Nameservers extends AbstractApi
 
     public function update(string $nameserver, string ...$moreNameservers): OperationResult
     {
-        $allNameservers = [$nameserver, ...$moreNameservers];
-        $data = [];
-        foreach (array_values($allNameservers) as $index => $ns) {
-            $data['ns' . ($index + 1)] = $ns;
-        }
-
-        $response = $this->post("/domain/updateNs/{$this->domain}", $data);
+        $response = $this->post("/domain/updateNs/{$this->domain}", [
+            'ns' => array_values([$nameserver, ...$moreNameservers]),
+        ]);
 
         return OperationResult::fromArray($response);
     }
