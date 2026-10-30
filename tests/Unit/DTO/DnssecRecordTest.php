@@ -44,6 +44,21 @@ it('handles alternative field names', function (): void {
         ->and($dnssecRecord->publicKey)->toBe('AwEAAd1KqJZW...');
 });
 
+it('reads the api response format', function (): void {
+    $dnssecRecord = DnssecRecord::fromArray([
+        'keyTag' => '64087',
+        'alg' => '13',
+        'digestType' => '2',
+        'digest' => 'ABCDEF1234567890',
+        'maxSigLife' => '',
+        'pubKey' => 'ZmFrZS1wdWJsaWMta2V5',
+    ]);
+
+    expect($dnssecRecord->algorithm)->toBe(13)
+        ->and($dnssecRecord->maxSigLife)->toBeNull()
+        ->and($dnssecRecord->publicKey)->toBe('ZmFrZS1wdWJsaWMta2V5');
+});
+
 it('converts to array with canonical field names', function (): void {
     $record = new DnssecRecord(
         keyTag: 12345,

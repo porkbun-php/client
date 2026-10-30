@@ -72,10 +72,10 @@ final class DnssecRecord implements JsonSerializable
             algorithm: (int) ($data['algorithm'] ?? $data['alg'] ?? 0),
             digestType: (int) ($data['digestType'] ?? 0),
             digest: (string) ($data['digest'] ?? ''),
-            maxSigLife: isset($data['maxSigLife']) ? (int) $data['maxSigLife'] : null,
-            flags: isset($data['flags']) ? (int) $data['flags'] : null,
-            protocol: isset($data['protocol']) ? (int) $data['protocol'] : null,
-            publicKey: $data['publicKey'] ?? $data['keyDataPubKey'] ?? null,
+            maxSigLife: ($data['maxSigLife'] ?? '') !== '' ? (int) $data['maxSigLife'] : null,
+            flags: ($data['flags'] ?? '') !== '' ? (int) $data['flags'] : null,
+            protocol: ($data['protocol'] ?? '') !== '' ? (int) $data['protocol'] : null,
+            publicKey: $data['pubKey'] ?? $data['publicKey'] ?? $data['keyDataPubKey'] ?? null,
         );
     }
 
