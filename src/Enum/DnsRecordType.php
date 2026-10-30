@@ -21,6 +21,7 @@ enum DnsRecordType: string
     case SVCB = 'SVCB';
     case ALIAS = 'ALIAS';
     case SSHFP = 'SSHFP';
+    case DS = 'DS';
 
     public static function resolve(string|self $type): self
     {
@@ -56,6 +57,7 @@ enum DnsRecordType: string
             self::SVCB => 'Service binding record',
             self::ALIAS => 'CNAME flattening record',
             self::SSHFP => 'SSH fingerprint record',
+            self::DS => 'Delegation signer record',
         };
     }
 
@@ -73,6 +75,7 @@ enum DnsRecordType: string
             self::HTTPS, self::SVCB => true, // Complex validation would require specific parsing
             self::ALIAS => $this->isValidDomainName($content),
             self::SSHFP => $this->isValidSshfpRecord($content),
+            self::DS => $this->isValidDsRecord($content),
         };
     }
 
@@ -103,5 +106,11 @@ enum DnsRecordType: string
     {
         // SSHFP format: algorithm fingerprint-type fingerprint
         return preg_match('/^\d+ \d+ [a-fA-F0-9]+$/', $content) === 1;
+    }
+
+    private function isValidDsRecord(string $content): bool
+    {
+        // DS format: key-tag algorithm digest-type digest
+        return preg_match('/^\d+ \d+ \d+ [a-fA-F0-9]+$/', $content) === 1;
     }
 }

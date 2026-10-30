@@ -133,6 +133,10 @@ test('dns record builder has convenience methods', function (): void {
     expect($data['type'])->toBe('TLSA');
     expect($data['content'])->toBe('3 1 1 abc123');
 
+    $data = new DnsRecordBuilder()->name('sub')->ds('2371 13 2 abc123')->toRequestData();
+    expect($data['type'])->toBe('DS');
+    expect($data['content'])->toBe('2371 13 2 abc123');
+
     $data = new DnsRecordBuilder()->name('')->https('1 . alpn="h3,h2"')->toRequestData();
     expect($data['type'])->toBe('HTTPS');
     expect($data['content'])->toBe('1 . alpn="h3,h2"');

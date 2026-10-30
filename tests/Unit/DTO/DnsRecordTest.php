@@ -118,3 +118,17 @@ test('it creates SSHFP record from array', function (): void {
     expect($dnsRecord->type)->toBe(DnsRecordType::SSHFP)
         ->and($dnsRecord->content)->toBe('1 2 abc123def456');
 });
+
+test('it creates DS record from array', function (): void {
+    $dnsRecord = DnsRecord::fromArray([
+        'id' => '102',
+        'name' => 'sub',
+        'type' => 'DS',
+        'content' => '2371 13 2 1f987cc6583e92df0890718c42a1b4f2',
+        'ttl' => '600',
+        'prio' => '0',
+    ]);
+
+    expect($dnsRecord->type)->toBe(DnsRecordType::DS)
+        ->and($dnsRecord->content)->toBe('2371 13 2 1f987cc6583e92df0890718c42a1b4f2');
+});
