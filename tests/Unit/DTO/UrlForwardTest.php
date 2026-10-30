@@ -115,6 +115,22 @@ it('detects forward types correctly', function (): void {
         ->and($temporary->isTemporary)->toBeTrue();
 });
 
+it('creates masked forward from array', function (): void {
+    $forward = UrlForward::fromArray([
+        'id' => '3',
+        'subdomain' => 'm',
+        'location' => 'https://example.com',
+        'type' => 'masked',
+        'includePath' => 'no',
+        'wildcard' => 'no',
+    ]);
+
+    expect($forward->type)->toBe(UrlForwardType::MASKED)
+        ->and($forward->isMasked)->toBeTrue()
+        ->and($forward->isPermanent)->toBeFalse()
+        ->and($forward->isTemporary)->toBeFalse();
+});
+
 it('throws InvalidArgumentException for unknown forward type', function (): void {
     expect(fn (): UrlForward => UrlForward::fromArray([
         'id' => '1',

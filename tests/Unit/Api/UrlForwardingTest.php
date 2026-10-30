@@ -106,6 +106,27 @@ test('url forwarding api can create forward with enum type', function (): void {
     expect($result)->toBeInstanceOf(OperationResult::class);
 });
 
+test('url forwarding api can create masked forward', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body['type'])->toBe('masked');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $urlForwarding = new UrlForwarding(createMockContext($httpClient), 'example.com');
+
+    $result = $urlForwarding->create('https://target.com', 'masked', subdomain: 'm');
+
+    expect($result)->toBeInstanceOf(OperationResult::class);
+});
+
 test('url forwarding api returns empty collection', function (): void {
     $mockClient = createMockHttpClient([
         ['status' => 'SUCCESS', 'forwards' => []],
