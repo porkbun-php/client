@@ -388,6 +388,19 @@ test('nameservers: retrieve current nameservers', function () use ($domainResour
         ->and($nameserverCollection->last())->toBeString();
 })->group('integration');
 
+test('nameservers: update keeps the given nameservers', function () use ($domainResource): void {
+    $nameservers = $domainResource->nameservers();
+    $current = $nameservers->all()->items();
+
+    if ($current === []) {
+        $this->markTestSkipped('Domain has no nameservers to write back');
+    }
+
+    $nameservers->update(...$current);
+
+    expect($nameservers->all()->items())->toEqualCanonicalizing($current);
+})->group('integration');
+
 // --------------------------------------------------------------------------
 // URL Forwarding
 // --------------------------------------------------------------------------
