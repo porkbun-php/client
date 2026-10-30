@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Rector\CodeQuality\Rector\ClassMethod\LocallyCalledStaticMethodToNonStaticRector;
 use Rector\CodeQuality\Rector\Identical\FlipTypeControlToUseExclusiveTypeRector;
+use Rector\CodeQuality\Rector\If_\ExplicitNullableObjectInstanceRector;
 use Rector\Config\RectorConfig;
 use Rector\Naming\Rector\Assign\RenameVariableToMatchMethodCallReturnTypeRector;
 use Rector\Naming\Rector\Class_\RenamePropertyToMatchTypeRector;
@@ -38,6 +39,7 @@ return static function (RectorConfig $rectorConfig): void {
         RenameParamToMatchTypeRector::class,
         // !== null is cleaner than instanceof when return type already narrows to ?T
         FlipTypeControlToUseExclusiveTypeRector::class,
+        ExplicitNullableObjectInstanceRector::class,
         // Stateless private methods should stay static — static signals "no $this dependency"
         LocallyCalledStaticMethodToNonStaticRector::class,
     ]);
