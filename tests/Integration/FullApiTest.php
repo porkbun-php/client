@@ -293,6 +293,29 @@ test('dns: update by type/name', function () use ($domainResource): void {
     }
 })->group('integration');
 
+test('dns: update keeps ttl and priority when not given', function () use ($domainResource): void {
+    $dns = $domainResource->dns();
+    $recordId = $dns->create('MX', '_test-keep', 'mail1.example.net', ttl: 3600, priority: 20)->id;
+
+    try {
+        $dns->update($recordId, 'MX', '_test-keep', 'mail2.example.net');
+
+        $updated = $dns->find($recordId);
+        expect($updated->content)->toBe('mail2.example.net')
+            ->and($updated->ttl)->toBe(3600)
+            ->and($updated->priority)->toBe(20);
+
+        $dns->updateFromBuilder($recordId, $dns->record()->name('_test-keep')->type('MX')->content('mail3.example.net'));
+
+        $updated = $dns->find($recordId);
+        expect($updated->content)->toBe('mail3.example.net')
+            ->and($updated->ttl)->toBe(3600)
+            ->and($updated->priority)->toBe(20);
+    } finally {
+        $dns->delete($recordId);
+    }
+})->group('integration');
+
 test('dns: DS record is listed and deleted', function () use ($domainResource): void {
     $dns = $domainResource->dns();
     $content = '2371 13 2 ' . str_repeat('1f987cc6', 8);

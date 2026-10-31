@@ -242,10 +242,11 @@ use Porkbun\Enum\DnsRecordType;
 $dns->findByType(DnsRecordType::A);
 $dns->create(DnsRecordType::A, 'www', '192.0.2.1');
 
-// Update (direct or builder)
+// Update (direct or builder): ttl and priority you leave out keep their current values
+// (the builder's mx() always sets priority, default 10)
 $dns->update($recordId, 'A', 'www', '192.0.2.3');
 $dns->updateFromBuilder($recordId, $dns->record()->a('192.0.2.3')->name('www'));
-$dns->updateByType('A', 'www', '192.0.2.3');
+$dns->updateByType('A', 'www', '192.0.2.3');   // resets ttl/priority to 600/0 unless you pass them
 
 // Delete
 $dns->delete($recordId);

@@ -37,8 +37,8 @@ final class DnsBatchBuilder implements Countable
         string|DnsRecordType $type,
         string $name,
         string $content,
-        int $ttl = 600,
-        int $priority = 0,
+        ?int $ttl = null,
+        ?int $priority = null,
         ?string $notes = null,
     ): self {
         $clone = clone $this;
@@ -54,8 +54,8 @@ final class DnsBatchBuilder implements Countable
         string|DnsRecordType $type,
         string $name,
         string $content,
-        int $ttl = 600,
-        int $priority = 0,
+        ?int $ttl = null,
+        ?int $priority = null,
         ?string $notes = null,
     ): self {
         $clone = clone $this;
@@ -126,16 +126,22 @@ final class DnsBatchBuilder implements Countable
         string|DnsRecordType $type,
         string $name,
         string $content,
-        int $ttl,
-        int $priority,
+        ?int $ttl,
+        ?int $priority,
         ?string $notes,
     ): array {
         $builder = new DnsRecordBuilder()
             ->name($name)
             ->type($type)
-            ->content($content)
-            ->ttl($ttl)
-            ->priority($priority);
+            ->content($content);
+
+        if ($ttl !== null) {
+            $builder = $builder->ttl($ttl);
+        }
+
+        if ($priority !== null) {
+            $builder = $builder->priority($priority);
+        }
 
         if ($notes !== null) {
             $builder = $builder->notes($notes);
@@ -146,15 +152,15 @@ final class DnsBatchBuilder implements Countable
 
     private function executeCreate(Dns $dns, BatchOperation $batchOperation): BatchOperationResult
     {
-        /** @var array{name: string, type: string, content: string, ttl: int|string, prio: int|string, notes?: string} $data */
+        /** @var array{name: string, type: string, content: string, ttl?: string, prio?: string, notes?: string} $data */
         $data = $batchOperation->data;
 
         $createResult = $dns->create(
             (string) $data['type'],
             (string) $data['name'],
             (string) $data['content'],
-            (int) $data['ttl'],
-            (int) $data['prio'],
+            isset($data['ttl']) ? (int) $data['ttl'] : null,
+            isset($data['prio']) ? (int) $data['prio'] : null,
             $data['notes'] ?? null,
         );
 
@@ -167,7 +173,7 @@ final class DnsBatchBuilder implements Countable
             throw new InvalidArgumentException('Batch update operation requires a record ID.');
         }
 
-        /** @var array{name: string, type: string, content: string, ttl: string, prio: string, notes?: string} $data */
+        /** @var array{name: string, type: string, content: string, ttl?: string, prio?: string, notes?: string} $data */
         $data = $batchOperation->data;
 
         $dns->update(
@@ -175,8 +181,8 @@ final class DnsBatchBuilder implements Countable
             $data['type'],
             $data['name'],
             $data['content'],
-            (int) $data['ttl'],
-            (int) $data['prio'],
+            isset($data['ttl']) ? (int) $data['ttl'] : null,
+            isset($data['prio']) ? (int) $data['prio'] : null,
             $data['notes'] ?? null,
         );
 

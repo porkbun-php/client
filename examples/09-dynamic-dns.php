@@ -31,7 +31,7 @@ $dns = $client->domain($domainName)->dns();
 $existing = $dns->findByType('A', $subdomain);
 
 if ($existing->isNotEmpty()) {
-    $dns->updateByType('A', $subdomain, $currentIp);
+    $dns->update($existing->first()->id, 'A', $subdomain, $currentIp);
     echo "Updated {$subdomain}.{$domainName} -> {$currentIp}\n";
 } else {
     $dns->create('A', $subdomain, $currentIp, ttl: 600);

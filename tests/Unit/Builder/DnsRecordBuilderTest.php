@@ -21,7 +21,6 @@ test('dns record builder can build basic A record', function (): void {
         'type' => 'A',
         'content' => '192.0.2.1',
         'ttl' => '3600',
-        'prio' => '0',
     ]);
 });
 
@@ -40,7 +39,6 @@ test('dns record builder can build MX record with priority', function (): void {
         'name' => 'mail',
         'type' => 'MX',
         'content' => 'mail.example.com',
-        'ttl' => '600',
         'prio' => '10',
         'notes' => 'Mail server',
     ]);
@@ -241,11 +239,11 @@ test('dns record builder srv convenience method sets priority', function (): voi
     expect($data['prio'])->toBe('20');
 });
 
-test('dns record builder srv convenience method defaults priority to zero', function (): void {
+test('dns record builder srv convenience method leaves out priority by default', function (): void {
     $data = new DnsRecordBuilder()
         ->name('_sip._tcp')
         ->srv('10 60 5060 sip.example.com')
         ->toRequestData();
 
-    expect($data['prio'])->toBe('0');
+    expect($data)->not->toHaveKey('prio');
 });
