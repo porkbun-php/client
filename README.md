@@ -13,7 +13,7 @@ A community-maintained PHP 8.4+ client for the [Porkbun API v3](https://porkbun.
 
 ## Features
 
-- **Core API coverage** — 27 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, domains, pricing, and more
+- **Core API coverage** — 28 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, domains, pricing, and more
 - **Domain-centric design** — fluent API: `$client->domain('example.com')->dns()->all()`
 - **Typed everything** — immutable DTOs, backed enums, strict return types throughout
 - **Fluent builders** — validated DNS record construction with convenience methods
@@ -173,6 +173,7 @@ $result->isAvailable;           // bool
 $result->price;                 // ?float (registration price)
 $result->type;                  // string — 'standard', 'premium', etc.
 $result->priceInCents;          // ?int (e.g., 999 for $9.99)
+$result->renewalPriceInCents;   // ?int (pass to renew())
 $result->effectivePrice;        // ?float (promo price if available, else regular)
 ```
 
@@ -182,6 +183,21 @@ $result->effectivePrice;        // ?float (promo price if available, else regula
 $result = $client->domain('newdomain.com')->register(868);
 
 $result->domain;                 // 'newdomain.com'
+$result->orderId;                // int
+$result->costInCents;            // int
+$result->costInDollars;          // float (computed)
+$result->balanceInCents;         // int
+$result->balanceInDollars;       // float (computed)
+```
+
+### Domain Renewal
+
+```php
+$domain = $client->domain('example.com');
+$result = $domain->renew($domain->check()->renewalPriceInCents);
+
+$result->domain;                 // 'example.com'
+$result->expirationDate;         // ?DateTimeImmutable (new expiration date)
 $result->orderId;                // int
 $result->costInCents;            // int
 $result->costInDollars;          // float (computed)

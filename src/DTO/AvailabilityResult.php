@@ -18,6 +18,14 @@ final class AvailabilityResult implements JsonSerializable
             : null;
     }
 
+    public ?int $renewalPriceInCents {
+        get {
+            $price = $this->renewalPrice ?? $this->renewalRegularPrice;
+
+            return $price !== null ? (int) round($price * 100) : null;
+        }
+    }
+
     public bool $hasPromoPrice {
         get => $this->price !== null
             && $this->regularPrice !== null
