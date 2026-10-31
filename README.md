@@ -13,7 +13,7 @@ A community-maintained PHP 8.4+ client for the [Porkbun API v3](https://porkbun.
 
 ## Features
 
-- **Core API coverage** — 28 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, domains, pricing, and more
+- **Core API coverage** — 30 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, contacts, domains, pricing, and more
 - **Domain-centric design** — fluent API: `$client->domain('example.com')->dns()->all()`
 - **Typed everything** — immutable DTOs, backed enums, strict return types throughout
 - **Fluent builders** — validated DNS record construction with convenience methods
@@ -322,6 +322,40 @@ $ns->all();              // NameserverCollection: ['ns1.porkbun.com', 'ns2.porkb
 $ns->update('ns1.custom.com', 'ns2.custom.com');
 ```
 
+### Contacts
+
+```php
+use Porkbun\DTO\Contact;
+use Porkbun\Enum\AddressValidationChoice;
+
+$contacts = $client->domain('example.com')->contacts();
+
+$domainContacts = $contacts->all();
+$domainContacts->registrant;         // ?Contact — also admin, tech, billing
+
+$contact = new Contact(
+    firstName: 'Jane',
+    address1: '1 Example St',
+    city: 'Springfield',
+    postalCode: '62701',
+    country: 'US',                   // ISO 3166-1 alpha-2
+    phone: '5555550100',
+    phoneCountryCode: '1',
+    email: 'jane@example.com',
+    lastName: 'Doe',
+    state: 'IL',
+);
+
+$contacts->update(admin: $contact, tech: $contact);   // any subset of roles
+$result = $contacts->updateAll($contact);             // all four roles
+$result->registrantChanged;          // bool — true when a new-owner notice was sent
+
+$contacts->updateAll($contact, AddressValidationChoice::ACCEPT_SUGGESTION);   // see note below
+```
+
+> [!NOTE]
+> On some TLDs (`.de`, `.uk`, `.us`, `.ca`, `.eu` and others) a registrant change can throw `ApiException` with code `ADDRESS_VALIDATION_REQUIRED`. The code and the `suggestedAddress` are in the response body (`$e->getResponse()`). Re-send with `addressValidationChoice: AddressValidationChoice::ACCEPT_SUGGESTION` to save the suggestion, or `USE_AS_ENTERED` to keep yours.
+
 ### URL Forwarding
 
 ```php
@@ -441,7 +475,7 @@ See the [`examples/`](examples/) directory for runnable scripts:
 - [`04-dns.php`](examples/04-dns.php) - DNS CRUD with direct methods, collection helpers
 - [`05-dns-builder.php`](examples/05-dns-builder.php) - Fluent builder, convenience methods, immutable templates
 - [`06-dns-batch.php`](examples/06-dns-batch.php) - Batch operations, mixed create/edit/delete
-- [`07-domain-services.php`](examples/07-domain-services.php) - Nameservers, URL forwarding, glue records, SSL, auto-renew
+- [`07-domain-services.php`](examples/07-domain-services.php) - Nameservers, contacts, URL forwarding, glue records, SSL, auto-renew
 - [`08-error-handling.php`](examples/08-error-handling.php) - Exception hierarchy, endpoint fallback pattern
 - [`09-dynamic-dns.php`](examples/09-dynamic-dns.php) - Real-world dynamic DNS updater recipe
 - [`10-multi-account.php`](examples/10-multi-account.php) - Account switching, public/auth/clearAuth flow

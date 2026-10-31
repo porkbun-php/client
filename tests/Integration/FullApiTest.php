@@ -6,12 +6,14 @@ use Porkbun\Builder\DnsBatchBuilder;
 use Porkbun\Client;
 use Porkbun\DTO\AutoRenewResult;
 use Porkbun\DTO\AvailabilityResult;
+use Porkbun\DTO\Contact;
 use Porkbun\DTO\CreateResult;
 use Porkbun\DTO\DnsRecord;
 use Porkbun\DTO\DnsRecordCollection;
 use Porkbun\DTO\DnssecRecordCollection;
 use Porkbun\DTO\Domain;
 use Porkbun\DTO\DomainCollection;
+use Porkbun\DTO\DomainContacts;
 use Porkbun\DTO\GlueRecordCollection;
 use Porkbun\DTO\NameserverCollection;
 use Porkbun\DTO\PaginatedResult;
@@ -418,6 +420,61 @@ test('nameservers: update keeps the given nameservers', function () use ($domain
     $nameservers->update(...$current);
 
     expect($nameservers->all()->items())->toEqualCanonicalizing($current);
+})->group('integration');
+
+// --------------------------------------------------------------------------
+// Contacts
+// --------------------------------------------------------------------------
+
+test('contacts: retrieve contacts', function () use ($domainResource): void {
+    expect($domainResource->contacts()->all())->toBeInstanceOf(DomainContacts::class);
+})->group('integration');
+
+test('contacts: update all, then one role', function () use ($apiKey, $domainResource): void {
+    if (!str_starts_with($apiKey, 'pk1_sb_')) {
+        $this->markTestSkipped('Changing contacts on a real domain emails the owner');
+    }
+
+    $contacts = $domainResource->contacts();
+    $original = $contacts->all();
+
+    try {
+        $contacts->updateAll(new Contact(
+            firstName: 'Test',
+            address1: '1 Example St',
+            city: 'Springfield',
+            postalCode: '62701',
+            country: 'US',
+            phone: '5555550100',
+            phoneCountryCode: '1',
+            email: 'test@example.com',
+            lastName: 'User',
+            state: 'IL',
+        ));
+
+        $result = $contacts->update(admin: new Contact(
+            firstName: 'Admin',
+            address1: '2 Example St',
+            city: 'Springfield',
+            postalCode: '62701',
+            country: 'US',
+            phone: '5555550101',
+            phoneCountryCode: '1',
+            email: 'admin@example.com',
+            state: 'IL',
+        ));
+
+        $domainContacts = $contacts->all();
+
+        expect($result->registrantChanged)->toBeFalse()
+            ->and($domainContacts->registrant?->email)->toBe('test@example.com')
+            ->and($domainContacts->admin?->email)->toBe('admin@example.com')
+            ->and($domainContacts->tech?->email)->toBe('test@example.com');
+    } finally {
+        if ($original->registrant instanceof Contact) {
+            $contacts->update($original->registrant, $original->admin, $original->tech, $original->billing);
+        }
+    }
 })->group('integration');
 
 // --------------------------------------------------------------------------
