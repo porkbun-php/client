@@ -104,6 +104,13 @@ test('ping: verify authentication and IP resolution', function () use ($client):
         ->and($ping->resolvedIp)->toBeString()->not->toBeEmpty();
 })->group('integration');
 
+test('errors: API error carries its code', function () use ($client): void {
+    $e = catchPorkbunException(fn (): DnsRecordCollection => $client->domain('example.com')->dns()->all());
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getErrorCode())->toBe('INVALID_DOMAIN');
+})->group('integration');
+
 // --------------------------------------------------------------------------
 // Domain Availability
 // --------------------------------------------------------------------------

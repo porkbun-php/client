@@ -354,7 +354,7 @@ $contacts->updateAll($contact, AddressValidationChoice::ACCEPT_SUGGESTION);   //
 ```
 
 > [!NOTE]
-> On some TLDs (`.de`, `.uk`, `.us`, `.ca`, `.eu` and others) a registrant change can throw `ApiException` with code `ADDRESS_VALIDATION_REQUIRED`. The code and the `suggestedAddress` are in the response body (`$e->getResponse()`). Re-send with `addressValidationChoice: AddressValidationChoice::ACCEPT_SUGGESTION` to save the suggestion, or `USE_AS_ENTERED` to keep yours.
+> On some TLDs (`.de`, `.uk`, `.us`, `.ca`, `.eu` and others) a registrant change can throw `ApiException` with `$e->getErrorCode() === 'ADDRESS_VALIDATION_REQUIRED'`. The `suggestedAddress` is in the response body (`$e->getResponse()`). Re-send with `addressValidationChoice: AddressValidationChoice::ACCEPT_SUGGESTION` to save the suggestion, or `USE_AS_ENTERED` to keep yours.
 
 ### URL Forwarding
 
@@ -405,9 +405,11 @@ use Porkbun\Exception\ExceptionInterface;
 try {
     $client->domains()->list();
 } catch (AuthenticationException $e) {
-    // Invalid or missing API credentials (403)
+    // Invalid or missing API credentials
+    $e->getErrorCode();   // e.g. 'INVALID_API_KEYS_001'
 } catch (ApiException $e) {
     // API returned an error (4xx/5xx)
+    $e->getErrorCode();   // e.g. 'INVALID_DOMAIN', null if the API sent none
     $e->getStatusCode();
     $e->getRequest();
     $e->getResponse();
@@ -420,6 +422,8 @@ try {
     // Catch-all for any library exception
 }
 ```
+
+`getErrorCode()` returns Porkbun's machine-readable `code` as a plain string. Porkbun adds new codes over time, so always handle unknown ones (a `default` arm in `match`). The same problem can also have different codes on different endpoints: a bad key is `INVALID_API_KEYS` on `/ping` and `INVALID_API_KEYS_001` elsewhere, so match such families with `str_starts_with()`.
 
 > [!TIP]
 > If the default endpoint is unreachable, fall back to `$client->useIpv4Endpoint()`. See [`08-error-handling.php`](examples/08-error-handling.php) for the full pattern.

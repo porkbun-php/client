@@ -141,18 +141,21 @@ final class HttpClient
                 403,
                 null,
                 $request,
-                $response
+                $response,
+                $this->extractErrorCode($this->decodeErrorBody($body))
             );
         }
 
         if ($statusCode >= 400) {
-            $message = $this->extractErrorMessage($body) ?? "HTTP {$statusCode} error";
+            $error = $this->decodeErrorBody($body);
+            $message = $this->extractErrorMessage($body, $error) ?? "HTTP {$statusCode} error";
+            $errorCode = $this->extractErrorCode($error);
 
             if ($this->isAuthenticationError($message)) {
-                throw new AuthenticationException($message, $statusCode, null, $request, $response);
+                throw new AuthenticationException($message, $statusCode, null, $request, $response, $errorCode);
             }
 
-            throw new ApiException($message, $statusCode, null, $request, $response);
+            throw new ApiException($message, $statusCode, null, $request, $response, $errorCode);
         }
 
         $content = $this->decodeJson($body, $statusCode, $request, $response);
@@ -188,42 +191,51 @@ final class HttpClient
 
         if ($data['status'] !== 'SUCCESS') {
             $message = is_string($data['message'] ?? null) ? $data['message'] : 'Unknown API error';
+            $errorCode = $this->extractErrorCode($data);
 
             if ($this->isAuthenticationError($message)) {
-                throw new AuthenticationException($message, $response->getStatusCode(), null, $request, $response);
+                throw new AuthenticationException($message, $response->getStatusCode(), null, $request, $response, $errorCode);
             }
 
-            throw new ApiException($message, $response->getStatusCode(), null, $request, $response);
+            throw new ApiException($message, $response->getStatusCode(), null, $request, $response, $errorCode);
         }
     }
 
-    private function extractErrorMessage(string $body): ?string
+    private function decodeErrorBody(string $body): ?array
     {
         if (!$this->looksLikeJson($body)) {
-            return $body !== '' ? $body : null;
+            return null;
         }
 
         try {
             $content = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-
-            if (is_array($content)) {
-                if (($content['status'] ?? '') === 'ERROR' && is_string($content['message'] ?? null)) {
-                    return $content['message'];
-                }
-
-                if (is_string($content['message'] ?? null)) {
-                    return $content['message'];
-                }
-
-                if (is_string($content['error'] ?? null)) {
-                    return $content['error'];
-                }
-            }
         } catch (JsonException) {
+            return null;
+        }
+
+        return is_array($content) ? $content : null;
+    }
+
+    private function extractErrorMessage(string $body, ?array $error): ?string
+    {
+        if ($error === null) {
             return $body !== '' ? $body : null;
         }
 
+        if (is_string($error['message'] ?? null)) {
+            return $error['message'];
+        }
+
+        if (is_string($error['error'] ?? null)) {
+            return $error['error'];
+        }
+
         return null;
+    }
+
+    private function extractErrorCode(?array $data): ?string
+    {
+        return is_string($data['code'] ?? null) ? $data['code'] : null;
     }
 
     private function isAuthenticationError(string $message): bool

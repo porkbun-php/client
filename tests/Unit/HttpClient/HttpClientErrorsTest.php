@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Porkbun\Exception\ApiException;
+use Porkbun\Exception\AuthenticationException;
 use Porkbun\HttpClient;
 use Psr\Http\Client\ClientInterface;
 
@@ -187,4 +188,93 @@ test('http client baseUrl returns base url', function (): void {
     $httpClient = new HttpClient($mock, $factory, $factory, 'https://custom.api.com');
 
     expect($httpClient->baseUrl)->toBe('https://custom.api.com');
+});
+
+test('http client reads error code from 4xx response', function (): void {
+    $factory = new Psr17Factory();
+    $response = $factory->createResponse(400)
+        ->withBody($factory->createStream('{"status":"ERROR","message":"Invalid domain: example.com is not in the account sandbox-user.","code":"INVALID_DOMAIN","account":"sandbox-user","next_action":{"type":"fix_request","hint":"The domain name is invalid. Check the formatting.","retryable":false},"requestId":"00000000-0000-0000-0000-000000000000","sandbox":true}'));
+
+    $mock = Mockery::mock(ClientInterface::class);
+    $mock->shouldReceive('sendRequest')->andReturn($response);
+
+    $httpClient = new HttpClient($mock, $factory, $factory);
+
+    $e = catchPorkbunException(fn (): array => $httpClient->post('/test'));
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getErrorCode())->toBe('INVALID_DOMAIN')
+        ->and($e->getMessage())->toBe('Invalid domain: example.com is not in the account sandbox-user.');
+});
+
+test('http client reads error code from authentication error', function (): void {
+    $factory = new Psr17Factory();
+    $response = $factory->createResponse(400)
+        ->withBody($factory->createStream('{"status":"ERROR","message":"Invalid API key.","code":"INVALID_API_KEYS","next_action":{"type":"authenticate","hint":"Your API key or secret is invalid. Verify them, or create a new key.","retryable":false,"url":"https:\\/\\/porkbun.com\\/account\\/api"},"requestId":"00000000-0000-0000-0000-000000000000"}'));
+
+    $mock = Mockery::mock(ClientInterface::class);
+    $mock->shouldReceive('sendRequest')->andReturn($response);
+
+    $httpClient = new HttpClient($mock, $factory, $factory);
+
+    $e = catchPorkbunException(fn (): array => $httpClient->post('/test'));
+
+    expect($e)->toBeInstanceOf(AuthenticationException::class)
+        ->and($e->getErrorCode())->toBe('INVALID_API_KEYS');
+});
+
+test('http client reads error code from 403 response', function (): void {
+    $factory = new Psr17Factory();
+    $response = $factory->createResponse(403)
+        ->withBody($factory->createStream('{"status":"ERROR","message":"Invalid API key.","code":"INVALID_API_KEYS","requestId":"00000000-0000-0000-0000-000000000000"}'));
+
+    $mock = Mockery::mock(ClientInterface::class);
+    $mock->shouldReceive('sendRequest')->andReturn($response);
+
+    $httpClient = new HttpClient($mock, $factory, $factory);
+
+    $e = catchPorkbunException(fn (): array => $httpClient->post('/test'));
+
+    expect($e)->toBeInstanceOf(AuthenticationException::class)
+        ->and($e->getErrorCode())->toBe('INVALID_API_KEYS');
+});
+
+test('http client reads error code from error status in 200 response', function (): void {
+    $factory = new Psr17Factory();
+    $response = $factory->createResponse(200)
+        ->withBody($factory->createStream('{"status":"ERROR","message":"Cost must be a valid integer.","code":"INVALID_INPUT","requestId":"00000000-0000-0000-0000-000000000000","sandbox":true}'));
+
+    $mock = Mockery::mock(ClientInterface::class);
+    $mock->shouldReceive('sendRequest')->andReturn($response);
+
+    $httpClient = new HttpClient($mock, $factory, $factory);
+
+    $e = catchPorkbunException(fn (): array => $httpClient->post('/test'));
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getErrorCode())->toBe('INVALID_INPUT');
+});
+
+test('http client leaves error code null when body has none', function (): void {
+    $factory = new Psr17Factory();
+    $cases = [
+        [400, '{"status": "ERROR", "message": "Bad request"}'],
+        [400, '{"status": "ERROR", "message": "Bad request", "code": 123}'],
+        [500, 'Internal Server Error'],
+        [502, '{invalid json}'],
+    ];
+
+    foreach ($cases as [$status, $body]) {
+        $response = $factory->createResponse($status)->withBody($factory->createStream($body));
+
+        $mock = Mockery::mock(ClientInterface::class);
+        $mock->shouldReceive('sendRequest')->andReturn($response);
+
+        $httpClient = new HttpClient($mock, $factory, $factory);
+
+        $e = catchPorkbunException(fn (): array => $httpClient->post('/test'));
+
+        expect($e)->toBeInstanceOf(ApiException::class)
+            ->and($e->getErrorCode())->toBeNull($body);
+    }
 });

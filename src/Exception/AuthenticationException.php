@@ -15,8 +15,9 @@ final class AuthenticationException extends PorkbunApiException
         int $statusCode = 403,
         ?Throwable $previous = null,
         ?RequestInterface $request = null,
-        ?ResponseInterface $response = null
+        ?ResponseInterface $response = null,
+        ?string $errorCode = null,
     ) {
-        parent::__construct($message, $statusCode, $previous, $request, $response);
+        parent::__construct($message, $statusCode, $previous, $request, $response, $errorCode);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Mockery\MockInterface;
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Porkbun\Exception\PorkbunApiException;
 use Porkbun\HttpClient;
 use Porkbun\Internal\ClientContext;
 use Psr\Http\Client\ClientInterface;
@@ -98,4 +99,15 @@ function createHttpClient(
 function createMockContext(HttpClient $httpClient): ClientContext
 {
     return new ClientContext(fn (): HttpClient => $httpClient);
+}
+
+function catchPorkbunException(Closure $call): PorkbunApiException
+{
+    try {
+        $call();
+    } catch (PorkbunApiException $porkbunApiException) {
+        return $porkbunApiException;
+    }
+
+    throw new RuntimeException('Expected a PorkbunApiException, none was thrown');
 }
