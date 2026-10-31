@@ -406,7 +406,7 @@ try {
     $client->domains()->list();
 } catch (AuthenticationException $e) {
     // Invalid or missing API credentials
-    $e->getErrorCode();   // e.g. 'INVALID_API_KEYS'
+    $e->getErrorCode();   // e.g. 'INVALID_API_KEYS_001'
 } catch (ApiException $e) {
     // API returned an error (4xx/5xx)
     $e->getErrorCode();   // e.g. 'INVALID_DOMAIN', null if the API sent none
@@ -423,7 +423,7 @@ try {
 }
 ```
 
-`getErrorCode()` returns Porkbun's machine-readable `code` as a plain string. Porkbun adds new codes over time, so always handle unknown ones (a `default` arm in `match`).
+`getErrorCode()` returns Porkbun's machine-readable `code` as a plain string. Porkbun adds new codes over time, so always handle unknown ones (a `default` arm in `match`). The same problem can also have different codes on different endpoints: a bad key is `INVALID_API_KEYS` on `/ping` and `INVALID_API_KEYS_001` elsewhere, so match such families with `str_starts_with()`.
 
 > [!TIP]
 > If the default endpoint is unreachable, fall back to `$client->useIpv4Endpoint()`. See [`08-error-handling.php`](examples/08-error-handling.php) for the full pattern.
