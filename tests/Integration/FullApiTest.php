@@ -106,8 +106,8 @@ test('ping: verify authentication and IP resolution', function () use ($client):
 // Domain Availability
 // --------------------------------------------------------------------------
 
-test('domain availability: check a taken domain', function () use ($domainResource): void {
-    $availability = $domainResource->check();
+test('domain availability: check a taken domain', function () use ($client): void {
+    $availability = $client->domain('example.com')->check();
 
     expect($availability)->toBeInstanceOf(AvailabilityResult::class)
         ->and($availability->isAvailable)->toBeFalse()
