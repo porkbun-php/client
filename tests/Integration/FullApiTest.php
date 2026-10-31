@@ -564,3 +564,23 @@ test('auto-renew: disable and re-enable', function () use ($domainResource): voi
 test('domain registration: skipped to avoid real charges')
     ->skip('Domain registration costs real money')
     ->group('integration');
+
+// --------------------------------------------------------------------------
+// Domain Renewal — sandbox keys only (costs real money otherwise)
+// --------------------------------------------------------------------------
+
+test('domain renewal: renews at the checked renewal price', function () use ($apiKey, $domainResource, $domain): void {
+    if (!str_starts_with($apiKey, 'pk1_sb_')) {
+        $this->markTestSkipped('Domain renewal costs real money');
+    }
+
+    $costInCents = $domainResource->check()->renewalPriceInCents;
+    assert(is_int($costInCents));
+
+    $domainRenewal = $domainResource->renew($costInCents);
+
+    expect($domainRenewal->domain)->toBe($domain)
+        ->and($domainRenewal->costInCents)->toBe($costInCents)
+        ->and($domainRenewal->orderId)->toBeGreaterThan(0)
+        ->and($domainRenewal->expirationDate)->toBeInstanceOf(DateTimeImmutable::class);
+})->group('integration');

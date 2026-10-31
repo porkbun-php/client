@@ -93,3 +93,7 @@ try {
 // Domain Registration (commented out — purchases a domain)
 // $result = $client->domain('newdomain.com')->register(868);
 // echo "Registered: {$result->domain}, order #{$result->orderId}\n";
+
+// Domain Renewal (commented out — charges your account)
+// $result = $domain->renew($domain->check()->renewalPriceInCents);
+// echo "Renewed: {$result->domain} until {$result->expirationDate?->format('Y-m-d')}\n";

@@ -12,10 +12,12 @@ use Porkbun\Api\Domains;
 use Porkbun\Api\GlueRecords;
 use Porkbun\Api\Nameservers;
 use Porkbun\Api\Registration as RegistrationApi;
+use Porkbun\Api\Renewal as RenewalApi;
 use Porkbun\Api\UrlForwarding;
 use Porkbun\DTO\AvailabilityResult;
 use Porkbun\DTO\Domain as DomainDto;
 use Porkbun\DTO\DomainRegistration;
+use Porkbun\DTO\DomainRenewal;
 use Porkbun\DTO\SslCertificate;
 use Porkbun\Exception\ApiException;
 use Porkbun\Internal\ClientContext;
@@ -92,5 +94,10 @@ final class Domain
     public function register(int $costInCents): DomainRegistration
     {
         return new RegistrationApi($this->clientContext, $this->name)->register($costInCents);
+    }
+
+    public function renew(int $costInCents): DomainRenewal
+    {
+        return new RenewalApi($this->clientContext, $this->name)->renew($costInCents);
     }
 }

@@ -12,6 +12,7 @@ use Porkbun\Api\UrlForwarding;
 use Porkbun\DTO\AvailabilityResult;
 use Porkbun\DTO\Domain as DomainDto;
 use Porkbun\DTO\DomainRegistration;
+use Porkbun\DTO\DomainRenewal;
 use Porkbun\DTO\SslCertificate;
 use Porkbun\Exception\ApiException;
 use Porkbun\HttpClient;
@@ -181,6 +182,29 @@ test('domain facade can register domain', function (): void {
         ->and($domainRegistration->domain)->toBe('newdomain.com')
         ->and($domainRegistration->costInCents)->toBe(868)
         ->and($domainRegistration->orderId)->toBe(123456);
+});
+
+test('domain facade can renew domain', function (): void {
+    $mockClient = createMockHttpClient([
+        [
+            'status' => 'SUCCESS',
+            'domain' => 'example.com',
+            'expirationDate' => '2028-10-30 10:41:05',
+            'cost' => 1108,
+            'orderId' => 123456,
+            'balance' => 5000,
+        ],
+    ]);
+
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $domain = createDomainFacade('example.com', $httpClient);
+
+    $domainRenewal = $domain->renew(1108);
+
+    expect($domainRenewal)->toBeInstanceOf(DomainRenewal::class)
+        ->and($domainRenewal->domain)->toBe('example.com')
+        ->and($domainRenewal->costInCents)->toBe(1108)
+        ->and($domainRenewal->orderId)->toBe(123456);
 });
 
 test('domain facade details returns domain DTO', function (): void {

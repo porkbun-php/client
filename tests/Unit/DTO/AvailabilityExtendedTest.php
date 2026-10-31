@@ -35,3 +35,35 @@ test('getPriceInCents falls back to regularPrice', function (): void {
 
     expect($availability->priceInCents)->toBe(1500);
 });
+
+test('renewalPriceInCents returns renewal price in cents', function (): void {
+    $availability = Availability::fromArray([
+        'response' => [
+            'avail' => 'no',
+            'type' => 'registration',
+            'additional' => ['renewal' => ['type' => 'renewal', 'price' => '11.08', 'regularPrice' => '12.00']],
+        ],
+    ]);
+
+    expect($availability->renewalPriceInCents)->toBe(1108);
+});
+
+test('renewalPriceInCents falls back to renewal regularPrice', function (): void {
+    $availability = Availability::fromArray([
+        'response' => [
+            'avail' => 'no',
+            'type' => 'registration',
+            'additional' => ['renewal' => ['type' => 'renewal', 'regularPrice' => '12.00']],
+        ],
+    ]);
+
+    expect($availability->renewalPriceInCents)->toBe(1200);
+});
+
+test('renewalPriceInCents returns null when no renewal price', function (): void {
+    $availability = Availability::fromArray([
+        'response' => ['avail' => 'no', 'type' => 'registration'],
+    ]);
+
+    expect($availability->renewalPriceInCents)->toBeNull();
+});
