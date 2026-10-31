@@ -21,14 +21,23 @@ final class GlueRecords extends AbstractApi
     {
         $response = $this->post("/domain/getGlue/{$this->domain}");
 
-        /** @var array<array<string, mixed>> $responseGlue */
-        $responseGlue = $response['glue'] ?? [];
+        /** @var list<array{0?: string, 1?: array<mixed>}> $hosts */
+        $hosts = $response['hosts'] ?? [];
 
-        foreach ($responseGlue as &$record) {
-            $record['host'] = self::stripDomainSuffix((string) ($record['host'] ?? ''), $this->domain);
+        $records = [];
+        foreach ($hosts as $entry) {
+            $host = $entry[0] ?? '';
+            if ($host === '') {
+                continue;
+            }
+
+            $records[] = [
+                'host' => self::stripDomainSuffix($host, $this->domain),
+                'ips' => self::flattenIps($entry[1] ?? []),
+            ];
         }
 
-        return GlueRecordCollection::fromArray($responseGlue);
+        return GlueRecordCollection::fromArray($records);
     }
 
     public function create(string $subdomain, string $ip, string ...$moreIps): OperationResult
@@ -52,15 +61,24 @@ final class GlueRecords extends AbstractApi
         return OperationResult::fromArray($response);
     }
 
-    /** @return array<string, string> */
-    private function buildIpData(string $ip, string ...$moreIps): array
+    /**
+     * @param array<mixed> $ips
+     *
+     * @return list<string>
+     */
+    private static function flattenIps(array $ips): array
     {
-        $allIps = [$ip, ...$moreIps];
-        $data = [];
-        foreach (array_values($allIps) as $index => $ipAddr) {
-            $data['ip' . ($index + 1)] = $ipAddr;
+        // The API sends either a flat list or {v4, v6}.
+        if (!array_is_list($ips)) {
+            $ips = [...(array) ($ips['v4'] ?? []), ...(array) ($ips['v6'] ?? [])];
         }
 
-        return $data;
+        return array_values(array_map(strval(...), array_filter($ips, is_scalar(...))));
+    }
+
+    /** @return array{ips: list<string>} */
+    private function buildIpData(string $ip, string ...$moreIps): array
+    {
+        return ['ips' => array_values([$ip, ...$moreIps])];
     }
 }
