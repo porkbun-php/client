@@ -23,6 +23,7 @@ use Porkbun\DTO\UrlForward;
 use Porkbun\DTO\UrlForwardCollection;
 use Porkbun\Enum\BatchOperationType;
 use Porkbun\Enum\DnsRecordType;
+use Porkbun\Enum\UrlForwardType;
 use Porkbun\Exception\ApiException;
 
 /*
@@ -462,6 +463,24 @@ test('url forwarding: add, list, delete lifecycle', function () use ($domainReso
 
     foreach ($urlForwardCollection as $forward) {
         expect($forward->subdomain)->not->toContain('_test-fwd');
+    }
+})->group('integration');
+
+test('url forwarding: masked forward is listed and deleted', function () use ($domainResource): void {
+    $urlForwarding = $domainResource->urlForwarding();
+
+    $urlForwarding->create('https://example.com/test-masked', UrlForwardType::MASKED, subdomain: '_test-masked');
+
+    $found = $urlForwarding->all()->filter(fn (UrlForward $forward): bool => $forward->subdomain === '_test-masked')->first();
+
+    try {
+        expect($found)->not->toBeNull()
+            ->and($found?->isMasked)->toBeTrue()
+            ->and($found?->location)->toBe('https://example.com/test-masked');
+    } finally {
+        if ($found instanceof UrlForward) {
+            $urlForwarding->delete($found->id);
+        }
     }
 })->group('integration');
 

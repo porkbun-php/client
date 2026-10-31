@@ -16,6 +16,8 @@ final class UrlForward implements JsonSerializable
 
     public bool $isTemporary { get => $this->type === UrlForwardType::TEMPORARY; }
 
+    public bool $isMasked { get => $this->type === UrlForwardType::MASKED; }
+
     public bool $isRootDomain { get => $this->subdomain === ''; }
 
     public function __construct(
