@@ -82,8 +82,8 @@ final class Dns extends AbstractApi
         string|DnsRecordType $type,
         string $name,
         string $content,
-        int $ttl = 600,
-        int $priority = 0,
+        ?int $ttl = null,
+        ?int $priority = null,
         ?string $notes = null,
     ): CreateResult {
         $response = $this->post(
@@ -118,8 +118,8 @@ final class Dns extends AbstractApi
         string|DnsRecordType $type,
         string $name,
         string $content,
-        int $ttl = 600,
-        int $priority = 0,
+        ?int $ttl = null,
+        ?int $priority = null,
         ?string $notes = null,
     ): OperationResult {
         $response = $this->post(
@@ -139,7 +139,10 @@ final class Dns extends AbstractApi
         return OperationResult::fromArray($response);
     }
 
-    /** Updates ALL matching records. Pass null for $name to update all records of the given type. */
+    /**
+     * Updates ALL matching records. Pass null for $name to update all records of the given type.
+     * Unlike update(), ttl and priority are always sent: Porkbun resets left-out values to 600/0.
+     */
     public function updateByType(
         string|DnsRecordType $type,
         ?string $name,
@@ -196,17 +199,23 @@ final class Dns extends AbstractApi
         string|DnsRecordType $type,
         string $name,
         string $content,
-        int $ttl,
-        int $priority,
+        ?int $ttl,
+        ?int $priority,
         ?string $notes,
     ): array {
         $data = [
             'name' => $name,
             'type' => DnsRecordType::resolve($type)->value,
             'content' => $content,
-            'ttl' => (string) $ttl,
-            'prio' => (string) $priority,
         ];
+
+        if ($ttl !== null) {
+            $data['ttl'] = (string) $ttl;
+        }
+
+        if ($priority !== null) {
+            $data['prio'] = (string) $priority;
+        }
 
         if ($notes !== null) {
             $data['notes'] = $notes;

@@ -220,8 +220,8 @@ test('dns api can update record', function (): void {
                 ->toHaveKey('name', 'www')
                 ->toHaveKey('type', 'A')
                 ->toHaveKey('content', '192.0.2.2')
-                ->toHaveKey('ttl', '600')
-                ->toHaveKey('prio', '0');
+                ->not()->toHaveKey('ttl')
+                ->not()->toHaveKey('prio');
 
             return true;
         }))
@@ -511,4 +511,71 @@ test('dns api findByType normalizes FQDN names', function (): void {
 
     $items = iterator_to_array($dnsRecordCollection);
     expect($items[1]->name)->toBe('www');
+});
+
+test('dns api create leaves out ttl and priority when not given', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)
+                ->toHaveKey('content', '192.0.2.1')
+                ->not()->toHaveKey('ttl')
+                ->not()->toHaveKey('prio');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS', 'id' => 123])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dns->create('A', 'www', '192.0.2.1');
+});
+
+test('dns api update from builder leaves out ttl and priority when not set', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            expect((string) $request->getUri())->toContain('/dns/edit/example.com/789');
+
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)
+                ->toHaveKey('content', '192.0.2.5')
+                ->not()->toHaveKey('ttl')
+                ->not()->toHaveKey('prio');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dns->updateFromBuilder(789, $dns->record()->name('www')->a('192.0.2.5'));
+});
+
+test('dns api update still sends explicit ttl and zero priority', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            $body = json_decode((string) $request->getBody(), true);
+            expect($body)
+                ->toHaveKey('ttl', '300')
+                ->toHaveKey('prio', '0');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $dns->update(123, 'MX', 'mail', 'mail.example.com', ttl: 300, priority: 0);
 });

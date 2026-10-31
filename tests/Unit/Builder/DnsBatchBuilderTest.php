@@ -10,6 +10,8 @@ use Porkbun\DTO\BatchResult;
 use Porkbun\Enum\BatchOperationType;
 use Porkbun\Enum\DnsRecordType;
 use Porkbun\Exception\InvalidArgumentException;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
 
 test('dns batch builder can add operations', function (): void {
     $batch = new DnsBatchBuilder()
@@ -321,4 +323,37 @@ test('dns batch builder execute argument overrides pre-wired dns', function (): 
     expect($results)->toHaveCount(1);
     expect($results->items()[0]->success)->toBeTrue();
     expect($results->items()[0]->recordId)->toBe(999);
+});
+
+test('dns batch builder leaves out ttl and priority when not given', function (): void {
+    $bodies = [];
+
+    $mock = Mockery::mock(ClientInterface::class);
+    $mock->shouldReceive('sendRequest')
+        ->twice()
+        ->with(Mockery::on(function (RequestInterface $request) use (&$bodies): bool {
+            $bodies[] = json_decode((string) $request->getBody(), true);
+
+            return true;
+        }))
+        ->andReturn(
+            createMockResponse(json_encode(['status' => 'SUCCESS', 'id' => 111])),
+            createMockResponse(json_encode(['status' => 'SUCCESS'])),
+        );
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $dns = new Dns(createMockContext($httpClient), 'example.com');
+
+    $results = new DnsBatchBuilder()
+        ->add(new DnsRecordBuilder()->name('www')->a('192.0.2.1'))
+        ->updateRecord(123, 'A', 'api', '192.0.2.2')
+        ->execute($dns);
+
+    expect($results->hasFailures())->toBeFalse()
+        ->and($bodies)->toHaveCount(2);
+
+    foreach ($bodies as $body) {
+        expect($body)->not()->toHaveKey('ttl')
+            ->not()->toHaveKey('prio');
+    }
 });

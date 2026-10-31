@@ -13,8 +13,8 @@ final class DnsRecordBuilder
         private string $name = '',
         private ?DnsRecordType $type = null,
         private ?string $content = null,
-        private int $ttl = 600,
-        private int $priority = 0,
+        private ?int $ttl = null,
+        private ?int $priority = null,
         private ?string $notes = null,
     ) {
     }
@@ -107,9 +107,15 @@ final class DnsRecordBuilder
             'name' => $this->name,
             'type' => $this->type->value,
             'content' => $this->content,
-            'ttl' => (string) $this->ttl,
-            'prio' => (string) $this->priority,
         ];
+
+        if ($this->ttl !== null) {
+            $data['ttl'] = (string) $this->ttl;
+        }
+
+        if ($this->priority !== null) {
+            $data['prio'] = (string) $this->priority;
+        }
 
         if ($this->notes !== null) {
             $data['notes'] = $this->notes;
@@ -153,9 +159,11 @@ final class DnsRecordBuilder
         return $this->type(DnsRecordType::CAA)->content($value);
     }
 
-    public function srv(string $value, int $priority = 0): self
+    public function srv(string $value, ?int $priority = null): self
     {
-        return $this->type(DnsRecordType::SRV)->content($value)->priority($priority);
+        $builder = $this->type(DnsRecordType::SRV)->content($value);
+
+        return $priority === null ? $builder : $builder->priority($priority);
     }
 
     public function alias(string $target): self
