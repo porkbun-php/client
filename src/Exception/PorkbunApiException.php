@@ -17,8 +17,14 @@ abstract class PorkbunApiException extends Exception implements ExceptionInterfa
         ?Throwable $previous = null,
         private readonly ?RequestInterface $request = null,
         private readonly ?ResponseInterface $response = null,
+        private readonly ?string $errorCode = null,
     ) {
         parent::__construct($message, 0, $previous);
+    }
+
+    public function getErrorCode(): ?string
+    {
+        return $this->errorCode;
     }
 
     public function getStatusCode(): int

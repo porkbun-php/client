@@ -16,10 +16,11 @@ $client->authenticate('pk1_invalid', 'sk1_invalid');
 try {
     $client->domains()->list();
 } catch (AuthenticationException $e) {
-    echo "Auth error (HTTP {$e->getStatusCode()}): {$e->getMessage()}\n";
-    // AuthenticationException has getRequest() and getResponse()
+    $code = $e->getErrorCode() ?? 'no code';
+    echo "Auth error (HTTP {$e->getStatusCode()}, {$code}): {$e->getMessage()}\n";
 } catch (ApiException $e) {
-    echo "API error (HTTP {$e->getStatusCode()}): {$e->getMessage()}\n";
+    $code = $e->getErrorCode() ?? 'no code';
+    echo "API error (HTTP {$e->getStatusCode()}, {$code}): {$e->getMessage()}\n";
     if ($e->hasResponse()) {
         echo "Response body available for inspection\n";
     }

@@ -32,6 +32,22 @@ test('api exception with previous exception', function (): void {
     expect($exception->getStatusCode())->toBe(500);
 });
 
+test('api exception error code defaults to null', function (): void {
+    expect(new ApiException('Test message')->getErrorCode())->toBeNull();
+});
+
+test('api exception carries error code', function (): void {
+    $exception = new ApiException('Test message', 400, null, null, null, 'INVALID_DOMAIN');
+
+    expect($exception->getErrorCode())->toBe('INVALID_DOMAIN');
+});
+
+test('authentication exception carries error code', function (): void {
+    $exception = new AuthenticationException('Auth failed', 400, null, null, null, 'INVALID_API_KEYS');
+
+    expect($exception->getErrorCode())->toBe('INVALID_API_KEYS');
+});
+
 test('authentication exception can be instantiated', function (): void {
     $exception = new AuthenticationException('Auth failed');
 
