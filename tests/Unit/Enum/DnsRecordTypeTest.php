@@ -36,7 +36,8 @@ test('description returns description for all types', function (): void {
         ->and(DnsRecordType::HTTPS->description())->toBe('HTTPS service binding record')
         ->and(DnsRecordType::SVCB->description())->toBe('Service binding record')
         ->and(DnsRecordType::ALIAS->description())->toBe('CNAME flattening record')
-        ->and(DnsRecordType::SSHFP->description())->toBe('SSH fingerprint record');
+        ->and(DnsRecordType::SSHFP->description())->toBe('SSH fingerprint record')
+        ->and(DnsRecordType::DS->description())->toBe('Delegation signer record');
 });
 
 test('validateContent validates A records', function (): void {
@@ -110,4 +111,10 @@ test('validateContent validates SSHFP records', function (): void {
         ->and(DnsRecordType::SSHFP->validateContent('3 1 AABBCCDD'))->toBeTrue()
         ->and(DnsRecordType::SSHFP->validateContent('invalid'))->toBeFalse()
         ->and(DnsRecordType::SSHFP->validateContent('1 2 notahex!'))->toBeFalse();
+});
+
+test('validateContent validates DS records', function (): void {
+    expect(DnsRecordType::DS->validateContent('2371 13 2 1F987CC6583E92DF0890718C42A1B4F2'))->toBeTrue()
+        ->and(DnsRecordType::DS->validateContent('2371 13 2'))->toBeFalse()
+        ->and(DnsRecordType::DS->validateContent('2371 13 2 notahex!'))->toBeFalse();
 });

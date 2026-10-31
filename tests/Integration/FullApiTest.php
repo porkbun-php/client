@@ -290,6 +290,24 @@ test('dns: update by type/name', function () use ($domainResource): void {
     }
 })->group('integration');
 
+test('dns: DS record is listed and deleted', function () use ($domainResource): void {
+    $dns = $domainResource->dns();
+    $content = '2371 13 2 ' . str_repeat('1f987cc6', 8);
+
+    $dns->createFromBuilder($dns->record()->name('_test-ds')->ds($content));
+
+    try {
+        $found = $dns->findByType(DnsRecordType::DS, '_test-ds');
+        expect($found->count())->toBe(1)
+            ->and($found->first()?->content)->toBe($content);
+
+        expect($dns->all()->filter(fn (DnsRecord $record): bool => $record->type === DnsRecordType::DS)->count())
+            ->toBeGreaterThanOrEqual(1);
+    } finally {
+        $dns->deleteByType(DnsRecordType::DS, '_test-ds');
+    }
+})->group('integration');
+
 test('dns: all() returns collection', function () use ($domainResource): void {
     $dns = $domainResource->dns();
     $all = $dns->all();

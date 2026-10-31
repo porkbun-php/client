@@ -173,6 +173,11 @@ final class DnsRecordBuilder
         return $this->type(DnsRecordType::TLSA)->content($value);
     }
 
+    public function ds(string $value): self
+    {
+        return $this->type(DnsRecordType::DS)->content($value);
+    }
+
     public function https(string $value): self
     {
         return $this->type(DnsRecordType::HTTPS)->content($value);
