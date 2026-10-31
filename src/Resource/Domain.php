@@ -6,6 +6,7 @@ namespace Porkbun\Resource;
 
 use Porkbun\Api\AutoRenew;
 use Porkbun\Api\Availability as AvailabilityApi;
+use Porkbun\Api\Contacts;
 use Porkbun\Api\Dns;
 use Porkbun\Api\Dnssec;
 use Porkbun\Api\Domains;
@@ -35,6 +36,8 @@ final class Domain
     private ?GlueRecords $glueRecords = null;
 
     private ?AutoRenew $autoRenew = null;
+
+    private ?Contacts $contacts = null;
 
     public function __construct(
         public readonly string $name,
@@ -84,6 +87,11 @@ final class Domain
     public function autoRenew(): AutoRenew
     {
         return $this->autoRenew ??= new AutoRenew($this->clientContext, $this->name);
+    }
+
+    public function contacts(): Contacts
+    {
+        return $this->contacts ??= new Contacts($this->clientContext, $this->name);
     }
 
     public function check(): AvailabilityResult

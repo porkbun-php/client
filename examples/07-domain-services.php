@@ -47,6 +47,22 @@ try {
 
 // $domain->nameservers()->update('ns1.custom.com', 'ns2.custom.com');
 
+// Contacts
+$contacts = $domain->contacts()->all();
+$registrant = $contacts->registrant;
+echo "\nRegistrant: " . ($registrant !== null ? "{$registrant->firstName} {$registrant->lastName} <{$registrant->email}>" : 'none') . "\n";
+
+// $domain->contacts()->update(admin: new Porkbun\DTO\Contact(
+//     firstName: 'Jane',
+//     address1: '1 Example St',
+//     city: 'Springfield',
+//     postalCode: '62701',
+//     country: 'US',
+//     phone: '5555550100',
+//     phoneCountryCode: '1',
+//     email: 'jane@example.com',
+// ));
+
 // URL Forwarding
 $forwards = $domain->urlForwarding()->all();
 echo "\nURL forwards: " . count($forwards) . "\n";

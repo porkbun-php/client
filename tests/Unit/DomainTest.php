@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Porkbun\Api\AutoRenew;
+use Porkbun\Api\Contacts;
 use Porkbun\Api\Dns;
 use Porkbun\Api\Dnssec;
 use Porkbun\Api\Domains;
@@ -104,6 +105,15 @@ test('domain facade provides auto renew service', function (): void {
     expect($domain->autoRenew())->toBeInstanceOf(AutoRenew::class);
 });
 
+test('domain facade provides contacts service', function (): void {
+    $mockClient = createMockHttpClient([]);
+    $httpClient = createHttpClient($mockClient);
+
+    $domain = createDomainFacade('example.com', $httpClient);
+
+    expect($domain->contacts())->toBeInstanceOf(Contacts::class);
+});
+
 test('domain facade caches service instances', function (): void {
     $mockClient = createMockHttpClient([]);
     $httpClient = createHttpClient($mockClient);
@@ -133,6 +143,10 @@ test('domain facade caches service instances', function (): void {
     $autoRenew1 = $domain->autoRenew();
     $autoRenew2 = $domain->autoRenew();
     expect($autoRenew1)->toBe($autoRenew2);
+
+    $contacts1 = $domain->contacts();
+    $contacts2 = $domain->contacts();
+    expect($contacts1)->toBe($contacts2);
 });
 
 test('domain facade can check availability', function (): void {
