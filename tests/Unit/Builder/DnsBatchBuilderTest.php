@@ -67,7 +67,7 @@ test('dns batch builder handles errors gracefully', function (): void {
     expect($results->items()[0])->toBeInstanceOf(BatchOperationResult::class);
     expect($results->items()[0]->isFailure)->toBeTrue();
     expect($results->items()[0]->operation)->toBe(BatchOperationType::CREATE);
-    expect($results->items()[0]->error)->toContain('Authentication');
+    expect($results->items()[0]->error)->toContain('Invalid API key');
 });
 
 test('dns batch builder preserves operations after execute', function (): void {

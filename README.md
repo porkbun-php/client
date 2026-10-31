@@ -351,14 +351,21 @@ use Porkbun\Exception\AuthenticationException;
 use Porkbun\Exception\InvalidArgumentException;
 use Porkbun\Exception\NetworkException;
 use Porkbun\Exception\ExceptionInterface;
+use Porkbun\Exception\RateLimitException;
 
 try {
     $client->domains()->list();
 } catch (AuthenticationException $e) {
-    // Invalid or missing API credentials (403)
+    // Invalid credentials, or the key is not allowed to do this (403)
+} catch (RateLimitException $e) {
+    // Too many requests (429)
+    sleep($e->getRetryAfter() ?? 60);
 } catch (ApiException $e) {
     // API returned an error (4xx/5xx)
     $e->getStatusCode();
+    $e->getErrorCode();            // e.g. 'INVALID_DOMAIN'
+    $e->getNextAction()?->hint;    // what to do about it
+    $e->getRequestId();            // for Porkbun support
     $e->getRequest();
     $e->getResponse();
 } catch (NetworkException $e) {
@@ -370,6 +377,8 @@ try {
     // Catch-all for any library exception
 }
 ```
+
+Branch on `getErrorCode()`, not on the message text. Porkbun lists every code in its [API docs](https://porkbun.com/api/json/v3/documentation).
 
 > [!TIP]
 > If the default endpoint is unreachable, fall back to `$client->useIpv4Endpoint()`. See [`08-error-handling.php`](examples/08-error-handling.php) for the full pattern.

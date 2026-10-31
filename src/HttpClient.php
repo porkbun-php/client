@@ -7,11 +7,14 @@ namespace Porkbun;
 use Composer\InstalledVersions;
 use JsonException;
 use OutOfBoundsException;
+use Porkbun\DTO\NextAction;
 use Porkbun\Enum\Endpoint;
 use Porkbun\Exception\ApiException;
 use Porkbun\Exception\AuthenticationException;
 use Porkbun\Exception\InvalidArgumentException;
 use Porkbun\Exception\NetworkException;
+use Porkbun\Exception\PorkbunApiException;
+use Porkbun\Exception\RateLimitException;
 use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
@@ -135,28 +138,19 @@ final class HttpClient
         $statusCode = $response->getStatusCode();
         $body = (string) $response->getBody();
 
-        if ($statusCode === 403) {
-            throw new AuthenticationException(
-                'Authentication required or invalid',
-                403,
-                null,
-                $request,
-                $response
-            );
-        }
-
         if ($statusCode >= 400) {
-            $message = $this->extractErrorMessage($body) ?? "HTTP {$statusCode} error";
-
-            if ($this->isAuthenticationError($message)) {
-                throw new AuthenticationException($message, $statusCode, null, $request, $response);
-            }
-
-            throw new ApiException($message, $statusCode, null, $request, $response);
+            throw $this->createException($this->decodeErrorBody($body), $request, $response);
         }
 
         $content = $this->decodeJson($body, $statusCode, $request, $response);
-        $this->validateSuccessResponse($content, $request, $response);
+
+        if (!isset($content['status'])) {
+            throw new ApiException('Invalid API response format: missing status field', $statusCode, null, $request, $response);
+        }
+
+        if ($content['status'] !== 'SUCCESS') {
+            throw $this->createException($content, $request, $response);
+        }
 
         return $content;
     }
@@ -180,54 +174,74 @@ final class HttpClient
         }
     }
 
-    private function validateSuccessResponse(array $data, RequestInterface $request, ResponseInterface $response): void
-    {
-        if (!isset($data['status'])) {
-            throw new ApiException('Invalid API response format: missing status field', $response->getStatusCode(), null, $request, $response);
-        }
-
-        if ($data['status'] !== 'SUCCESS') {
-            $message = is_string($data['message'] ?? null) ? $data['message'] : 'Unknown API error';
-
-            if ($this->isAuthenticationError($message)) {
-                throw new AuthenticationException($message, $response->getStatusCode(), null, $request, $response);
-            }
-
-            throw new ApiException($message, $response->getStatusCode(), null, $request, $response);
-        }
-    }
-
-    private function extractErrorMessage(string $body): ?string
+    private function decodeErrorBody(string $body): array
     {
         if (!$this->looksLikeJson($body)) {
-            return $body !== '' ? $body : null;
+            return [];
         }
 
         try {
-            $content = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
-
-            if (is_array($content)) {
-                if (($content['status'] ?? '') === 'ERROR' && is_string($content['message'] ?? null)) {
-                    return $content['message'];
-                }
-
-                if (is_string($content['message'] ?? null)) {
-                    return $content['message'];
-                }
-
-                if (is_string($content['error'] ?? null)) {
-                    return $content['error'];
-                }
-            }
+            $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            return $body !== '' ? $body : null;
+            return [];
         }
 
-        return null;
+        return is_array($decoded) ? $decoded : [];
     }
 
-    private function isAuthenticationError(string $message): bool
+    private function createException(array $error, RequestInterface $request, ResponseInterface $response): PorkbunApiException
     {
+        $statusCode = $response->getStatusCode();
+        $code = is_string($error['code'] ?? null) ? $error['code'] : null;
+        $message = $this->errorMessage($error, $statusCode);
+        $nextAction = is_array($error['next_action'] ?? null) ? NextAction::fromArray($error['next_action']) : null;
+        $requestId = $error['requestId'] ?? $response->getHeaderLine('X-Request-Id');
+        $requestId = is_string($requestId) && $requestId !== '' ? $requestId : null;
+
+        if ($statusCode === 429 || $code === 'RATE_LIMIT_EXCEEDED') {
+            return new RateLimitException($message, $statusCode, null, $request, $response, $code, $nextAction, $requestId, $this->retryAfter($error, $response));
+        }
+
+        if ($statusCode === 403 || $this->isAuthenticationError($code, $message)) {
+            return new AuthenticationException($message, $statusCode, null, $request, $response, $code, $nextAction, $requestId);
+        }
+
+        return new ApiException($message, $statusCode, null, $request, $response, $code, $nextAction, $requestId);
+    }
+
+    private function errorMessage(array $error, int $statusCode): string
+    {
+        foreach (['message', 'error'] as $key) {
+            if (is_string($error[$key] ?? null) && $error[$key] !== '') {
+                return $error[$key];
+            }
+        }
+
+        return match (true) {
+            $statusCode === 403 => 'Authentication required or invalid',
+            $statusCode >= 400 => "HTTP {$statusCode} error",
+            default => 'Unknown API error',
+        };
+    }
+
+    private function retryAfter(array $error, ResponseInterface $response): ?int
+    {
+        $header = $response->getHeaderLine('Retry-After');
+
+        if (is_numeric($header)) {
+            return (int) $header;
+        }
+
+        return is_numeric($error['ttlRemaining'] ?? null) ? (int) $error['ttlRemaining'] : null;
+    }
+
+    private function isAuthenticationError(?string $code, string $message): bool
+    {
+        if ($code !== null) {
+            return in_array($code, ['API_KEY_REQUIRED', 'INVALID_TOKEN', 'INVALID_USER'], true)
+                || str_starts_with($code, 'INVALID_API_KEYS');
+        }
+
         $message = mb_strtolower($message);
 
         return str_contains($message, 'invalid api key')

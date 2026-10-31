@@ -79,5 +79,8 @@
     "exclude": [
         "vendor",
         "tests/Pest.php"
+    ],
+    "notPath": [
+        "src/Exception/ApiException.php"
     ]
 }

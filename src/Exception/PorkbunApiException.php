@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Porkbun\Exception;
 
 use Exception;
+use Porkbun\DTO\NextAction;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
@@ -17,6 +18,9 @@ abstract class PorkbunApiException extends Exception implements ExceptionInterfa
         ?Throwable $previous = null,
         private readonly ?RequestInterface $request = null,
         private readonly ?ResponseInterface $response = null,
+        private readonly ?string $errorCode = null,
+        private readonly ?NextAction $nextAction = null,
+        private readonly ?string $requestId = null,
     ) {
         parent::__construct($message, 0, $previous);
     }
@@ -44,5 +48,20 @@ abstract class PorkbunApiException extends Exception implements ExceptionInterfa
     public function hasResponse(): bool
     {
         return $this->response instanceof ResponseInterface;
+    }
+
+    public function getErrorCode(): ?string
+    {
+        return $this->errorCode;
+    }
+
+    public function getNextAction(): ?NextAction
+    {
+        return $this->nextAction;
+    }
+
+    public function getRequestId(): ?string
+    {
+        return $this->requestId;
     }
 }

@@ -8,6 +8,7 @@ use Porkbun\Exception\ApiException;
 use Porkbun\Exception\AuthenticationException;
 use Porkbun\Exception\ExceptionInterface;
 use Porkbun\Exception\NetworkException;
+use Porkbun\Exception\RateLimitException;
 
 $client = new Porkbun\Client();
 $client->authenticate('pk1_invalid', 'sk1_invalid');
@@ -16,10 +17,13 @@ $client->authenticate('pk1_invalid', 'sk1_invalid');
 try {
     $client->domains()->list();
 } catch (AuthenticationException $e) {
-    echo "Auth error (HTTP {$e->getStatusCode()}): {$e->getMessage()}\n";
-    // AuthenticationException has getRequest() and getResponse()
+    echo "Auth error (HTTP {$e->getStatusCode()}, {$e->getErrorCode()}): {$e->getMessage()}\n";
+    echo "Next step: {$e->getNextAction()?->hint}\n";
+} catch (RateLimitException $e) {
+    echo "Rate limited, retry in {$e->getRetryAfter()} seconds\n";
 } catch (ApiException $e) {
-    echo "API error (HTTP {$e->getStatusCode()}): {$e->getMessage()}\n";
+    echo "API error (HTTP {$e->getStatusCode()}, {$e->getErrorCode()}): {$e->getMessage()}\n";
+    echo "Request ID for support: {$e->getRequestId()}\n";
     if ($e->hasResponse()) {
         echo "Response body available for inspection\n";
     }

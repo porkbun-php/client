@@ -107,7 +107,7 @@ test('http client extracts error field from response', function (): void {
         ->toThrow(ApiException::class, 'Something went wrong');
 });
 
-test('http client uses plain text error body', function (): void {
+test('http client ignores plain text error body in the message', function (): void {
     $factory = new Psr17Factory();
     $response = $factory->createResponse(500)
         ->withBody($factory->createStream('Internal Server Error'));
@@ -118,7 +118,7 @@ test('http client uses plain text error body', function (): void {
     $httpClient = new HttpClient($mock, $factory, $factory);
 
     expect(fn (): array => $httpClient->post('/test'))
-        ->toThrow(ApiException::class, 'Internal Server Error');
+        ->toThrow(ApiException::class, 'HTTP 500 error');
 });
 
 test('http client uses generic message for empty error body', function (): void {
