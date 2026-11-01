@@ -9,6 +9,8 @@ use Porkbun\DTO\AutoRenewResult;
 use Porkbun\DTO\Domain;
 use Porkbun\DTO\DomainCollection;
 use Porkbun\DTO\PaginatedResult;
+use Porkbun\DTO\RegistrationRequirements;
+use Porkbun\Exception\ApiException;
 
 final class Domains extends AbstractApi
 {
@@ -58,6 +60,22 @@ final class Domains extends AbstractApi
 
             $start = $page->nextStart ?? 0;
         } while ($page->hasMore);
+    }
+
+    public function registrationRequirements(string $tld): RegistrationRequirements
+    {
+        $httpClient = $this->context->httpClient();
+        $data = $httpClient->get("/domain/getRegistrationRequirements/{$tld}");
+
+        if (!is_string($data['tld'] ?? null) || !is_array($data['requestSchema'] ?? null)) {
+            throw new ApiException(
+                'Invalid API response: missing registration requirements',
+                $httpClient->lastResponse?->getStatusCode() ?? 0,
+                response: $httpClient->lastResponse,
+            );
+        }
+
+        return RegistrationRequirements::fromArray($data);
     }
 
     /** @return list<AutoRenewResult> */

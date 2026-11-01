@@ -13,7 +13,7 @@ A community-maintained PHP 8.4+ client for the [Porkbun API v3](https://porkbun.
 
 ## Features
 
-- **Core API coverage** — 31 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, contacts, domains, pricing, and more
+- **Core API coverage** — 32 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, contacts, domains, pricing, and more
 - **Domain-centric design** — fluent API: `$client->domain('example.com')->dns()->all()`
 - **Typed everything** — immutable DTOs, backed enums, strict return types throughout
 - **Fluent builders** — validated DNS record construction with convenience methods
@@ -179,6 +179,24 @@ $result->priceInCents;          // ?int (e.g., 999 for $9.99)
 $result->renewalPriceInCents;   // ?int (pass to renew())
 $result->effectivePrice;        // ?float (promo price if available, else regular)
 ```
+
+### Registration Requirements
+
+```php
+$req = $client->domains()->registrationRequirements('us');   // a TLD, not a domain: 'co.uk', not 'example.co.uk'
+
+$req->apiRegisterable;            // bool: false means register on the website only
+$req->notApiRegisterableReason;   // ?string, set when apiRegisterable is false
+$req->registrationDurationYears;  // int: fixed term the API registers for (2 for .ai)
+$req->maxRegistrationYears;       // ?int
+$req->whoisPrivacySupported;      // bool
+$req->requiresValidatedAddress;   // bool
+$req->registrantOnly;             // bool: only the registrant contact is used
+$req->requestSchema;              // array: JSON Schema of the /domain/create body
+$req->registryRequirements;       // ?array: JSON Schema of registry eligibility fields (.us, .ca, .de, ...)
+```
+
+`registryRequirements` only describes the registry's eligibility rules: `register()` cannot send those fields. An unknown TLD throws `ApiException` with `getErrorCode() === 'INVALID_INPUT'`.
 
 ### Domain Registration
 
@@ -479,7 +497,7 @@ See the [`examples/`](examples/) directory for runnable scripts:
 
 - [`01-ping.php`](examples/01-ping.php) - Auth test and IPv4 endpoint switching
 - [`02-pricing.php`](examples/02-pricing.php) - Public pricing API, cheapest TLDs, iteration
-- [`03-domains.php`](examples/03-domains.php) - List domains, pagination, expiring soon, availability check
+- [`03-domains.php`](examples/03-domains.php) - List domains, pagination, expiring soon, availability check, registration requirements
 - [`04-dns.php`](examples/04-dns.php) - DNS CRUD with direct methods, collection helpers
 - [`05-dns-builder.php`](examples/05-dns-builder.php) - Fluent builder, convenience methods, immutable templates
 - [`06-dns-batch.php`](examples/06-dns-batch.php) - Batch operations, mixed create/edit/delete
