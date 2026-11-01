@@ -123,7 +123,7 @@ final class Client
 
     public function domain(string $domain): Domain
     {
-        return new Domain($domain, $this->clientContext, $this->domains());
+        return new Domain($domain, $this->clientContext);
     }
 
     private function getHttpClient(): HttpClient

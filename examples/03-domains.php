@@ -36,7 +36,7 @@ foreach ($domains as $domain) {
 echo "\nTotal: " . count($domains) . " domains\n";
 
 // Look up a single domain by name
-$first = $domains->first();
+$first = $domains->domains()->first();
 if ($first !== null) {
     $found = $client->domains()->find($first->domain);
     if ($found !== null) {
@@ -44,14 +44,10 @@ if ($first !== null) {
         echo ', auto-renew=' . ($found->autoRenew ? 'on' : 'off');
         echo ', expires=' . ($found->expireDate?->format('Y-m-d') ?? 'unknown') . "\n";
     }
-
-    // Same info via the domain facade
-    $details = $client->domain($first->domain)->details();
-    echo "Via facade: {$details->domain} (security-lock=" . ($details->securityLock ? 'on' : 'off') . ")\n";
 }
 
 // Domains expiring within 30 days
-$expiring = $domains->expiringSoon(30);
+$expiring = $domains->domains()->expiringSoon(30);
 if ($expiring->isNotEmpty()) {
     echo "\nExpiring within 30 days:\n";
     foreach ($expiring as $domain) {

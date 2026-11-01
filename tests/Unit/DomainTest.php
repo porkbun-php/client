@@ -6,24 +6,24 @@ use Porkbun\Api\AutoRenew;
 use Porkbun\Api\Contacts;
 use Porkbun\Api\Dns;
 use Porkbun\Api\Dnssec;
-use Porkbun\Api\Domains;
 use Porkbun\Api\GlueRecords;
 use Porkbun\Api\Nameservers;
 use Porkbun\Api\UrlForwarding;
 use Porkbun\DTO\AvailabilityResult;
 use Porkbun\DTO\Domain as DomainDto;
+use Porkbun\DTO\DomainLabel;
 use Porkbun\DTO\DomainRegistration;
 use Porkbun\DTO\DomainRenewal;
 use Porkbun\DTO\SslCertificate;
 use Porkbun\Exception\ApiException;
 use Porkbun\HttpClient;
 use Porkbun\Resource\Domain;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestInterface;
 
-function createDomainFacade(string $name, HttpClient $httpClient, ?Domains $domains = null): Domain
+function createDomainFacade(string $name, HttpClient $httpClient): Domain
 {
-    $clientContext = createMockContext($httpClient);
-
-    return new Domain($name, $clientContext, $domains ?? new Domains($clientContext));
+    return new Domain($name, createMockContext($httpClient));
 }
 
 test('domain facade returns name', function (): void {
@@ -221,39 +221,85 @@ test('domain facade can renew domain', function (): void {
         ->and($domainRenewal->orderId)->toBe(123456);
 });
 
-test('domain facade details returns domain DTO', function (): void {
-    $mockClient = createMockHttpClient([
-        [
-            'status' => 'SUCCESS',
-            'domains' => [
-                ['domain' => 'example.com', 'status' => 'ACTIVE', 'autoRenew' => 1, 'expireDate' => '2026-03-16 22:28:09'],
-                ['domain' => 'other.com', 'status' => 'ACTIVE'],
-            ],
-        ],
-    ]);
+test('domain facade details gets the domain', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
 
-    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            expect($request->getMethod())->toBe('GET')
+                ->and((string) $request->getUri())->toBe('https://api.porkbun.com/api/json/v3/domain/get/example.com');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse('{"status":"SUCCESS","domain":{"domain":"example.com","status":"ACTIVE","tld":"com","createDate":"2026-10-30 10:41:05","addedDate":"2026-10-30 10:41:05","expireDate":"2037-10-30 10:41:05","securityLock":0,"whoisPrivacy":1,"autoRenew":1,"apiAccess":1,"notLocal":0},"requestId":"00000000-0000-0000-0000-000000000000","sandbox":true}'));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
     $domain = createDomainFacade('example.com', $httpClient);
 
     $details = $domain->details();
 
     expect($details)->toBeInstanceOf(DomainDto::class)
         ->and($details->domain)->toBe('example.com')
-        ->and($details->status)->toBe('ACTIVE');
+        ->and($details->status)->toBe('ACTIVE')
+        ->and($details->tld)->toBe('com')
+        ->and($details->expireDate?->format('Y-m-d'))->toBe('2037-10-30')
+        ->and($details->securityLock)->toBeFalse()
+        ->and($details->whoisPrivacy)->toBeTrue()
+        ->and($details->autoRenew)->toBeTrue()
+        ->and($details->isExternal)->toBeFalse()
+        ->and($details->labels)->toBeNull();
+});
+
+test('domain facade details asks for labels', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            expect((string) $request->getUri())->toBe('https://api.porkbun.com/api/json/v3/domain/get/example.com?includeLabels=yes');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse('{"status":"SUCCESS","domain":{"domain":"example.com","status":"ACTIVE","tld":"com","createDate":"2021-01-15 10:00:00","addedDate":"2026-10-16 07:06:17","expireDate":"2027-01-15 10:00:00","securityLock":1,"whoisPrivacy":1,"autoRenew":1,"apiAccess":1,"notLocal":0,"labels":[{"id":"123","title":"Production","color":"#337ab7"}]}}'));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $details = createDomainFacade('example.com', $httpClient)->details(includeLabels: true);
+
+    expect($details->labels)->toHaveCount(1);
+
+    /** @var list<DomainLabel> $labels */
+    $labels = $details->labels;
+    expect($labels[0]->id)->toBe(123)
+        ->and($labels[0]->title)->toBe('Production')
+        ->and($labels[0]->color)->toBe('#337ab7');
+});
+
+test('domain facade details throws when the response has no domain', function (): void {
+    $mockClient = createMockHttpClient([['status' => 'SUCCESS']]);
+    $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
+
+    expect(fn (): DomainDto => createDomainFacade('example.com', $httpClient)->details())
+        ->toThrow(ApiException::class, 'Invalid API response: missing domain');
 });
 
 test('domain facade details throws when domain not found', function (): void {
-    $mockClient = createMockHttpClient([
-        [
-            'status' => 'SUCCESS',
-            'domains' => [
-                ['domain' => 'other.com', 'status' => 'ACTIVE'],
-            ],
+    $mockClient = createMockHttpClient([[
+        'httpStatus' => 404,
+        'body' => [
+            'status' => 'ERROR',
+            'message' => 'Domain not found in your account. (Account: sandbox-user.)',
+            'code' => 'DOMAIN_NOT_FOUND',
+            'account' => 'sandbox-user',
+            'requestId' => '00000000-0000-0000-0000-000000000000',
+            'sandbox' => true,
         ],
-    ]);
+    ]]);
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
-    $domain = createDomainFacade('notfound.com', $httpClient);
+    $e = catchPorkbunException(fn (): DomainDto => createDomainFacade('notfound.com', $httpClient)->details());
 
-    expect(fn (): DomainDto => $domain->details())->toThrow(ApiException::class, "Domain 'notfound.com' not found in account");
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getStatusCode())->toBe(404)
+        ->and($e->getErrorCode())->toBe('DOMAIN_NOT_FOUND');
 });

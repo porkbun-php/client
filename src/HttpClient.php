@@ -93,6 +93,12 @@ final class HttpClient
             ->withHeader('Content-Type', self::CONTENT_TYPE)
             ->withHeader('User-Agent', $this->getUserAgent());
 
+        if ($this->apiKey !== null && $this->secretKey !== null) {
+            $request = $request
+                ->withHeader('X-API-Key', $this->apiKey)
+                ->withHeader('X-Secret-API-Key', $this->secretKey);
+        }
+
         try {
             $this->lastResponse = $this->httpClient->sendRequest($request);
         } catch (ClientExceptionInterface $e) {
