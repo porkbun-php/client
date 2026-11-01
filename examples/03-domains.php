@@ -63,6 +63,14 @@ if ($availability->isAvailable && $availability->effectivePrice !== null) {
 }
 echo "\n";
 
+// Registration requirements for a TLD
+$requirements = $client->domains()->registrationRequirements('us');
+echo "\n.us registerable via API: " . ($requirements->apiRegisterable ? 'yes' : 'no');
+if ($requirements->notApiRegisterableReason !== null) {
+    echo " ({$requirements->notApiRegisterableReason})";
+}
+echo "\n";
+
 // Auto-renew via domain facade (commented out — modifies account settings)
 // $client->domain('domain1.com')->autoRenew()->enable();
 // $client->domain('domain2.com')->autoRenew()->disable();

@@ -20,6 +20,7 @@ use Porkbun\DTO\PaginatedResult;
 use Porkbun\DTO\PingResult;
 use Porkbun\DTO\PricingCollection;
 use Porkbun\DTO\PricingItem;
+use Porkbun\DTO\RegistrationRequirements;
 use Porkbun\DTO\SslCertificate;
 use Porkbun\DTO\UrlForward;
 use Porkbun\DTO\UrlForwardCollection;
@@ -192,6 +193,30 @@ test('domain: details of a domain outside the account is DOMAIN_NOT_FOUND', func
     expect($e)->toBeInstanceOf(ApiException::class)
         ->and($e->getStatusCode())->toBe(404)
         ->and($e->getErrorCode())->toBe('DOMAIN_NOT_FOUND');
+})->group('integration');
+
+test('domains: registration requirements for a tld', function () use ($client): void {
+    $requirements = $client->domains()->registrationRequirements('com');
+
+    expect($requirements->tld)->toBe('com')
+        ->and($requirements->apiRegisterable)->toBeTrue()
+        ->and($requirements->requestSchema)->toHaveKey('properties');
+})->group('integration');
+
+test('domains: registration requirements for a tld the api cannot register', function () use ($client): void {
+    $requirements = $client->domains()->registrationRequirements('us');
+
+    expect($requirements->apiRegisterable)->toBeFalse()
+        ->and($requirements->notApiRegisterableReason)->not->toBeNull()
+        ->and($requirements->registryRequirements)->toHaveKey('properties');
+})->group('integration');
+
+test('domains: registration requirements of an unknown tld is INVALID_INPUT', function () use ($client): void {
+    $e = catchPorkbunException(fn (): RegistrationRequirements => $client->domains()->registrationRequirements('notatld'));
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getStatusCode())->toBe(400)
+        ->and($e->getErrorCode())->toBe('INVALID_INPUT');
 })->group('integration');
 
 test('domains: all generator yields domains', function () use ($client, $domain): void {
