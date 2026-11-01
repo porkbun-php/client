@@ -8,6 +8,7 @@ use Porkbun\Api\Dns;
 use Porkbun\Api\Dnssec;
 use Porkbun\Api\GlueRecords;
 use Porkbun\Api\Nameservers;
+use Porkbun\Api\Transfer;
 use Porkbun\Api\UrlForwarding;
 use Porkbun\DTO\AvailabilityResult;
 use Porkbun\DTO\Domain as DomainDto;
@@ -114,6 +115,15 @@ test('domain facade provides contacts service', function (): void {
     expect($domain->contacts())->toBeInstanceOf(Contacts::class);
 });
 
+test('domain facade provides transfer service', function (): void {
+    $mockClient = createMockHttpClient([]);
+    $httpClient = createHttpClient($mockClient);
+
+    $domain = createDomainFacade('example.com', $httpClient);
+
+    expect($domain->transfer())->toBeInstanceOf(Transfer::class);
+});
+
 test('domain facade caches service instances', function (): void {
     $mockClient = createMockHttpClient([]);
     $httpClient = createHttpClient($mockClient);
@@ -147,6 +157,10 @@ test('domain facade caches service instances', function (): void {
     $contacts1 = $domain->contacts();
     $contacts2 = $domain->contacts();
     expect($contacts1)->toBe($contacts2);
+
+    $transfer1 = $domain->transfer();
+    $transfer2 = $domain->transfer();
+    expect($transfer1)->toBe($transfer2);
 });
 
 test('domain facade can check availability', function (): void {

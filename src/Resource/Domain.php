@@ -13,6 +13,7 @@ use Porkbun\Api\GlueRecords;
 use Porkbun\Api\Nameservers;
 use Porkbun\Api\Registration as RegistrationApi;
 use Porkbun\Api\Renewal as RenewalApi;
+use Porkbun\Api\Transfer;
 use Porkbun\Api\UrlForwarding;
 use Porkbun\DTO\AvailabilityResult;
 use Porkbun\DTO\Domain as DomainDto;
@@ -37,6 +38,8 @@ final class Domain
     private ?AutoRenew $autoRenew = null;
 
     private ?Contacts $contacts = null;
+
+    private ?Transfer $transfer = null;
 
     public function __construct(
         public readonly string $name,
@@ -103,6 +106,11 @@ final class Domain
     public function contacts(): Contacts
     {
         return $this->contacts ??= new Contacts($this->clientContext, $this->name);
+    }
+
+    public function transfer(): Transfer
+    {
+        return $this->transfer ??= new Transfer($this->clientContext, $this->name);
     }
 
     public function check(): AvailabilityResult

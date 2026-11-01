@@ -10,6 +10,7 @@ use Porkbun\DTO\Domain;
 use Porkbun\DTO\DomainCollection;
 use Porkbun\DTO\PaginatedResult;
 use Porkbun\DTO\RegistrationRequirements;
+use Porkbun\DTO\TransferRecordCollection;
 use Porkbun\Exception\ApiException;
 
 final class Domains extends AbstractApi
@@ -88,6 +89,22 @@ final class Domains extends AbstractApi
     public function disableAutoRenew(string $domain, string ...$moreDomains): array
     {
         return $this->updateAutoRenew(false, $domain, ...$moreDomains);
+    }
+
+    public function transfers(): TransferRecordCollection
+    {
+        $httpClient = $this->context->httpClient();
+        $data = $httpClient->get('/domain/listTransfers');
+
+        if (!is_array($data['transfers'] ?? null)) {
+            throw new ApiException(
+                'Invalid API response: missing transfers',
+                $httpClient->lastResponse?->getStatusCode() ?? 0,
+                response: $httpClient->lastResponse,
+            );
+        }
+
+        return TransferRecordCollection::fromArray($data['transfers']);
     }
 
     /** @return list<AutoRenewResult> */

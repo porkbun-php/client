@@ -26,6 +26,14 @@ final class AvailabilityResult implements JsonSerializable
         }
     }
 
+    public ?int $transferPriceInCents {
+        get {
+            $price = $this->transferPrice ?? $this->transferRegularPrice;
+
+            return $price !== null ? (int) round($price * 100) : null;
+        }
+    }
+
     public bool $hasPromoPrice {
         get => $this->price !== null
             && $this->regularPrice !== null

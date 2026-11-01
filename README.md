@@ -13,7 +13,7 @@ A community-maintained PHP 8.4+ client for the [Porkbun API v3](https://porkbun.
 
 ## Features
 
-- **Core API coverage** — 32 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, contacts, domains, pricing, and more
+- **Core API coverage** — 37 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, contacts, domains, transfers, pricing, and more
 - **Domain-centric design** — fluent API: `$client->domain('example.com')->dns()->all()`
 - **Typed everything** — immutable DTOs, backed enums, strict return types throughout
 - **Fluent builders** — validated DNS record construction with convenience methods
@@ -177,6 +177,7 @@ $result->price;                 // ?float (registration price)
 $result->type;                  // string — 'standard', 'premium', etc.
 $result->priceInCents;          // ?int (e.g., 999 for $9.99)
 $result->renewalPriceInCents;   // ?int (pass to renew())
+$result->transferPriceInCents;  // ?int (pass to transfer()->initiate())
 $result->effectivePrice;        // ?float (promo price if available, else regular)
 ```
 
@@ -225,6 +226,35 @@ $result->costInDollars;          // float (computed)
 $result->balanceInCents;         // int
 $result->balanceInDollars;       // float (computed)
 ```
+
+### Domain Transfers
+
+```php
+$domain = $client->domain('example.com');
+$transfer = $domain->transfer(); // takes no arguments: start a transfer with initiate()
+
+// The auth code (EPP code) comes from the current registrar
+$result = $transfer->initiate($authCode, $domain->check()->transferPriceInCents); // DomainTransfer
+$result->orderId;           // int
+$result->transferId;        // int
+$result->balanceInCents;    // int
+$result->message;           // ?string
+
+// Track it (production transfers usually take 5-7 days)
+$record = $transfer->details();  // TransferRecord
+$record->status;                 // string: 'PENDINGTRANSFER', 'DONE', 'CANCELED', ...
+$record->statusDescription;      // string
+$record->transferDate;           // ?DateTimeImmutable (UTC)
+
+// Replace a wrong auth code, or cancel and refund
+$transfer->updateAuthCode($newAuthCode); // TransferAuthCodeUpdate
+$transfer->cancel();                     // TransferCancellation (refunded, refundAmountInCents, ...)
+
+// Active transfers in the account (done and canceled ones are not listed)
+$client->domains()->transfers();         // TransferRecordCollection of TransferRecord
+```
+
+`initiate()` pays from account credit, so don't retry it automatically (for example in a queue job): check `details()` first. Failures throw `ApiException`; check `getErrorCode()` for `DOMAIN_ALREADY_IN_ACCOUNT`, `COST_MISMATCH` (the message names the expected cost), `INVALID_AUTH_CODE` from `updateAuthCode()`, and `TRANSFER_NOT_FOUND` when the domain has no transfer.
 
 ### DNS Records
 
@@ -497,7 +527,7 @@ See the [`examples/`](examples/) directory for runnable scripts:
 
 - [`01-ping.php`](examples/01-ping.php) - Auth test and IPv4 endpoint switching
 - [`02-pricing.php`](examples/02-pricing.php) - Public pricing API, cheapest TLDs, iteration
-- [`03-domains.php`](examples/03-domains.php) - List domains, pagination, expiring soon, availability check, registration requirements
+- [`03-domains.php`](examples/03-domains.php) - List domains, pagination, expiring soon, availability check, registration requirements, active transfers
 - [`04-dns.php`](examples/04-dns.php) - DNS CRUD with direct methods, collection helpers
 - [`05-dns-builder.php`](examples/05-dns-builder.php) - Fluent builder, convenience methods, immutable templates
 - [`06-dns-batch.php`](examples/06-dns-batch.php) - Batch operations, mixed create/edit/delete

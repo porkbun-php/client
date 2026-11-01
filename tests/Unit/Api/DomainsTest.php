@@ -9,6 +9,7 @@ use Porkbun\DTO\DomainCollection;
 use Porkbun\DTO\DomainLabel;
 use Porkbun\DTO\PaginatedResult;
 use Porkbun\DTO\RegistrationRequirements;
+use Porkbun\DTO\TransferRecordCollection;
 use Porkbun\Exception\ApiException;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestInterface;
@@ -341,4 +342,47 @@ test('domains api registration requirements throws when the response has no requ
 
     expect(fn (): RegistrationRequirements => $domains->registrationRequirements('com'))
         ->toThrow(ApiException::class, 'Invalid API response: missing registration requirements');
+});
+
+test('domains api lists active transfers', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            expect($request->getMethod())->toBe('GET')
+                ->and((string) $request->getUri())->toBe('https://api.porkbun.com/api/json/v3/domain/listTransfers')
+                ->and($request->getHeaderLine('X-API-Key'))->toBe('pk1_key')
+                ->and($request->getHeaderLine('X-Secret-API-Key'))->toBe('sk1_secret');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse('{"status":"SUCCESS","transfers":[{"domain":"example.com","status":"PENDINGTRANSFER","statusDescription":"Waiting for the losing registrar.","transferDate":"2026-01-01T00:00:00Z","orderId":9915398}]}'));
+
+    $domains = new Domains(createMockContext(createHttpClient($mock, 'pk1_key', 'sk1_secret')));
+
+    $transfers = $domains->transfers();
+
+    expect($transfers)->toBeInstanceOf(TransferRecordCollection::class)
+        ->and($transfers)->toHaveCount(1)
+        ->and($transfers->first()?->domain)->toBe('example.com')
+        ->and($transfers->first()?->status)->toBe('PENDINGTRANSFER')
+        ->and($transfers->first()?->orderId)->toBe(9915398);
+});
+
+test('domains api lists no transfers', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+    $mock->shouldReceive('sendRequest')->once()->andReturn(createMockResponse('{"status":"SUCCESS","transfers":[],"requestId":"00000000-0000-0000-0000-000000000000","sandbox":true}'));
+
+    $domains = new Domains(createMockContext(createHttpClient($mock, 'pk1_key', 'sk1_secret')));
+
+    expect($domains->transfers()->isEmpty())->toBeTrue();
+});
+
+test('domains api transfers throws when the response has no transfers', function (): void {
+    $httpClient = createHttpClient(createMockHttpClient([['status' => 'SUCCESS']]), 'pk1_key', 'sk1_secret');
+    $domains = new Domains(createMockContext($httpClient));
+
+    expect(fn (): TransferRecordCollection => $domains->transfers())
+        ->toThrow(ApiException::class, 'Invalid API response: missing transfers');
 });

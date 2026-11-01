@@ -71,6 +71,13 @@ if ($requirements->notApiRegisterableReason !== null) {
 }
 echo "\n";
 
+// Active inbound transfers
+$transfers = $client->domains()->transfers();
+echo "\nActive transfers: " . count($transfers) . "\n";
+foreach ($transfers as $transfer) {
+    echo "  {$transfer->domain}: {$transfer->status}\n";
+}
+
 // Auto-renew via domain facade (commented out — modifies account settings)
 // $client->domain('domain1.com')->autoRenew()->enable();
 // $client->domain('domain2.com')->autoRenew()->disable();

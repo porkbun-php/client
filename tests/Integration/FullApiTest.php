@@ -14,6 +14,7 @@ use Porkbun\DTO\DnssecRecordCollection;
 use Porkbun\DTO\Domain;
 use Porkbun\DTO\DomainCollection;
 use Porkbun\DTO\DomainContacts;
+use Porkbun\DTO\DomainTransfer;
 use Porkbun\DTO\GlueRecordCollection;
 use Porkbun\DTO\NameserverCollection;
 use Porkbun\DTO\PaginatedResult;
@@ -22,6 +23,10 @@ use Porkbun\DTO\PricingCollection;
 use Porkbun\DTO\PricingItem;
 use Porkbun\DTO\RegistrationRequirements;
 use Porkbun\DTO\SslCertificate;
+use Porkbun\DTO\TransferAuthCodeUpdate;
+use Porkbun\DTO\TransferCancellation;
+use Porkbun\DTO\TransferRecord;
+use Porkbun\DTO\TransferRecordCollection;
 use Porkbun\DTO\UrlForward;
 use Porkbun\DTO\UrlForwardCollection;
 use Porkbun\Enum\BatchOperationType;
@@ -704,4 +709,80 @@ test('domain renewal: renews at the checked renewal price', function () use ($ap
         ->and($domainRenewal->costInCents)->toBe($costInCents)
         ->and($domainRenewal->orderId)->toBeGreaterThan(0)
         ->and($domainRenewal->expirationDate)->toBeInstanceOf(DateTimeImmutable::class);
+})->group('integration');
+
+// --------------------------------------------------------------------------
+// Domain Transfers — sandbox keys only for every write (costs real money otherwise)
+// --------------------------------------------------------------------------
+
+test('domain transfer: a domain already in the account is DOMAIN_ALREADY_IN_ACCOUNT', function () use ($apiKey, $domainResource): void {
+    if (!str_starts_with($apiKey, 'pk1_sb_')) {
+        $this->markTestSkipped('Domain transfer costs real money');
+    }
+
+    $costInCents = $domainResource->check()->transferPriceInCents;
+    assert(is_int($costInCents));
+
+    $e = catchPorkbunException(fn (): DomainTransfer => $domainResource->transfer()->initiate('sandbox-auth-code', $costInCents));
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getErrorCode())->toBe('DOMAIN_ALREADY_IN_ACCOUNT');
+})->group('integration');
+
+test('domain transfer: transfers a domain and reads its details', function () use ($apiKey, $client): void {
+    if (!str_starts_with($apiKey, 'pk1_sb_')) {
+        $this->markTestSkipped('Domain transfer costs real money');
+    }
+
+    $domainResource = $client->domain('pbphp-transfer-' . time() . '.com');
+    $costInCents = $domainResource->check()->transferPriceInCents;
+    assert(is_int($costInCents));
+
+    $domainTransfer = $domainResource->transfer()->initiate('sandbox-auth-code', $costInCents);
+    $record = $domainResource->transfer()->details();
+
+    expect($domainTransfer->domain)->toBe($domainResource->name)
+        ->and($domainTransfer->orderId)->toBeGreaterThan(0)
+        ->and($domainTransfer->transferId)->toBeGreaterThan(0)
+        ->and($record->domain)->toBe($domainResource->name)
+        ->and($record->status)->toBe('DONE')
+        ->and($record->orderId)->toBe($domainTransfer->orderId)
+        ->and($record->transferDate)->toBeInstanceOf(DateTimeImmutable::class);
+})->group('integration');
+
+test('domain transfer: details without a transfer is TRANSFER_NOT_FOUND', function () use ($apiKey, $domainResource): void {
+    if (!str_starts_with($apiKey, 'pk1_sb_')) {
+        $this->markTestSkipped('A real domain may have been transferred in');
+    }
+
+    $e = catchPorkbunException(fn (): TransferRecord => $domainResource->transfer()->details());
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getErrorCode())->toBe('TRANSFER_NOT_FOUND');
+})->group('integration');
+
+test('domain transfer: cancel without a pending transfer is TRANSFER_NOT_FOUND', function () use ($apiKey, $domainResource): void {
+    if (!str_starts_with($apiKey, 'pk1_sb_')) {
+        $this->markTestSkipped('Cancelling a real transfer cannot be undone');
+    }
+
+    $e = catchPorkbunException(fn (): TransferCancellation => $domainResource->transfer()->cancel());
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getErrorCode())->toBe('TRANSFER_NOT_FOUND');
+})->group('integration');
+
+test('domain transfer: update auth code without a pending transfer is TRANSFER_NOT_FOUND', function () use ($apiKey, $domainResource): void {
+    if (!str_starts_with($apiKey, 'pk1_sb_')) {
+        $this->markTestSkipped('Updating a real transfer re-queues it');
+    }
+
+    $e = catchPorkbunException(fn (): TransferAuthCodeUpdate => $domainResource->transfer()->updateAuthCode('sandbox-auth-code'));
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getErrorCode())->toBe('TRANSFER_NOT_FOUND');
+})->group('integration');
+
+test('domains: transfers lists active transfers', function () use ($client): void {
+    expect($client->domains()->transfers())->toBeInstanceOf(TransferRecordCollection::class);
 })->group('integration');
