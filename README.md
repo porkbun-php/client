@@ -13,7 +13,7 @@ A community-maintained PHP 8.4+ client for the [Porkbun API v3](https://porkbun.
 
 ## Features
 
-- **Core API coverage** — 30 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, contacts, domains, pricing, and more
+- **Core API coverage** — 31 Porkbun API v3 endpoints: DNS, DNSSEC, SSL, nameservers, URL forwarding, glue records, contacts, domains, pricing, and more
 - **Domain-centric design** — fluent API: `$client->domain('example.com')->dns()->all()`
 - **Typed everything** — immutable DTOs, backed enums, strict return types throughout
 - **Fluent builders** — validated DNS record construction with convenience methods
@@ -155,7 +155,8 @@ $client->domains()->disableAutoRenew('example.com');
 
 ```php
 $domain = $client->domain('example.com');
-$info = $domain->details();      // Domain DTO (from your account)
+$info = $domain->details();      // Domain DTO
+$domain->details(includeLabels: true);   // also fills ->labels
 
 $info->domain;                   // 'example.com'
 $info->status;                   // 'ACTIVE'
@@ -163,6 +164,8 @@ $info->expireDate;               // ?DateTimeImmutable
 $info->autoRenew;                // ?bool
 $info->tld;                      // 'com'
 ```
+
+A domain that is not in the account throws `ApiException` with `getErrorCode() === 'DOMAIN_NOT_FOUND'` (HTTP 404). Like every other domain method, `details()` may fail with `API_ACCESS_DISABLED` for a domain that is not opted in to API access; `$client->domains()->find('example.com')` reads any domain in the account.
 
 ### Domain Availability
 

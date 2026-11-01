@@ -42,6 +42,42 @@ test('http client adds authentication to POST request', function (): void {
     expect($result['status'])->toBe('SUCCESS');
 });
 
+test('http client adds authentication headers to GET request', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->once()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            expect($request->getHeaderLine('X-API-Key'))->toBe('pk1_key')
+                ->and($request->getHeaderLine('X-Secret-API-Key'))->toBe('sk1_secret')
+                ->and((string) $request->getUri())->not->toContain('pk1_key')
+                ->and((string) $request->getUri())->not->toContain('sk1_secret');
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    $httpClient = createHttpClient($mock, 'pk1_key', 'sk1_secret');
+    $httpClient->get('/domain/get/example.com');
+});
+
+test('http client sends no authentication headers on GET without both keys', function (): void {
+    $mock = Mockery::mock(ClientInterface::class);
+
+    $mock->shouldReceive('sendRequest')
+        ->twice()
+        ->with(Mockery::on(function (RequestInterface $request): bool {
+            expect($request->hasHeader('X-API-Key'))->toBeFalse()
+                ->and($request->hasHeader('X-Secret-API-Key'))->toBeFalse();
+
+            return true;
+        }))
+        ->andReturn(createMockResponse(json_encode(['status' => 'SUCCESS'])));
+
+    createHttpClient($mock)->get('/domain/get/example.com');
+    createHttpClient($mock, 'pk1_key')->get('/domain/get/example.com');
+});
+
 test('http client sets correct headers', function (): void {
     $mock = Mockery::mock(ClientInterface::class);
 

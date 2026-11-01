@@ -182,7 +182,16 @@ test('domain: details returns domain DTO with metadata', function () use ($domai
         ->and($details->autoRenew)->toBeBool()
         ->and($details->securityLock)->toBeBool()
         ->and($details->whoisPrivacy)->toBeBool()
-        ->and($details->expireDate)->toBeInstanceOf(DateTimeImmutable::class);
+        ->and($details->expireDate)->toBeInstanceOf(DateTimeImmutable::class)
+        ->and($domainResource->details(includeLabels: true)->domain)->toBe($domain);
+})->group('integration');
+
+test('domain: details of a domain outside the account is DOMAIN_NOT_FOUND', function () use ($client): void {
+    $e = catchPorkbunException(fn (): Domain => $client->domain('example.com')->details());
+
+    expect($e)->toBeInstanceOf(ApiException::class)
+        ->and($e->getStatusCode())->toBe(404)
+        ->and($e->getErrorCode())->toBe('DOMAIN_NOT_FOUND');
 })->group('integration');
 
 test('domains: all generator yields domains', function () use ($client, $domain): void {

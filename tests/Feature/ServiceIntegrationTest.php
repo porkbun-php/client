@@ -64,7 +64,7 @@ test('service integration - domain check availability', function (): void {
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $clientContext = createMockContext($httpClient);
-    $domain = new Domain('example.com', $clientContext, new Domains($clientContext));
+    $domain = new Domain('example.com', $clientContext);
 
     $availability = $domain->check();
     expect($availability)->toBeInstanceOf(AvailabilityResult::class)
@@ -93,7 +93,7 @@ test('service integration - error handling across services', function (): void {
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $clientContext = createMockContext($httpClient);
-    $domain = new Domain('nonexistent.com', $clientContext, new Domains($clientContext));
+    $domain = new Domain('nonexistent.com', $clientContext);
 
     expect(fn (): AvailabilityResult => $domain->check())
         ->toThrow(ApiException::class, 'Domain not found');
@@ -111,7 +111,7 @@ test('service integration - ssl certificate retrieval', function (): void {
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $context = createMockContext($httpClient);
-    $domain = new Domain('example.com', $context, new Domains($context));
+    $domain = new Domain('example.com', $context);
 
     $sslCertificate = $domain->ssl();
 

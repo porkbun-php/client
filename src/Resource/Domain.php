@@ -9,7 +9,6 @@ use Porkbun\Api\Availability as AvailabilityApi;
 use Porkbun\Api\Contacts;
 use Porkbun\Api\Dns;
 use Porkbun\Api\Dnssec;
-use Porkbun\Api\Domains;
 use Porkbun\Api\GlueRecords;
 use Porkbun\Api\Nameservers;
 use Porkbun\Api\Registration as RegistrationApi;
@@ -42,14 +41,26 @@ final class Domain
     public function __construct(
         public readonly string $name,
         private readonly ClientContext $clientContext,
-        private readonly Domains $domains,
     ) {
     }
 
-    public function details(): DomainDto
+    public function details(bool $includeLabels = false): DomainDto
     {
-        return $this->domains->find($this->name)
-            ?? throw new ApiException("Domain '{$this->name}' not found in account", 0);
+        $httpClient = $this->clientContext->httpClient();
+        $data = $httpClient->get(
+            "/domain/get/{$this->name}",
+            $includeLabels ? ['includeLabels' => 'yes'] : [],
+        );
+
+        if (!is_array($data['domain'] ?? null)) {
+            throw new ApiException(
+                'Invalid API response: missing domain',
+                $httpClient->lastResponse?->getStatusCode() ?? 0,
+                response: $httpClient->lastResponse,
+            );
+        }
+
+        return DomainDto::fromArray($data['domain']);
     }
 
     public function dns(): Dns

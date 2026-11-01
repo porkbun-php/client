@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Porkbun\Api\Domains;
 use Porkbun\DTO\SslCertificate;
 use Porkbun\Exception\ApiException;
 use Porkbun\Resource\Domain;
@@ -19,7 +18,7 @@ test('ssl can get certificate', function (): void {
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $context = createMockContext($httpClient);
-    $domain = new Domain('example.com', $context, new Domains($context));
+    $domain = new Domain('example.com', $context);
 
     $sslCertificate = $domain->ssl();
 
@@ -42,7 +41,7 @@ test('ssl handles intermediate certificate', function (): void {
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $context = createMockContext($httpClient);
-    $domain = new Domain('example.com', $context, new Domains($context));
+    $domain = new Domain('example.com', $context);
 
     $sslCertificate = $domain->ssl();
 
@@ -63,7 +62,7 @@ test('ssl throws ApiException when certificate not ready', function (): void {
 
     $httpClient = createHttpClient($mockClient, 'pk1_key', 'sk1_secret');
     $context = createMockContext($httpClient);
-    $domain = new Domain('example.com', $context, new Domains($context));
+    $domain = new Domain('example.com', $context);
 
     expect(fn (): SslCertificate => $domain->ssl())->toThrow(
         ApiException::class,
